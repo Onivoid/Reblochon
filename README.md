@@ -6,8 +6,9 @@ Stack: FastAPI + PostgreSQL, React (Vite) + pnpm, UI based on [000h](https://000
 
 ## Demo
 
-<video src="docs/demo.mp4" controls width="100%">
-  <a href="docs/demo.mp4">Watch the demo</a>
+<!-- GitHub only embeds videos from githubusercontent.com (not /blob/ pages). -->
+<video src="https://raw.githubusercontent.com/Onivoid/Reblochon/main/docs/demo.mp4" controls width="100%">
+  <a href="https://github.com/Onivoid/Reblochon/raw/main/docs/demo.mp4">Watch the demo</a>
 </video>
 
 ## Requirements

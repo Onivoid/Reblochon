@@ -9,12 +9,23 @@ api/.venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tox/
+.coverage
+htmlcov/
+*.log
+tmp/
+.hallmark/
+
+# Node / pnpm
+node_modules/
 web/node_modules/
 web/dist/
 frontend/node_modules/
 frontend/dist/
-.hallmark/
-*.log
-.coverage
-htmlcov/
-tmp/
+.pnpm-store/
+**/.pnpm-store/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp

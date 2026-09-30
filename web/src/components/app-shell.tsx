@@ -1,15 +1,6 @@
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  ChevronDown,
-  Home,
-  LayoutGrid,
-  Plus,
-  Settings,
-  Users,
-  LogOut,
-  Search,
-} from 'lucide-react'
+import { ChevronDown, Home, LayoutGrid, Plus, Settings, Users, LogOut, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
 import { AppearanceProvider } from '@/components/ui/appearance'
@@ -154,7 +145,7 @@ function ShellInner() {
           <div data-onboard="team" className="-mx-4 border-y border-[var(--border)]">
             <Select
               value={team?.id}
-              containerProps={{ className: "block w-full" }}
+              containerProps={{ className: 'block w-full' }}
               onValueChange={(id) => {
                 if (!id) return
                 if (id === CREATE_TEAM_VALUE) {
