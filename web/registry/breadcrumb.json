@@ -1,0 +1,128 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "breadcrumb",
+  "title": "Breadcrumb",
+  "description": "Find your place with a complete trail, a pocket-sized ancestor menu or a connected directory path.",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/breadcrumb.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { Slot } from \"@radix-ui/react-slot\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Icon, IconButton } from \"@/components/ui/icon\";\nexport const breadcrumbVariants = cva(\n  \"v-crumbs flex flex-wrap items-center gap-[var(--s-3)] text-[length:var(--fs-control)] text-[color:var(--v-text-2)]\",\n);\nexport type BreadcrumbPresentation = \"trail\" | \"pocket\" | \"directory\";\nexport type BreadcrumbProps = React.ComponentProps<\"nav\"> & {\n  presentation?: BreadcrumbPresentation;\n};\nexport function Breadcrumb({\n  className,\n  presentation,\n  ...props\n}: BreadcrumbProps) {\n  return (\n    <nav\n      data-slot=\"breadcrumb\"\n      data-part=\"root\"\n      data-presentation={presentation}\n      aria-label=\"Breadcrumb\"\n      className={cn(breadcrumbVariants(), className)}\n      {...props}\n    />\n  );\n}\nexport type BreadcrumbListProps = React.ComponentProps<\"ol\">;\nexport function BreadcrumbList({ className, ...props }: BreadcrumbListProps) {\n  return (\n    <ol\n      data-slot=\"breadcrumb-list\"\n      className={cn(\"contents list-none\", className)}\n      {...props}\n    />\n  );\n}\nexport type BreadcrumbItemProps = React.ComponentProps<\"li\">;\nexport function BreadcrumbItem({ className, ...props }: BreadcrumbItemProps) {\n  return (\n    <li\n      data-slot=\"breadcrumb-item\"\n      className={cn(\"inline-flex items-center gap-[var(--s-3)]\", className)}\n      {...props}\n    />\n  );\n}\nexport type BreadcrumbLinkProps = React.ComponentProps<\"a\"> & {\n  asChild?: boolean;\n};\nexport function BreadcrumbLink({\n  asChild,\n  className,\n  ...props\n}: BreadcrumbLinkProps) {\n  const Comp = asChild ? Slot : \"a\";\n  return (\n    <Comp\n      data-slot=\"breadcrumb-link\"\n      data-part=\"item\"\n      data-stable-hit=\"\"\n      className={cn(\n        \"inline h-auto p-0 rounded-[var(--r-xs)] bg-transparent [box-shadow:none] text-[color:var(--v-text-2)] font-normal no-underline\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type BreadcrumbPageProps = React.ComponentProps<\"span\">;\nexport function BreadcrumbPage({ className, ...props }: BreadcrumbPageProps) {\n  return (\n    <span\n      data-slot=\"breadcrumb-page\"\n      data-part=\"page\"\n      aria-current=\"page\"\n      data-state=\"active\"\n      className={cn(\n        \"inline h-auto p-0 bg-transparent text-[color:var(--v-text)] font-semibold tabular-nums\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type BreadcrumbSeparatorProps = React.ComponentProps<\"li\"> & {\n  asChild?: boolean;\n};\nexport function BreadcrumbSeparator({\n  children,\n  className,\n  asChild,\n  ...props\n}: BreadcrumbSeparatorProps) {\n  const Comp = asChild ? Slot : \"li\";\n  return (\n    <Comp\n      data-slot=\"breadcrumb-separator\"\n      role=\"presentation\"\n      aria-hidden=\"true\"\n      className={cn(\"list-none inline-flex\", className)}\n      {...props}\n    >\n      {children ?? <Icon name=\"chevron-right\" />}\n    </Comp>\n  );\n}\nexport type BreadcrumbEllipsisProps = React.ComponentProps<\"span\">;\nexport function BreadcrumbEllipsis(props: BreadcrumbEllipsisProps) {\n  return (\n    <span\n      data-slot=\"breadcrumb-ellipsis\"\n      role=\"presentation\"\n      aria-hidden=\"true\"\n      {...props}\n    >\n      …\n    </span>\n  );\n}\nexport type BreadcrumbBackProps = React.ComponentProps<\"button\">;\nexport function BreadcrumbBack({\n  ref,\n  className,\n  children,\n  ...props\n}: BreadcrumbBackProps) {\n  return (\n    <IconButton\n      ref={ref}\n      data-slot=\"breadcrumb-back\"\n      data-stable-hit=\"\"\n      type=\"button\"\n      aria-label=\"Back\"\n      className={cn(\n        \"v-ibtn inline-grid place-items-center shrink-0 [width:44px] [height:44px] mr-[var(--s-1)] [border-radius:50%] [border:0] [background:var(--v-canvas)] [color:var(--v-text)] [box-shadow:inset_0_0_0_1px_var(--v-edge)]\",\n        className,\n      )}\n      {...props}\n    >\n      {children ?? <Icon name=\"arrow-left\" />}\n    </IconButton>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/breadcrumb.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"breadcrumb-link\"] {\n  transition: color var(--t-micro);\n}\n[data-slot=\"breadcrumb-link\"]:hover {\n  color: var(--v-text);\n  background: none;\n  box-shadow: none;\n  text-decoration: underline;\n  text-underline-offset: 4px;\n  text-decoration-color: var(--v-pink-deep);\n  text-decoration-thickness: 2px;\n}\n[data-slot=\"breadcrumb-back\"] {\n  transition:\n    background var(--t-micro),\n    box-shadow var(--t-micro);\n}\n[data-slot=\"breadcrumb-back\"]:hover {\n  background: var(--v-pink);\n  box-shadow: none;\n  color: var(--v-on-accent);\n  transform: none;\n}\n[data-slot=\"breadcrumb-back\"] .v-icon {\n  width: 18px;\n  height: 18px;\n  stroke-width: 2;\n}\n[data-slot=\"breadcrumb-separator\"] .v-icon,\n[data-slot=\"breadcrumb\"] > .v-icon {\n  width: 14px;\n  height: 14px;\n  color: var(--v-text-2);\n  stroke-width: 2;\n  margin: 0;\n  opacity: 0.8;\n}\n[dir=\"rtl\"] [data-slot=\"breadcrumb\"] .v-icon {\n  transform: scaleX(-1);\n}\n:root[data-mode=\"dark\"] [data-slot=\"breadcrumb-back\"] {\n  background: var(--v-beige-2);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n\n[data-slot=\"breadcrumb\"],\n[data-slot=\"breadcrumb-item\"] {\n  min-width: 0;\n  max-width: 100%;\n}\n[data-slot=\"breadcrumb-link\"],\n[data-slot=\"breadcrumb-page\"] {\n  overflow-wrap: anywhere;\n}\n[data-slot=\"breadcrumb-separator\"] {\n  flex-shrink: 0;\n}\n\n/* Native ancestors stay put; composition belongs to the navigation owner. */\n[data-slot=\"breadcrumb\"][data-presentation] {\n  gap: var(--s-2);\n  font-size: var(--fs-control);\n}\n[data-slot=\"breadcrumb\"][data-presentation] [data-slot=\"breadcrumb-link\"] {\n  display: inline-flex;\n  align-items: center;\n  min-height: 44px;\n  padding-inline: var(--s-2);\n}\n[data-slot=\"breadcrumb\"][data-presentation] [data-slot=\"breadcrumb-page\"] {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--s-2);\n  min-height: 44px;\n  padding: var(--s-2) var(--s-4);\n  line-height: 1.4;\n  border-radius: var(--r-sm) var(--r-sm) var(--r-card-sm) var(--r-sm);\n  background: color-mix(in oklab, var(--v-yellow) 28%, var(--v-canvas));\n  color: var(--v-text);\n  box-shadow: inset 0 -2px var(--v-yellow);\n}\n[data-slot=\"breadcrumb\"][data-presentation]\n  [data-slot=\"breadcrumb-page\"]\n  .v-icon {\n  flex-shrink: 0;\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"pocket\"] {\n  display: grid;\n  grid-template-columns: 44px minmax(0, 1fr);\n  align-items: start;\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-card);\n  padding: var(--s-2) var(--s-3);\n  background: var(--v-canvas);\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"pocket\"]\n  [data-slot=\"breadcrumb-list\"] {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 0 var(--s-2);\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"pocket\"]\n  [data-slot=\"breadcrumb-item\"]:last-child {\n  flex-basis: 100%;\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"pocket\"]\n  [data-slot=\"breadcrumb-item\"]:last-child\n  > [data-slot=\"breadcrumb-separator\"] {\n  display: none;\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"pocket\"]\n  [data-slot=\"breadcrumb-page\"] {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: var(--s-2);\n}\n.v-breadcrumb-overflow {\n  min-width: 44px;\n  min-height: 44px;\n  padding-inline: var(--s-3);\n  font-size: var(--fs-title);\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"directory\"] {\n  display: block;\n  padding: var(--s-5);\n  border-radius: var(--r-card-sm);\n  background: color-mix(in oklab, var(--v-blue) 8%, var(--v-canvas));\n  border: 1px solid var(--v-border);\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"directory\"]\n  [data-slot=\"breadcrumb-list\"] {\n  display: grid;\n  gap: 0;\n  border-inline-start: 1px solid var(--v-border);\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"directory\"]\n  [data-slot=\"breadcrumb-separator\"] {\n  display: none;\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"directory\"]\n  [data-slot=\"breadcrumb-item\"] {\n  position: relative;\n  padding-inline-start: calc(18px + var(--crumb-depth, 0) * 14px);\n  min-height: 52px;\n}\n[data-slot=\"breadcrumb\"][data-presentation=\"directory\"]\n  [data-slot=\"breadcrumb-item\"]::before {\n  content: \"\";\n  position: absolute;\n  pointer-events: none;\n  inset-inline-start: 0;\n  width: calc(12px + var(--crumb-depth, 0) * 14px);\n  height: 1px;\n  top: 26px;\n  background: var(--v-border);\n}\n.v-breadcrumb-example {\n  display: grid;\n  gap: var(--s-6);\n  width: 100%;\n  max-width: 760px;\n  min-width: 0;\n  margin-inline: auto;\n  padding: var(--s-2);\n  box-sizing: border-box;\n}\n.v-breadcrumb-example__eyebrow {\n  display: flex;\n  gap: var(--s-2);\n  align-items: center;\n  color: var(--v-text-2);\n  font-size: var(--fs-meta);\n}\n.v-breadcrumb-example__document {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;\n  gap: var(--s-5);\n  padding-block: var(--s-6);\n  border-block: 1px dashed var(--v-border);\n}\n.v-breadcrumb-example__document p {\n  margin: 0;\n  color: var(--v-text-2);\n  font-size: var(--fs-small);\n  line-height: 1.6;\n}\n.v-breadcrumb-example__document h3 {\n  font: var(--fw-medium) clamp(24px, 3vw, 32px) / 1.25 var(--font-display);\n  margin: var(--s-2) 0 var(--s-3);\n  overflow-wrap: anywhere;\n}\n.v-breadcrumb-example__folio {\n  font: var(--fw-regular) 36px/1.2 var(--font-display);\n  color: var(--v-text);\n  display: grid;\n  align-content: center;\n  gap: 2px;\n}\n.v-breadcrumb-example__folio > span {\n  font: var(--fw-regular) var(--fs-meta)/1.5 var(--font-mono);\n  color: var(--v-text-2);\n}\n.v-breadcrumb-example__footer {\n  display: flex;\n  gap: var(--s-3);\n  align-items: center;\n  flex-wrap: wrap;\n}\n.v-breadcrumb-example__footer p {\n  flex: 1 1 180px;\n  color: var(--v-text-2);\n  margin: 0;\n  font-size: var(--fs-meta);\n  line-height: 1.6;\n}\n.v-breadcrumb-example h3:focus {\n  outline: none;\n}\n.v-breadcrumb-example h3:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 4px;\n}\n@media (max-width: 480px) {\n  [data-slot=\"breadcrumb\"][data-presentation=\"pocket\"] {\n    gap: var(--s-1);\n    padding: var(--s-2);\n  }\n  [data-slot=\"breadcrumb\"][data-presentation=\"directory\"] {\n    padding: var(--s-3);\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/breadcrumb.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/breadcrumb.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "breadcrumb",
+      "name": "Breadcrumb",
+      "tier": "base",
+      "evidence": "I16",
+      "status": "source",
+      "root": ".v-crumbs",
+      "variants": [
+        "trail",
+        "pocket",
+        "directory"
+      ],
+      "sizes": [],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active",
+        "selected"
+      ],
+      "dataStates": [],
+      "category": "nav",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "breathes"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/breadcrumb/contract.md",
+      "demo": "entries/breadcrumb/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-selected.html",
+        "default-default-selected-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "BreadcrumbProps",
+        "props": [
+          {
+            "name": "presentation",
+            "type": "BreadcrumbPresentation",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "BreadcrumbListProps",
+        "props": []
+      },
+      {
+        "name": "BreadcrumbItemProps",
+        "props": []
+      },
+      {
+        "name": "BreadcrumbLinkProps",
+        "props": [
+          {
+            "name": "asChild",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "BreadcrumbPageProps",
+        "props": []
+      },
+      {
+        "name": "BreadcrumbSeparatorProps",
+        "props": [
+          {
+            "name": "asChild",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "BreadcrumbEllipsisProps",
+        "props": []
+      },
+      {
+        "name": "BreadcrumbBackProps",
+        "props": []
+      }
+    ],
+    "category": "Navigation",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "hover-card",
+  "title": "Hover Card",
+  "description": "A person, an excerpt or a small visual study—three considered previews, close to the thing you are exploring.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-hover-card"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/hover-card.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-hover-card\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nimport { ScrollArea } from \"@/components/ui/scroll-area\";\nexport type HoverCardProps = React.ComponentProps<typeof Primitive.Root>;\nexport function HoverCard(props: HoverCardProps) {\n  return <Primitive.Root openDelay={300} closeDelay={150} {...props} />;\n}\nexport type HoverCardTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n>;\nexport function HoverCardTrigger(props: HoverCardTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"hover-card-trigger\"\n      data-part=\"trigger\"\n      {...props}\n    />\n  );\n}\nexport type HoverCardPortalProps = React.ComponentProps<\n  typeof Primitive.Portal\n>;\nexport function HoverCardPortal(props: HoverCardPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport const hoverCardContentVariants = cva(\n  \"v-popover [background:var(--popover)] [border-radius:var(--r-card)] [padding:var(--s-5)] [box-shadow:var(--shadow-float)] [border:1px_solid_var(--v-border)]\",\n);\nexport type HoverCardContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & {\n  portal?: boolean;\n  appearance?: \"identity\" | \"preview\" | \"media\";\n  scrollable?: boolean;\n};\nexport function HoverCardContent({\n  className,\n  ref,\n  children,\n  sideOffset = 8,\n  align = \"start\",\n  collisionPadding = 8,\n  portal = true,\n  appearance,\n  scrollable = !!appearance,\n  ...props\n}: HoverCardContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, morphRef, \"grow\");\n  const ownsScroll = scrollable && !props.asChild;\n  const content = (\n    <Primitive.Content\n      ref={flowRef}\n      data-slot=\"hover-card-content\"\n      data-part=\"content\"\n      data-appearance={appearance}\n      data-morph={appearance ? \"both\" : undefined}\n      data-r={appearance ? \"css\" : undefined}\n      data-scrollable={ownsScroll || undefined}\n      sideOffset={sideOffset}\n      align={align}\n      collisionPadding={collisionPadding}\n      className={cn(hoverCardContentVariants(), className)}\n      {...props}\n    >\n      {ownsScroll ? (\n        <ScrollArea\n          variant=\"plain\"\n          className=\"v-hovercard-scroll\"\n          viewportProps={{ \"aria-label\": \"Preview details\" }}\n        >\n          {children}\n        </ScrollArea>\n      ) : (\n        children\n      )}\n    </Primitive.Content>\n  );\n  return portal ? <Primitive.Portal>{content}</Primitive.Portal> : content;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/hover-card.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"hover-card\"],\n  [data-slot^=\"hover-card-\"],\n  [data-slot=\"hover-card\"]::before,\n  [data-slot=\"hover-card\"]::after,\n  [data-slot^=\"hover-card-\"]::before,\n  [data-slot^=\"hover-card-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"hover-card-content\"],\n[data-slot=\"hover-card-sub-content\"] {\n  min-width: min(200px, calc(100vw - 24px));\n  max-width: calc(100vw - 24px);\n  max-height: min(\n    480px,\n    var(--radix-hover-card-content-available-height, calc(100dvh - 32px))\n  );\n  overflow-y: auto;\n  overscroll-behavior: contain;\n  overflow-wrap: anywhere;\n}\n[data-slot=\"hover-card-item\"] {\n  min-width: 0;\n  height: auto;\n  min-height: 36px;\n  white-space: normal;\n}\n[data-slot=\"hover-card-content\"] {\n  z-index: var(--z-popover);\n}\n[data-slot=\"hover-card-content\"][data-appearance] {\n  --mfill: var(--v-paper);\n  --mstroke: var(--v-border);\n  border-radius: var(--r-card);\n  width: min(340px, calc(100vw - 24px));\n  color: var(--v-text);\n  border: 0;\n  isolation: isolate;\n}\n[data-slot=\"hover-card-content\"][data-appearance].v-morph-live {\n  background: transparent;\n}\n[data-slot=\"hover-card-content\"][data-scrollable] {\n  overflow: visible;\n  padding: 0;\n}\n.v-hovercard-scroll[data-slot=\"scroll-area\"] {\n  --h: min(\n    440px,\n    var(--radix-hover-card-content-available-height, calc(100dvh - 32px))\n  );\n}\n.v-hovercard-scroll.v-scroll.-plain[data-slot=\"scroll-area\"]\n  > [data-slot=\"scroll-area-viewport\"] {\n  padding: var(--s-6) var(--s-7) var(--s-6) var(--s-6);\n}\n.v-hovercard-detail {\n  display: grid;\n  gap: var(--s-4);\n}\n.v-hovercard-detail h3 {\n  margin: 0;\n  font-family: var(--font-display);\n  font-size: var(--fs-title);\n  line-height: 1.25;\n}\n.v-hovercard-detail p {\n  margin: 0;\n  font-size: var(--fs-small);\n  line-height: 1.65;\n  color: var(--v-text-2);\n}\n.v-hovercard-detail__top {\n  display: flex;\n  align-items: center;\n  gap: var(--s-4);\n}\n.v-hovercard-detail__meta {\n  display: block;\n  font-size: var(--fs-caps);\n  color: var(--v-text-3);\n  letter-spacing: 0.04em;\n}\n.v-hovercard-detail__excerpt {\n  border-left: 3px solid var(--v-pink);\n  padding-left: var(--s-3);\n}\n.v-hovercard-detail__art {\n  width: 100%;\n  height: auto;\n  display: block;\n  border-radius: var(--r-md);\n}\n.v-hovercard-detail__footer {\n  border-top: 1px solid var(--v-edge);\n  padding-top: var(--s-3);\n  display: flex;\n  justify-content: space-between;\n  gap: var(--s-3);\n}\n.v-hovercard-example {\n  display: grid;\n  gap: var(--s-6);\n  width: 100%;\n  max-width: 580px;\n  margin-inline: auto;\n  padding: var(--s-6);\n  background: var(--v-paper);\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-panel);\n  color: var(--v-text);\n}\n.v-hovercard-example h3 {\n  font-family: var(--font-display);\n  margin: 0;\n  font-size: var(--fs-section);\n  line-height: 1.25;\n}\n.v-hovercard-example p {\n  margin: 0;\n  line-height: 1.6;\n}\n.v-hovercard-example > .v-btn {\n  justify-self: start;\n}\n.v-hovercard-inline[data-slot=\"collapsible-content\"] {\n  padding: 0;\n  background: transparent;\n}\n.v-hovercard-inline [data-disclosure-inner] {\n  padding: var(--s-6) 0 0;\n}\n.v-hovercard-example__actions {\n  display: flex;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n}\n.v-hovercard-example [data-slot=\"hover-card-trigger\"] {\n  min-height: 44px;\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/hover-card.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/hover-card.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "hover-card",
+      "name": "Hover Card",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": "[data-hovercard]",
+      "variants": [
+        "identity",
+        "preview",
+        "media"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "none",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x360",
+      "contract": "entries/hover-card/contract.md",
+      "demo": "entries/hover-card/demo.html",
+      "isolation": [
+        "default-default-rest-480x360.html",
+        "default-default-rest-dark-480x360.html",
+        "default-default-open-480x360.html",
+        "default-default-open-dark-480x360.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "HoverCardProps",
+        "props": []
+      },
+      {
+        "name": "HoverCardTriggerProps",
+        "props": []
+      },
+      {
+        "name": "HoverCardPortalProps",
+        "props": []
+      },
+      {
+        "name": "HoverCardContentProps",
+        "props": [
+          {
+            "name": "portal",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"identity\" | \"preview\" | \"media\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "scrollable",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

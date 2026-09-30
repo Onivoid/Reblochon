@@ -1,0 +1,74 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "bento-grid",
+  "title": "Bento Grid",
+  "description": "A complete canvas of rounded cards or organically interlocking pieces. Compose a layout, then install just the lightweight renderer.",
+  "dependencies": [
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/bento-grid.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { motion } from \"motion/react\";\nimport { cn } from \"@/lib/utils\";\nimport {\n  bentoTilePath,\n  validateBento,\n  type BentoLayout,\n  type BentoTile,\n  type BentoVariant,\n} from \"@/lib/cojeev/bento-layout\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\nexport type { BentoLayout, BentoTile, BentoVariant } from \"@/lib/cojeev/bento-layout\";\nexport type BentoGridProps = React.ComponentProps<\"div\"> & {\n  layout: BentoLayout;\n  variant: BentoVariant;\n  renderTile?: (tile: BentoTile) => React.ReactNode;\n};\nexport function BentoGrid({\n  layout,\n  variant = \"classic\",\n  renderTile,\n  className,\n  style,\n  ref,\n  ...props\n}: BentoGridProps) {\n  const host = React.useRef<HTMLDivElement>(null),\n    { enabled, inView } = useMotionVisibility(host);\n  const attach = React.useCallback(\n    (node: HTMLDivElement | null) => {\n      host.current = node;\n      const cleanup = assignMotionRef(ref, node);\n      return () => {\n        host.current = null;\n        cleanup();\n      };\n    },\n    [ref],\n  );\n  const geometry = layout.tiles\n    .map((t) => `${t.x},${t.y},${t.width},${t.height}`)\n    .join(\";\");\n  const error = validateBento(layout);\n  if (error)\n    return (\n      <div\n        {...props}\n        ref={attach}\n        role=\"alert\"\n        className={className}\n        style={style}\n      >\n        {error}\n      </div>\n    );\n  return (\n    <div\n      {...props}\n      ref={attach}\n      data-slot=\"bento-grid\"\n      data-variant={variant}\n      className={cn(\"v-bento\", className)}\n      style={\n        {\n          \"--bento-columns\": layout.columns,\n          \"--bento-rows\": layout.rows,\n          ...style,\n        } as React.CSSProperties\n      }\n    >\n      {variant === \"interlock\" && (\n        <svg\n          className=\"v-bento__paint\"\n          viewBox={`0 0 ${layout.columns} ${layout.rows}`}\n          preserveAspectRatio=\"none\"\n          aria-hidden=\"true\"\n        >\n          <g key={geometry}>\n            {layout.tiles.map((tile, i) => (\n              <motion.path\n                key={`${tile.x},${tile.y}`}\n                className={`v-bento__color-${i % 6}`}\n                initial={false}\n                animate={{ d: bentoTilePath(tile, layout) }}\n                transition={{ duration: enabled && inView ? 0.3 : 0 }}\n                vectorEffect=\"non-scaling-stroke\"\n              />\n            ))}\n          </g>\n        </svg>\n      )}\n      {layout.tiles.map((tile, i) => (\n        <div\n          key={tile.id}\n          data-bento-tile={tile.id}\n          className={`v-bento__tile v-bento__color-${i % 6}`}\n          style={{\n            gridColumn: `${tile.x + 1} / span ${tile.width}`,\n            gridRow: `${tile.y + 1} / span ${tile.height}`,\n          }}\n        >\n          {renderTile ? (\n            renderTile(tile)\n          ) : (\n            <>\n              <span className=\"v-bento__number\">\n                {String(i + 1).padStart(2, \"0\")}\n              </span>\n              <span className=\"v-bento__label\">{tile.label}</span>\n            </>\n          )}\n        </div>\n      ))}\n    </div>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/bento-grid.css",
+      "content": "@layer cojeev-states {\n.v-bento {\n  position: relative;\n  isolation: isolate;\n  display: grid;\n  grid-template-columns: repeat(var(--bento-columns), minmax(0, 1fr));\n  grid-template-rows: repeat(var(--bento-rows), minmax(88px, 1fr));\n  gap: var(--s-3);\n  width: 100%;\n  min-width: 0;\n  color: var(--v-on-accent);\n  container-type: inline-size;\n}\n.v-bento__tile {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  justify-content: space-between;\n  gap: var(--s-4);\n  padding: var(--s-7);\n  min-width: 0;\n  overflow-wrap: anywhere;\n  border-radius: var(--r-card);\n  background: var(--bento-fill);\n  color: var(--v-on-accent);\n}\n/* Default text scales with its usable tile width, after the safe paint inset.\n   Custom tile renderers retain their own sizing and container ownership. */\n.v-bento__tile:has(> .v-bento__label) {\n  container-type: inline-size;\n}\n.v-bento__color-0 {\n  --bento-fill: var(--v-pink);\n}\n.v-bento__color-1 {\n  --bento-fill: var(--v-blue);\n}\n.v-bento__color-2 {\n  --bento-fill: var(--v-yellow);\n}\n.v-bento__color-3 {\n  --bento-fill: var(--v-olive);\n}\n.v-bento__color-4 {\n  --bento-fill: var(--v-beige);\n  color: var(--v-text);\n}\n.v-bento__color-5 {\n  --bento-fill: var(--v-blue);\n}\n.v-bento__number {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.09em;\n  line-height: 1.4;\n  opacity: 0.65;\n}\n.v-bento__label {\n  font-family: var(--font-display, inherit);\n  font-size: clamp(16px, 12cqi, 30px);\n  font-weight: var(--fw-medium);\n  line-height: 1.15;\n  letter-spacing: -0.025em;\n  max-width: 18ch;\n}\n.v-bento__paint {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n  overflow: visible;\n  pointer-events: none;\n  z-index: -1;\n}\n.v-bento__paint path {\n  fill: var(--bento-fill);\n  stroke: var(--v-canvas);\n  stroke-width: 8;\n  stroke-linejoin: round;\n}\n.v-bento[data-variant=\"interlock\"] {\n  gap: 0;\n}\n.v-bento[data-variant=\"interlock\"] > .v-bento__tile {\n  background: transparent;\n  border-radius: 0;\n  padding: var(--s-8);\n}\n@media (max-width: 600px) {\n  .v-bento[data-variant=\"interlock\"] {\n    gap: var(--s-3);\n  }\n  .v-bento {\n    display: flex;\n    flex-direction: column;\n    gap: var(--s-3);\n  }\n  .v-bento__tile,\n  .v-bento[data-variant=\"interlock\"] > .v-bento__tile {\n    min-height: 150px;\n    padding: var(--s-6);\n    background: var(--bento-fill);\n    border-radius: var(--r-card);\n  }\n  .v-bento__paint {\n    display: none;\n  }\n  .v-bento__label {\n    font-size: var(--fs-section);\n  }\n  .v-bento[data-variant=\"interlock\"] > .v-bento__tile {\n    border-radius: var(--r-sheet) var(--r-card) var(--r-sheet) var(--r-card);\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/bento-grid.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/bento-grid.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Bento Grid",
+      "variants": [
+        "classic",
+        "interlock"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "responsive",
+        "reduced-motion"
+      ],
+      "reviewOnly": false
+    },
+    "api": [
+      {
+        "name": "BentoGridProps",
+        "props": [
+          {
+            "name": "layout",
+            "type": "BentoLayout",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "variant",
+            "type": "BentoVariant",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "renderTile",
+            "type": "(tile: BentoTile) => React.ReactNode",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

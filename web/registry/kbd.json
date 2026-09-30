@@ -1,0 +1,88 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kbd",
+  "title": "Kbd",
+  "description": "Formats a key or key combination as a recognizable keyboard instruction.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/kbd.tsx",
+      "content": "\"use client\"\nimport * as React from \"react\"\nimport { cva, type VariantProps } from \"class-variance-authority\"\nimport { cn } from \"@/lib/utils\"\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\"\n\nconst KbdVariants=cva(\"v-kbd [display:inline-block] [padding:2px_var(--s-2)] [border-radius:var(--r-xs)] [background:var(--v-beige)] [border-bottom:2px_solid_var(--v-border)] [font-size:var(--fs-caps)] [font-weight:var(--fw-semibold)]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type KbdProps=React.ComponentProps<\"kbd\"> & VariantProps<typeof KbdVariants> & { as?:React.ElementType }\nexport function Kbd({as:Tag=\"kbd\",className,variant,size,ref,...props}:KbdProps){const ownedRef=useMorph<HTMLElement>(\"pills\",ref);return <Tag ref={ownedRef} data-slot=\"kbd\" data-part=\"root\" className={cn(KbdVariants({variant,size}),className)} {...props}/>}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/kbd.css",
+      "content": "@layer cojeev-states {\n/* Orthogonal authored class modifiers remain composable with CVA axes. */\n\n/* Authored contextual and pseudo-element rules, scoped to component-owned roots. */\n:root[data-mode=\"dark\"] .v-kbd[data-slot]{color:var(--v-text)}\n\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/kbd.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/kbd.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "kbd",
+      "name": "Kbd",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": ".v-kbd",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "rest",
+        "open"
+      ],
+      "dataStates": [],
+      "category": "pills",
+      "motionOnByDefault": true,
+      "flowRoles": [
+        "breathes"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/kbd/contract.md",
+      "demo": "entries/kbd/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-open.html",
+        "default-default-open-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "KbdProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

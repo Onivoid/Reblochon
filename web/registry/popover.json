@@ -1,0 +1,102 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "popover",
+  "title": "Popover",
+  "description": "Places a dismissible panel next to a trigger for a small contextual task or set of controls.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-popover"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/popover.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-popover\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nexport type PopoverProps = React.ComponentProps<typeof Primitive.Root>;\nexport function Popover(props: PopoverProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type PopoverTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n>;\nexport function PopoverTrigger(props: PopoverTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"popover-trigger\"\n      data-part=\"trigger\"\n      {...props}\n    />\n  );\n}\nexport type PopoverPortalProps = React.ComponentProps<typeof Primitive.Portal>;\nexport function PopoverPortal(props: PopoverPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type PopoverAnchorProps = React.ComponentProps<typeof Primitive.Anchor>;\nexport function PopoverAnchor(props: PopoverAnchorProps) {\n  return (\n    <Primitive.Anchor\n      data-slot=\"popover-anchor\"\n      data-part=\"anchor\"\n      {...props}\n    />\n  );\n}\nexport type PopoverCloseProps = React.ComponentProps<typeof Primitive.Close>;\nexport function PopoverClose(props: PopoverCloseProps) {\n  return (\n    <Primitive.Close data-slot=\"popover-close\" data-part=\"close\" {...props} />\n  );\n}\nexport const popoverContentVariants = cva(\n  \"v-popover [z-index:var(--z-popover)] [background:var(--popover)] [border-radius:var(--r-card)] [padding:var(--s-5)] [box-shadow:var(--shadow-float)] [border:1px_solid_var(--v-border)]\",\n);\nexport type PopoverContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & { portal?: boolean };\nexport function PopoverContent({\n  className,\n  ref,\n  children,\n  sideOffset = 6,\n  align = \"start\",\n  portal = true,\n  ...props\n}: PopoverContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, morphRef, \"grow\");\n  const content = (\n    <Primitive.Content\n      ref={flowRef}\n      data-slot=\"popover-content\"\n      data-part=\"content\"\n      sideOffset={sideOffset}\n      align={align}\n      className={cn(popoverContentVariants(), className)}\n      {...props}\n    >\n      {children}\n    </Primitive.Content>\n  );\n  return portal ? <Primitive.Portal>{content}</Primitive.Portal> : content;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/popover.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"popover\"],\n  [data-slot^=\"popover-\"],\n  [data-slot=\"popover\"]::before,\n  [data-slot=\"popover\"]::after,\n  [data-slot^=\"popover-\"]::before,\n  [data-slot^=\"popover-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n\n[data-slot=\"popover-content\"], [data-slot=\"popover-sub-content\"] {\n min-width:min(200px,calc(100vw - 24px)); max-width:calc(100vw - 24px);\n max-height:min(480px,var(--radix-popover-content-available-height,calc(100dvh - 32px)));\n overflow-y:auto; overscroll-behavior:contain; overflow-wrap:anywhere;\n}\n[data-slot=\"popover-item\"] { min-width:0; height:auto; min-height:36px; white-space:normal; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/popover.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/popover.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "popover",
+      "name": "Popover",
+      "tier": "base",
+      "evidence": "Ext I15",
+      "status": "derived",
+      "root": ".v-popover",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group",
+        "press",
+        "opens"
+      ],
+      "canvas": "480x360",
+      "contract": "entries/popover/contract.md",
+      "demo": "entries/popover/demo.html",
+      "isolation": [
+        "default-default-rest-480x360.html",
+        "default-default-rest-dark-480x360.html",
+        "default-default-open-480x360.html",
+        "default-default-open-dark-480x360.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "PopoverProps",
+        "props": []
+      },
+      {
+        "name": "PopoverTriggerProps",
+        "props": []
+      },
+      {
+        "name": "PopoverPortalProps",
+        "props": []
+      },
+      {
+        "name": "PopoverAnchorProps",
+        "props": []
+      },
+      {
+        "name": "PopoverCloseProps",
+        "props": []
+      },
+      {
+        "name": "PopoverContentProps",
+        "props": [
+          {
+            "name": "portal",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

@@ -1,0 +1,105 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "presence",
+  "title": "Presence",
+  "description": "MotionPresence keeps keyed children mounted for their exits. MotionSurface adds coordinated lifecycle states to an existing primitive.",
+  "dependencies": [
+    "motion",
+    "@radix-ui/react-slot"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/presence.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { AnimatePresence, motion, useIsPresent, type HTMLMotionProps, type Target, type TargetAndTransition } from \"motion/react\";\nimport { Slot } from \"@radix-ui/react-slot\";\nimport { cn } from \"@/lib/utils\";\nimport { motionTokens, useChoreography } from \"@/lib/cojeev-motion/choreography\";\n\nconst shown = { opacity: 1, \"--presence-x\": \"0px\", \"--presence-y\": \"0px\", \"--presence-scale\": 1 };\nexport const presencePresets = {\n  fade: { initial: { ...shown, opacity: 0 }, animate: shown, exit: { ...shown, opacity: 0 } },\n  rise: { initial: { ...shown, opacity: 0, \"--presence-y\": \"10px\" }, animate: shown, exit: { ...shown, opacity: 0, \"--presence-y\": \"-6px\" } },\n  slide: { initial: { ...shown, opacity: 0, \"--presence-x\": \"16px\" }, animate: shown, exit: { ...shown, opacity: 0, \"--presence-x\": \"-10px\" } },\n  scale: { initial: { ...shown, opacity: 0, \"--presence-scale\": .96 }, animate: shown, exit: { ...shown, opacity: 0, \"--presence-scale\": .985 } },\n  settle: { initial: { ...shown, opacity: 0, \"--presence-y\": \"6px\", \"--presence-scale\": 1.04 }, animate: shown, exit: { ...shown, opacity: 0, \"--presence-y\": \"-5px\", \"--presence-scale\": .94 } },\n  soften: { initial: { ...shown, opacity: 0, \"--presence-y\": \"8px\", \"--presence-blur\": \"5px\" }, animate: { ...shown, \"--presence-blur\": \"0px\" }, exit: { ...shown, opacity: 0, \"--presence-y\": \"-10px\", \"--presence-blur\": \"6px\" } },\n  focus: { initial: { ...shown, opacity: 0, \"--presence-y\": \"10px\", \"--presence-scale\": 1.015, \"--presence-blur\": \"9px\" }, animate: { ...shown, \"--presence-blur\": \"0px\" }, exit: { ...shown, opacity: 0, \"--presence-y\": \"-8px\", \"--presence-blur\": \"7px\" } },\n  mask: {\n    initial: { ...shown, opacity: 0, clipPath: \"inset(0% 0% 100% 0% round 16px)\" },\n    animate: { ...shown, clipPath: \"inset(0% 0% 0% 0% round 16px)\" },\n    exit: { ...shown, opacity: 0, clipPath: \"inset(0% 0% 100% 0% round 16px)\" },\n  },\n} satisfies Record<string, { initial: Target; animate: Target; exit: Target }>;\nexport type PresencePreset = keyof typeof presencePresets;\n\nexport type MotionPresenceProps = React.ComponentProps<typeof AnimatePresence>;\n/** Keep this boundary mounted; each conditional direct child needs a stable key. */\nexport function MotionPresence({ initial = false, ...props }: MotionPresenceProps) {\n  const { quiet } = useChoreography();\n  return <AnimatePresence initial={quiet ? false : initial} {...props} />;\n}\n\nconst MotionSlot = motion.create(Slot);\nexport type MotionSurfaceProps = HTMLMotionProps<\"div\"> & {\n  \"data-slot\"?: string;\n  /** Merge onto exactly one ref-capable child, preserving its native element. */\n  asChild?: boolean;\n  preset?: PresencePreset;\n  /** Seconds; use motionTokens.stagger for a coordinated sibling sequence. */\n  delay?: number;\n  /** Seconds before exit; cap sibling staggering yourself to a short total window. */\n  exitDelay?: number;\n  /** Seconds. Soft-focus and settling presets use a gentler 420ms default. */\n  exitDuration?: number;\n};\n\n/** Defines lifecycle states. An external MotionPresence retains actual removals. */\nexport function MotionSurface({\n  asChild = false, preset = \"rise\", delay = 0, exitDelay = 0, exitDuration, className,\n  initial, animate, exit, transition: suppliedTransition, ...props\n}: MotionSurfaceProps) {\n  const { quiet, transition } = useChoreography();\n  const isPresent = useIsPresent();\n  const states = presencePresets[preset];\n  const Element = asChild ? MotionSlot : motion.div;\n  const entrance = { ...transition, delay: Math.max(0, Number.isFinite(delay) ? delay : 0), ...suppliedTransition };\n  const soft = [\"soften\", \"focus\", \"settle\"].includes(preset);\n  const exitTime = exitDuration === undefined || !Number.isFinite(exitDuration) ? soft ? .42 : motionTokens.duration.exit : Math.min(2, Math.max(0, exitDuration));\n  const exitState: TargetAndTransition = { ...states.exit, transition: { duration: exitTime, delay: Number.isFinite(exitDelay) ? Math.min(.6, Math.max(0, exitDelay)) : 0, ease: [...(soft ? motionTokens.ease.settle : motionTokens.ease.exit)] } };\n  const children = !isPresent && asChild && React.isValidElement(props.children)\n    ? React.cloneElement(props.children as React.ReactElement<React.HTMLAttributes<HTMLElement>>, { inert: true, \"aria-hidden\": true })\n    : props.children;\n  return <Element\n    {...props}\n    {...(asChild ? {} : { \"data-slot\": props[\"data-slot\"] ?? \"motion-surface\" })}\n    data-motion-surface={preset}\n    data-motion-quiet={quiet ? \"true\" : undefined}\n    data-motion-exiting={!isPresent ? \"true\" : undefined}\n    inert={!isPresent || props.inert || undefined}\n    aria-hidden={!isPresent ? true : props[\"aria-hidden\"]}\n    className={cn(\"v-motion-surface\", className)}\n    initial={quiet ? false : initial ?? states.initial}\n    animate={quiet ? states.animate : animate ?? states.animate}\n    exit={quiet ? { ...states.animate, transition: { duration: 0, delay: 0 } } : exit ?? exitState}\n    transition={quiet ? { duration: 0, delay: 0 } : entrance}\n  >{children}</Element>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/presence.css",
+      "content": "@layer cojeev-states {\n/* Separate lifecycle channels preserve a child's authored transform/contour owner. */\n.v-motion-surface[data-motion-surface] {\n  translate: var(--presence-x,0px) var(--presence-y,0px);\n  scale: var(--presence-scale,1);\n}\n.v-motion-surface:is([data-motion-surface=\"soften\"],[data-motion-surface=\"focus\"]) { filter:blur(var(--presence-blur,0px)); }\n.v-motion-surface[data-motion-quiet=\"true\"] { translate: none; scale: none; clip-path: none; }\n.v-motion-surface[data-motion-quiet=\"true\"]:is([data-motion-surface=\"soften\"],[data-motion-surface=\"focus\"]) { filter:none; }\n.v-motion-surface[data-motion-exiting=\"true\"] { pointer-events: none; }\n@media (prefers-reduced-motion: reduce) {\n  .v-motion-surface[data-motion-surface] { translate: none; scale: none; clip-path: none; }\n  .v-motion-surface:is([data-motion-surface=\"soften\"],[data-motion-surface=\"focus\"]) { filter:none; }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/presence.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/presence.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Presence",
+      "variants": [
+        "rise",
+        "fade",
+        "scale",
+        "slide",
+        "mask",
+        "settle",
+        "soften",
+        "focus"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "entering",
+        "visible",
+        "exiting",
+        "removed",
+        "reduced-motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "MotionPresenceProps",
+        "props": []
+      },
+      {
+        "name": "MotionSurfaceProps",
+        "props": [
+          {
+            "name": "data-slot",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "asChild",
+            "type": "boolean",
+            "required": false,
+            "description": "Merge onto exactly one ref-capable child, preserving its native element."
+          },
+          {
+            "name": "preset",
+            "type": "PresencePreset",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "delay",
+            "type": "number",
+            "required": false,
+            "description": "Seconds; use motionTokens.stagger for a coordinated sibling sequence."
+          },
+          {
+            "name": "exitDelay",
+            "type": "number",
+            "required": false,
+            "description": "Seconds before exit; cap sibling staggering yourself to a short total window."
+          },
+          {
+            "name": "exitDuration",
+            "type": "number",
+            "required": false,
+            "description": "Seconds. Soft-focus and settling presets use a gentler 420ms default."
+          }
+        ]
+      }
+    ],
+    "category": "Effects",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

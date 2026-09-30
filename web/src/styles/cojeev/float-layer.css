@@ -1,0 +1,14 @@
+@layer cojeev-states {
+.v-float-layer { min-inline-size: 0; }
+/* Individual translate composes with a child's transform/scale, including Card
+   depth. The presence offsets allow a shared MotionSurface on the same root. */
+.v-float-layer[data-float-layer][data-active][data-quiet] {
+  translate: calc(var(--presence-x, 0px) + var(--float-x, 0px)) calc(var(--presence-y, 0px) + var(--float-y, 0px) + var(--depth-lift, 0px));
+  opacity: var(--float-reveal, 1);
+}
+[data-float-layer][data-quiet="true"] { --float-x: 0px; --float-y: 0px; --float-reveal: 1; }
+@media (scripting: none), (prefers-reduced-motion: reduce) {
+  .v-float-layer[data-float-layer][data-active][data-quiet] { translate: none; opacity: 1; }
+}
+
+}

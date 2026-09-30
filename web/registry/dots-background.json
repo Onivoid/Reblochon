@@ -1,0 +1,61 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dots-background",
+  "title": "Dots background",
+  "description": "An evenly spaced field of fine points for quiet, familiar structure.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/pattern-background.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/dots-background.tsx",
+      "content": "import { PatternBackground, type PatternBackgroundProps } from \"@/components/ui/pattern-background\";\n\nexport type DotsBackgroundProps = Omit<PatternBackgroundProps, \"variant\">;\n\nexport function DotsBackground(props: DotsBackgroundProps) {\n  return <PatternBackground {...props} variant=\"dots\" />;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Dots background",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest"
+      ]
+    },
+    "api": [
+      {
+        "name": "DotsBackgroundProps",
+        "props": [
+          {
+            "name": "color",
+            "type": "string | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "opacity",
+            "type": "number",
+            "required": false,
+            "description": "Decorative ink strength, from 0 to 1."
+          },
+          {
+            "name": "spacing",
+            "type": "number",
+            "required": false,
+            "description": "Distance between marks, in pixels (8–80)."
+          }
+        ]
+      }
+    ],
+    "category": "Subtle backgrounds",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

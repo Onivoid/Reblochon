@@ -1,0 +1,15 @@
+@layer cojeev-states {
+/* Travel owns only geometry. Native component paint and interaction resume at rest. */
+.v-assembly-part[data-assembly-part] {position:absolute;margin:0;min-width:0;min-height:0;box-sizing:border-box;transform-origin:center;isolation:isolate;}
+.v-assembly-part[data-assembly-released="false"] {border-radius:0;transition:none;rotate:var(--assembly-rotation,0deg);--assembly-tone:var(--v-pink);}
+.v-assembly-part[data-assembly-tone="blue"] {--assembly-tone:var(--v-blue);}
+.v-assembly-part[data-assembly-tone="olive"] {--assembly-tone:var(--v-olive);}
+.v-assembly-part[data-assembly-tone="yellow"] {--assembly-tone:var(--v-yellow);}
+:root .v-assembly-part[data-assembly-part][data-assembly-released="false"]:not([data-assembly-paint-probe]) {--c:var(--assembly-paint-bg,var(--assembly-tone));background:var(--assembly-paint-bg,var(--assembly-tone));color:var(--assembly-paint-ink,var(--v-on-accent));box-shadow:none;border:0;}
+.v-assembly-part > .v-assembly-content {opacity:var(--assembly-content-opacity,1);transition:none;}
+.v-assembly-part[data-assembly-revealing="false"] > .v-assembly-content {opacity:0;}
+.v-assembly-part[data-assembly-released="true"] > .v-assembly-content {opacity:1;}
+@media(prefers-reduced-motion:reduce){.v-assembly-part > .v-assembly-content{transition:none;}}
+[data-flow="off"] .v-assembly-part > .v-assembly-content {transition:none;}
+
+}

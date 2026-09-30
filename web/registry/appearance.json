@@ -1,0 +1,97 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "appearance",
+  "title": "Appearance",
+  "description": "Choose from six coordinated palettes and adjust reading contrast across the application.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/scroll-area.json",
+    "https://000h.cojeev.com/r/label.json",
+    "https://000h.cojeev.com/r/slider.json",
+    "https://000h.cojeev.com/r/select.json",
+    "https://000h.cojeev.com/r/popover.json",
+    "https://000h.cojeev.com/r/shape.json",
+    "https://000h.cojeev.com/r/animated-icon.json",
+    "https://000h.cojeev.com/r/tooltip.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/appearance.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { cn } from \"@/lib/utils\";\nimport { appearanceTokens, defaultAppearance, normalizeAppearance, palettes, type AppearanceSettings } from \"@/lib/cojeev/appearance-tokens\";\nimport { Button } from \"@/components/ui/button\";\nimport { ScrollAreaList } from \"@/components/ui/scroll-area\";\nimport { Label } from \"@/components/ui/label\";\nimport { Slider } from \"@/components/ui/slider\";\nimport { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from \"@/components/ui/select\";\nimport { Popover, PopoverTrigger, PopoverContent } from \"@/components/ui/popover\";\nimport { Shape } from \"@/components/ui/shape\";\nimport { AnimatedIcon } from \"@/components/ui/animated-icon\";\nimport { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from \"@/components/ui/tooltip\";\n\nexport { palettes, defaultAppearance } from \"@/lib/cojeev/appearance-tokens\";\nexport type { AppearanceSettings, PaletteName } from \"@/lib/cojeev/appearance-tokens\";\nconst storageKey = \"cojeev-appearance\";\nconst settingsEvent = \"cojeev:appearance-settings\";\nlet snapshot: AppearanceSettings | undefined;\nfunction getSnapshot(): AppearanceSettings {\n  if (!snapshot) {\n    try { snapshot = normalizeAppearance(JSON.parse(localStorage.getItem(storageKey) ?? \"null\")); }\n    catch { snapshot = defaultAppearance; }\n  }\n  return snapshot;\n}\nfunction subscribe(listener: () => void) {\n  const onStorage = (event: StorageEvent) => { if (event.key === storageKey || event.key === null) { snapshot = undefined; listener(); } };\n  window.addEventListener(settingsEvent, listener);\n  window.addEventListener(\"storage\", onStorage);\n  return () => { window.removeEventListener(settingsEvent, listener); window.removeEventListener(\"storage\", onStorage); };\n}\nexport function setAppearance(value: AppearanceSettings) {\n  snapshot = normalizeAppearance(value);\n  try { localStorage.setItem(storageKey, JSON.stringify(snapshot)); } catch { /* In-memory preferences still work. */ }\n  window.dispatchEvent(new Event(settingsEvent));\n}\nexport function useAppearance() {\n  const settings = React.useSyncExternalStore(subscribe, getSnapshot, () => defaultAppearance);\n  return [settings, setAppearance] as const;\n}\n\n/** Mount once above the application. Shared tokens also reach portalled controls. */\nexport function AppearanceProvider({ children }: { children: React.ReactNode }) {\n  React.useEffect(() => {\n    const root = document.documentElement;\n    let frame = 0;\n    const previous = new Map<string, string>();\n    const apply = () => {\n      const settings = getSnapshot();\n      const mode = root.dataset.mode === \"dark\" ? \"dark\" : \"light\";\n      const tokens = appearanceTokens(settings, mode);\n      for (const [name, value] of Object.entries(tokens)) {\n        if (!previous.has(name)) previous.set(name, root.style.getPropertyValue(name));\n        root.style.setProperty(name, value);\n      }\n      root.dataset.palette = settings.palette;\n      root.dataset.contrast = String(settings.contrast);\n      window.dispatchEvent(new Event(\"v-palette\"));\n      window.dispatchEvent(new Event(\"cojeev:appearancechange\"));\n    };\n    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(apply); };\n    const stop = subscribe(schedule);\n    // Theme changes must repaint in the same microtask, before a view-transition\n    // takes its new-theme snapshot. Slider changes can be coalesced to one frame.\n    const observer = new MutationObserver(apply);\n    observer.observe(root, { attributes: true, attributeFilter: [\"data-mode\"] });\n    apply();\n    return () => {\n      stop(); observer.disconnect(); cancelAnimationFrame(frame);\n      for (const [name, value] of previous) { if (value) root.style.setProperty(name, value); else root.style.removeProperty(name); }\n      delete root.dataset.palette; delete root.dataset.contrast;\n      window.dispatchEvent(new Event(\"v-palette\"));\n    };\n  }, []);\n  return children;\n}\n\nexport type AppearanceControlsProps = Omit<React.ComponentProps<\"div\">, \"onChange\"> & {\n  value?: AppearanceSettings;\n  onValueChange?: (value: AppearanceSettings) => void;\n};\nexport function AppearanceControls({ value, onValueChange, className, ...props }: AppearanceControlsProps) {\n  const [globalValue, setGlobalValue] = useAppearance();\n  const settings = normalizeAppearance(value ?? globalValue);\n  const palette = palettes.find(p => p.id === settings.palette)!;\n  const id = React.useId();\n  const update = (next: AppearanceSettings) => { if (value === undefined) setGlobalValue(next); onValueChange?.(next); };\n  return <div data-slot=\"appearance-controls\" className={cn(\"v-appearance\", className)} {...props}>\n    <div className=\"v-appearance__heading\"><strong>Make it comfortable.</strong><p>Choose a palette. Tune how clearly text and edges stand out.</p></div>\n    <div className=\"v-appearance__field\"><Label htmlFor={`${id}-palette`}>Colour palette</Label>\n      <Select value={settings.palette} onValueChange={name => update({ ...settings, palette: normalizeAppearance({ palette: name }).palette })}>\n        <SelectTrigger id={`${id}-palette`}><SelectValue /></SelectTrigger>\n        <SelectContent>{palettes.map(p => <SelectItem key={p.id} value={p.id} adornment={false}>{p.name}</SelectItem>)}</SelectContent>\n      </Select>\n      <div className=\"v-appearance__swatches\" aria-hidden=\"true\">{palette.accents.map((color, i) => <Shape key={i} name={[\"pebble-soft\", \"clover-soft\", \"scalloped-square\", \"petal-7\"][i]} style={{ color, \"--c\": color } as React.CSSProperties} />)}</div>\n      <p className=\"v-appearance__description\">{palette.description}</p>\n    </div>\n    <div className=\"v-appearance__field\"><div className=\"v-appearance__label\"><Label id={`${id}-contrast`}>Contrast</Label><output>{Math.round(settings.contrast)}%</output></div>\n      <Slider aria-labelledby={`${id}-contrast`} thumbLabel=\"Contrast\" min={0} max={100} step={5} value={[settings.contrast]} onValueChange={([contrast]) => update({ ...settings, contrast })} />\n      <div className=\"v-appearance__ends\"><span>Comfortable</span><span>Strong</span></div>\n    </div>\n    <div className=\"v-appearance__sample\"><strong>A little colour. A clear thought.</strong><p>Readable labels, distinct panels, and room to focus.</p><span>Selected item</span></div>\n    <Button variant=\"secondary\" size=\"sm\" onClick={() => update(defaultAppearance)}><AnimatedIcon name=\"refresh-cw\" />Reset appearance</Button>\n  </div>;\n}\n\nexport type AppearanceMenuProps = { compact?: boolean; responsive?: boolean; className?: string };\nexport function AppearanceMenu({ compact = false, responsive = false, className }: AppearanceMenuProps) {\n  return <TooltipProvider><Popover><Tooltip><TooltipTrigger asChild><PopoverTrigger asChild><Button variant=\"ghost\" size=\"sm\" className={cn(\"v-appearance-trigger\", className)} aria-label=\"Colours and contrast\" title=\"Colour and contrast\" data-compact={compact} data-responsive={responsive} data-morph=\"both\" data-tier=\"pill\" data-lobes=\"3\" data-depth=\".008\" data-asym=\".05\">\n    <svg data-slot=\"appearance-palette-icon\" viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\">\n      <path d=\"M12 3C6.8 3 3 6.7 3 11.5C3 16.7 6.7 21 11.8 21C13.4 21 14.3 20.2 14.3 19C14.3 18.1 13.5 17.6 13.5 16.7C13.5 15.7 14.3 15 15.4 15H17C19.6 15 21 13.4 21 11.2C21 6.6 17.1 3 12 3Z\" stroke=\"currentColor\" strokeWidth=\"1.65\" strokeLinejoin=\"round\" />\n      <circle cx=\"7.2\" cy=\"10.5\" r=\"1.35\" fill=\"currentColor\" /><circle cx=\"10.2\" cy=\"6.9\" r=\"1.35\" fill=\"currentColor\" /><circle cx=\"15\" cy=\"7.3\" r=\"1.35\" fill=\"currentColor\" /><circle cx=\"17.6\" cy=\"10.7\" r=\"1.35\" fill=\"currentColor\" />\n    </svg>{!compact && <span className=\"v-appearance-trigger__label\">Colours</span>}\n  </Button></PopoverTrigger></TooltipTrigger><TooltipContent>Colour and contrast</TooltipContent></Tooltip><PopoverContent className=\"v-appearance-popover\" align=\"end\"><ScrollAreaList maxHeight=\"min(620px, calc(var(--radix-popover-content-available-height, 80dvh) - 48px))\"><AppearanceControls /></ScrollAreaList></PopoverContent></Popover></TooltipProvider>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/appearance.css",
+      "content": "@layer cojeev-states {\n.v-appearance { display:grid; gap:var(--s-6); min-width:0; color:var(--v-text); font:var(--fw-regular) var(--fs-control)/1.55 var(--font-text); }\n.v-appearance__heading strong { font:var(--fw-semibold) var(--fs-title)/1.2 var(--font-display); }\n.v-appearance p { margin:var(--s-2) 0 0; color:var(--v-text-2); }\n.v-appearance__field { display:grid; gap:var(--s-3); }\n.v-appearance__field [data-slot=select], .v-appearance__field [data-slot=select-trigger] { width:100%; }\n.v-appearance__swatches { display:flex; gap:var(--s-3); }\n.v-appearance__swatches [data-slot=shape] { width:40px; height:40px; }\n.v-appearance__description { font-size:var(--fs-small); }\n.v-appearance__label, .v-appearance__ends { display:flex; justify-content:space-between; align-items:center; gap:var(--s-4); }\n.v-appearance__label output { font-variant-numeric:tabular-nums; font-weight:var(--fw-semibold); }\n.v-appearance__ends { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-appearance__sample { padding:var(--s-4); border:1px solid var(--v-border); background:var(--v-beige); border-radius:var(--r-card-sm); }\n.v-appearance__sample span { display:inline-block; margin-top:var(--s-3); padding:var(--s-1) var(--s-3); border-radius:var(--r-sm); background:var(--sel-bg); color:var(--sel-ink); font-weight:var(--fw-semibold); }\n.v-appearance-popover[data-slot] { width:336px; max-width:calc(100vw - 24px); max-height:min(740px,calc(100dvh - 32px)); overflow:hidden; padding:var(--s-6); background:var(--v-paper); color:var(--v-text); }\n:root .v-btn.v-appearance-trigger[data-slot][data-compact] {\n  --mfill:var(--v-paper); --mstroke:var(--v-border);\n  gap:var(--s-2); height:44px; width:112px; min-width:112px; padding:0 var(--s-4); border-radius:var(--r-pill);\n  background:var(--mfill); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-border);\n}\n:root .v-btn.v-appearance-trigger[data-slot][data-compact]:is(:hover,:focus-visible) { --mfill:var(--v-beige); --mstroke:var(--v-text-2); }\n:root .v-btn.v-appearance-trigger[data-slot][data-compact]:has(>svg.v-morph) { background:transparent; box-shadow:none; }\n[data-slot=\"appearance-palette-icon\"] { flex:none; overflow:visible; }\n.v-appearance-trigger__label { color:inherit; font:var(--fw-medium) var(--fs-small)/1 var(--font-text); }\n:root .v-btn.v-appearance-trigger[data-slot][data-compact=\"true\"] { min-width:44px; width:44px; padding:0; }\n:root .v-btn.v-appearance-trigger[data-slot][data-compact]:is(:disabled,[aria-disabled=\"true\"]:not([aria-busy=\"true\"])) { --mfill:var(--v-disabled-face); --mstroke:var(--v-disabled-edge); color:var(--v-disabled-ink); }\n.docs-theme > [data-slot=popover], .docs-theme > .v-appearance-trigger { grid-column:1 / -1; }\n.docs-theme-compact { display:flex; align-items:center; gap:var(--s-2); }\n@media (max-width:640px) {\n  :root .v-btn.v-appearance-trigger[data-slot][data-responsive=\"true\"] { min-width:44px; width:44px; padding:0; }\n  .v-appearance-trigger[data-responsive=\"true\"] .v-appearance-trigger__label { display:none; }\n}\n@media (max-width:420px) { .v-appearance-popover[data-slot] { padding:var(--s-5); } .v-appearance { gap:var(--s-5); } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Appearance",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "interactive",
+        "reduced-motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "AppearanceControlsProps",
+        "props": [
+          {
+            "name": "value",
+            "type": "AppearanceSettings",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onValueChange",
+            "type": "(value: AppearanceSettings) => void",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AppearanceMenuProps",
+        "props": [
+          {
+            "name": "compact",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "responsive",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "className",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Tools",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

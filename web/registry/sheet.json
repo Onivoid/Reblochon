@@ -1,0 +1,124 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sheet",
+  "title": "Sheet",
+  "description": "Opens a side surface for focused secondary content while the current page remains in place.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-dialog",
+    "@radix-ui/react-direction"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/sheet.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-dialog\";\nimport { useDirection } from \"@radix-ui/react-direction\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nexport type SheetProps = React.ComponentProps<typeof Primitive.Root>;\nexport function Sheet(props: SheetProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type SheetTriggerProps = React.ComponentProps<typeof Primitive.Trigger>;\nexport function SheetTrigger(props: SheetTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"sheet-trigger\"\n      data-part=\"trigger\"\n      data-sheet-open=\"\"\n      {...props}\n    />\n  );\n}\nexport type SheetPortalProps = React.ComponentProps<typeof Primitive.Portal>;\nexport function SheetPortal(props: SheetPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type SheetOverlayProps = React.ComponentProps<typeof Primitive.Overlay>;\nexport function SheetOverlay({ className, ref, ...props }: SheetOverlayProps) {\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, ref, \"fade\");\n  return (\n    <Primitive.Overlay\n      ref={flowRef}\n      data-slot=\"sheet-overlay\"\n      data-part=\"overlay\"\n      className={cn(\n        \"v-scrim fixed inset-0 bg-[var(--v-scrim)] z-[calc(var(--z-sheet)-1)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport const sheetContentVariants = cva(\n  \"v-sheet [position:fixed] [top:var(--shell-inset)] [bottom:var(--shell-inset)] [width:min(480px,calc(100%_-_56px))] [background:var(--v-canvas)] [border-radius:var(--r-panel)] [padding:var(--s-6)] [z-index:var(--z-sheet)] [overflow:auto] [display:grid] grid-cols-[minmax(0,1fr)] [gap:var(--s-5)] [align-content:start] [box-shadow:var(--shadow-float),inset_0_0_0_1px_var(--v-border)]\",\n);\nexport type SheetContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & { showCloseButton?: boolean; /** Logical viewport edge; follows dir or DirectionProvider. */ side?: \"start\" | \"end\" };\nexport function SheetContent({\n  className,\n  ref,\n  children,\n  showCloseButton = false,\n  side = \"end\",\n  dir,\n  ...props\n}: SheetContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const direction = useDirection(dir === \"rtl\" || dir === \"ltr\" ? dir : undefined);\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, morphRef, \"slide-inline\");\n  return (\n    <Primitive.Portal>\n      <SheetOverlay />\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"sheet-content\"\n        data-part=\"content\"\n        data-side={side}\n        dir={direction}\n        className={cn(sheetContentVariants(), className)}\n        {...props}\n      >\n        {children}\n        {showCloseButton && (\n          <SheetClose aria-label=\"Close\" className=\"absolute right-4 top-4\">\n            ×\n          </SheetClose>\n        )}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\nexport type SheetHeaderProps = React.ComponentProps<\"div\">;\nexport function SheetHeader({ className, ...props }: SheetHeaderProps) {\n  return (\n    <div\n      data-slot=\"sheet-header\"\n      data-part=\"header\"\n      className={cn(\n        \"v-dialog__head flex items-start justify-between gap-[var(--s-4)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SheetFooterProps = React.ComponentProps<\"div\">;\nexport function SheetFooter({ className, ...props }: SheetFooterProps) {\n  return (\n    <div\n      data-slot=\"sheet-footer\"\n      data-part=\"footer\"\n      className={cn(\n        \"v-dialog__actions flex gap-[var(--s-3)] justify-end mt-[var(--s-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SheetTitleProps = React.ComponentProps<typeof Primitive.Title>;\nexport function SheetTitle({ className, ...props }: SheetTitleProps) {\n  return (\n    <Primitive.Title\n      data-slot=\"sheet-title\"\n      data-part=\"title\"\n      className={cn(\n        \"v-section font-[family-name:var(--font-display)] text-[length:var(--fs-section)] leading-[1.15] tracking-[-0.01em] pt-1.5 font-medium\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SheetDescriptionProps = React.ComponentProps<\n  typeof Primitive.Description\n>;\nexport function SheetDescription({\n  className,\n  ...props\n}: SheetDescriptionProps) {\n  return (\n    <Primitive.Description\n      data-slot=\"sheet-description\"\n      data-part=\"description\"\n      className={cn(\n        \"v-body-2 text-[length:var(--fs-body)] leading-[1.5] text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SheetCloseProps = React.ComponentProps<typeof Primitive.Close>;\nexport function SheetClose(props: SheetCloseProps) {\n  return (\n    <Primitive.Close\n      data-slot=\"sheet-close\"\n      data-part=\"close\"\n      data-close=\"\"\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/sheet.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-scrim:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  position: fixed;\n  inset: 0;\n  background: var(--v-scrim);\n  z-index: var(--z-sheet);\n}\n.v-dialog__head:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-4);\n}\n.v-dialog__actions:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  display: flex;\n  gap: var(--s-2);\n  justify-content: flex-end;\n}\n/* Scrim paint and retained close use the shared opacity-only Motion lane. */\n.v-dialog__head:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  align-items: start;\n}\n.v-dialog__head:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) .v-section {\n  font-size: var(--fs-section);\n  line-height: 1.15;\n  padding-top: var(--s-2);\n}\n.v-dialog__actions:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  margin-top: var(--s-2);\n  gap: var(--s-3);\n}\n.v-sheet:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-sheet:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"])::-webkit-scrollbar {\n  width: 12px;\n  height: 12px;\n}\n.v-sheet:where(\n    [data-slot=\"sheet\"],\n    [data-slot^=\"sheet-\"]\n  )::-webkit-scrollbar-track {\n  background: transparent;\n  border-radius: var(--r-pill);\n}\n.v-sheet:where(\n    [data-slot=\"sheet\"],\n    [data-slot^=\"sheet-\"]\n  )::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-ink) 34%, transparent);\n  border-radius: var(--r-pill);\n  border: 4px solid transparent;\n  background-clip: content-box;\n  min-height: 36px;\n}\n.v-sheet:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-sheet:where([data-slot=\"sheet\"], [data-slot^=\"sheet-\"]) {\n  scrollbar-gutter: stable;\n}\n@keyframes v-scrim-in {\n  from {\n    opacity: 0;\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"sheet\"],\n  [data-slot^=\"sheet-\"],\n  [data-slot=\"sheet\"]::before,\n  [data-slot=\"sheet\"]::after,\n  [data-slot^=\"sheet-\"]::before,\n  [data-slot^=\"sheet-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"sheet-content\"] {\n  max-height: calc(100dvh - 2 * var(--shell-inset));\n}\n\n[data-slot=\"sheet-content\"] { min-width:0; overscroll-behavior:contain; }\n[data-slot=\"sheet-title\"], [data-slot=\"sheet-description\"] { overflow-wrap:anywhere; }\n[data-slot=\"sheet-footer\"] { flex-wrap:wrap; }\n[data-slot=\"sheet-content\"] { --sheet-edge:var(--shell-inset); inset-inline-end:var(--sheet-edge); }\n[data-slot=\"sheet-content\"][data-side=\"start\"] { inset-inline-start:var(--sheet-edge); inset-inline-end:auto; }\n@media (max-width:640px) { [data-slot=\"sheet-content\"] { --sheet-edge:12px; top:12px; bottom:12px; width:calc(100% - 24px); max-height:calc(100dvh - 24px); padding:var(--s-5); } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/sheet.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/sheet.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "sheet",
+      "name": "Sheet",
+      "tier": "base",
+      "evidence": "I16",
+      "status": "source",
+      "root": ".v-sheet",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "opens"
+      ],
+      "canvas": "960x600",
+      "contract": "entries/sheet/contract.md",
+      "demo": "entries/sheet/demo.html",
+      "isolation": [
+        "default-default-rest-960x600.html",
+        "default-default-rest-dark-960x600.html",
+        "default-default-open-960x600.html",
+        "default-default-open-dark-960x600.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "SheetProps",
+        "props": []
+      },
+      {
+        "name": "SheetTriggerProps",
+        "props": []
+      },
+      {
+        "name": "SheetPortalProps",
+        "props": []
+      },
+      {
+        "name": "SheetOverlayProps",
+        "props": []
+      },
+      {
+        "name": "SheetContentProps",
+        "props": [
+          {
+            "name": "showCloseButton",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "side",
+            "type": "\"start\" | \"end\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "SheetHeaderProps",
+        "props": []
+      },
+      {
+        "name": "SheetFooterProps",
+        "props": []
+      },
+      {
+        "name": "SheetTitleProps",
+        "props": []
+      },
+      {
+        "name": "SheetDescriptionProps",
+        "props": []
+      },
+      {
+        "name": "SheetCloseProps",
+        "props": []
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

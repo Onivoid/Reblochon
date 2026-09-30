@@ -1,0 +1,68 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "ambient-background",
+  "title": "Ambient background",
+  "description": "Adds a quiet animated composition around content, with decorative shapes kept behind a readable surface.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/shape.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/ambient-background.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Shape } from \"@/components/ui/shape\";\nimport { useReducedMotion } from \"@/lib/cojeev-motion/use-reduced-motion\";\nimport {\n  getSettingsSnapshot,\n  getServerSettingsSnapshot,\n  subscribeSettings,\n} from \"@/lib/cojeev-motion/settings\";\n\nexport const ambientBackgroundVariants = cva(\"v-ambient-background\", {\n  variants: { variant: { drift: \"-drift\", orbit: \"-orbit\", contour: \"-contour\" } },\n  defaultVariants: { variant: \"drift\" },\n});\n\nfunction subscribeVisibility(listener: () => void) {\n  document.addEventListener(\"visibilitychange\", listener);\n  return () => document.removeEventListener(\"visibilitychange\", listener);\n}\nconst visibleSnapshot = () => document.visibilityState === \"visible\";\nconst hiddenSnapshot = () => false;\n\nexport type AmbientBackgroundProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof ambientBackgroundVariants> & { paused?: boolean };\n\n/** Sparse edge decoration; the opaque content surface preserves its own contrast. */\nexport function AmbientBackground({\n  variant = \"drift\",\n  paused = false,\n  children,\n  className,\n  ref,\n  ...props\n}: AmbientBackgroundProps) {\n  const root = React.useRef<HTMLDivElement>(null);\n  const [inView, setInView] = React.useState(false);\n  const visible = React.useSyncExternalStore(subscribeVisibility, visibleSnapshot, hiddenSnapshot);\n  const { motion } = React.useSyncExternalStore(subscribeSettings, getSettingsSnapshot, getServerSettingsSnapshot);\n  const reduced = useReducedMotion();\n  const quiet = reduced || motion.mode === \"off\";\n  const running = inView && visible && !paused && !quiet;\n\n  React.useEffect(() => {\n    const element = root.current;\n    if (!element) return;\n    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting));\n    observer.observe(element);\n    return () => observer.disconnect();\n  }, []);\n\n  return (\n    <div\n      {...props}\n      ref={(element) => {\n        root.current = element;\n        if (typeof ref === \"function\") return ref(element);\n        if (ref) ref.current = element;\n      }}\n      data-slot=\"ambient-background\"\n      data-variant={variant}\n      data-motion={quiet ? \"static\" : running ? \"running\" : \"paused\"}\n      className={cn(ambientBackgroundVariants({ variant }), className)}\n    >\n      <div data-slot=\"ambient-background-decoration\" aria-hidden=\"true\" inert>\n        {variant === \"contour\" ? (\n          <svg className=\"v-ambient-background__contour\" viewBox=\"0 0 600 600\" fill=\"none\">\n            <ellipse cx=\"300\" cy=\"300\" rx=\"260\" ry=\"214\" />\n            <ellipse cx=\"300\" cy=\"300\" rx=\"210\" ry=\"172\" />\n            <ellipse cx=\"300\" cy=\"300\" rx=\"160\" ry=\"130\" />\n            <ellipse cx=\"300\" cy=\"300\" rx=\"110\" ry=\"88\" />\n          </svg>\n        ) : (\n          <div className=\"v-ambient-background__field\">\n            <span className=\"v-ambient-background__piece -one\"><Shape name=\"blob-4\" /></span>\n            <span className=\"v-ambient-background__piece -two\"><Shape name=\"star-8\" /></span>\n            <span className=\"v-ambient-background__piece -three\"><Shape name=\"circle\" /></span>\n          </div>\n        )}\n      </div>\n      {children != null && <div data-slot=\"ambient-background-content\">{children}</div>}\n    </div>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/ambient-background.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"ambient-background\"] {\n  position: relative;\n  isolation: isolate;\n  display: grid;\n  place-items: center;\n  min-inline-size: 0;\n  min-block-size: 20rem;\n  padding: clamp(1.5rem, 6%, 4rem);\n  overflow: hidden;\n  border-radius: var(--r-panel);\n  background: var(--v-canvas);\n  color: var(--v-text);\n}\n[data-slot=\"ambient-background-decoration\"] {\n  position: absolute;\n  inset: 0;\n  z-index: -1;\n  pointer-events: none;\n  overflow: hidden;\n  opacity: .48;\n}\n[data-slot=\"ambient-background-content\"] {\n  position: relative;\n  min-inline-size: 0;\n  max-inline-size: 38rem;\n  padding: clamp(1.25rem, 4vw, 2.5rem);\n  border-radius: var(--r-panel);\n  background: var(--v-canvas);\n  color: var(--v-text);\n  overflow-wrap: anywhere;\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__field {\n  position: absolute;\n  inset: 0;\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__piece {\n  position: absolute;\n  display: block;\n  inline-size: clamp(9rem, 36%, 22rem);\n  aspect-ratio: 1;\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__piece [data-slot=\"shape\"] {\n  display: block;\n  inline-size: 100%;\n  block-size: 100%;\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__piece.-one {\n  inset-block-start: -20%;\n  inset-inline-end: -7%;\n  --c: var(--v-pink);\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__piece.-two {\n  inset-block-end: -24%;\n  inset-inline-start: -10%;\n  --c: var(--v-olive);\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__piece.-three {\n  inset-block-end: -30%;\n  inset-inline-end: 14%;\n  inline-size: clamp(7rem, 24%, 15rem);\n  --c: var(--v-blue);\n}\n[data-slot=\"ambient-background\"][data-variant=\"drift\"] .v-ambient-background__piece {\n  animation: v-ambient-drift 24s ease-in-out infinite alternate;\n}\n[data-slot=\"ambient-background\"][data-variant=\"drift\"] .v-ambient-background__piece.-two {\n  animation-delay: -12s;\n  animation-duration: 32s;\n}\n[data-slot=\"ambient-background\"][data-variant=\"drift\"] .v-ambient-background__piece.-three {\n  animation-delay: -6s;\n  animation-duration: 28s;\n}\n[data-slot=\"ambient-background\"][data-variant=\"orbit\"] .v-ambient-background__field {\n  inset: -35%;\n  animation: v-ambient-orbit 90s linear infinite;\n}\n[data-slot=\"ambient-background\"][data-variant=\"orbit\"] .v-ambient-background__piece.-one {\n  inset-block-start: 2%;\n  inset-inline-end: 15%;\n  --c: var(--v-yellow);\n}\n[data-slot=\"ambient-background\"][data-variant=\"orbit\"] .v-ambient-background__piece.-two {\n  inset-block-end: 5%;\n  inset-inline-start: 16%;\n  --c: var(--v-pink);\n}\n[data-slot=\"ambient-background\"][data-variant=\"orbit\"] .v-ambient-background__piece.-three {\n  inset-block-end: 18%;\n  inset-inline-end: 4%;\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__contour {\n  position: absolute;\n  inset-block-start: -60%;\n  inset-inline-end: -28%;\n  inline-size: max(38rem, 90%);\n  block-size: auto;\n  stroke: var(--v-olive);\n  stroke-width: 14;\n  animation: v-ambient-contour 38s ease-in-out infinite alternate;\n}\n[data-slot=\"ambient-background\"] .v-ambient-background__contour ellipse:nth-child(2) { stroke: var(--v-yellow); }\n[data-slot=\"ambient-background\"] .v-ambient-background__contour ellipse:nth-child(3) { stroke: var(--v-blue); }\n[data-slot=\"ambient-background\"] .v-ambient-background__contour ellipse:nth-child(4) { stroke: var(--v-pink); }\n[data-slot=\"ambient-background\"][data-motion=\"paused\"] :is(.v-ambient-background__field, .v-ambient-background__piece, .v-ambient-background__contour) {\n  animation-play-state: paused;\n}\n[data-slot=\"ambient-background\"][data-motion=\"static\"] :is(.v-ambient-background__field, .v-ambient-background__piece, .v-ambient-background__contour) {\n  animation: none;\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"ambient-background\"] :is(.v-ambient-background__field, .v-ambient-background__piece, .v-ambient-background__contour) { animation: none; }\n}\n@keyframes v-ambient-drift {\n  from { transform: translate3d(-3%, 2%, 0) rotate(-8deg); }\n  to { transform: translate3d(7%, -6%, 0) rotate(10deg); }\n}\n@keyframes v-ambient-orbit { to { transform: rotate(360deg); } }\n@keyframes v-ambient-contour {\n  from { transform: translate3d(0, 0, 0) rotate(-18deg); }\n  to { transform: translate3d(-4%, 8%, 0) rotate(8deg); }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/ambient-background.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/ambient-background.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Ambient background",
+      "variants": [
+        "drift",
+        "orbit",
+        "contour"
+      ],
+      "sizes": [],
+      "states": [
+        "running",
+        "paused",
+        "static"
+      ]
+    },
+    "api": [
+      {
+        "name": "AmbientBackgroundProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"drift\" | \"orbit\" | \"contour\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "paused",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Backgrounds",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

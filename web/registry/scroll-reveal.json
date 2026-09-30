@@ -1,0 +1,100 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scroll-reveal",
+  "title": "Scroll Reveal",
+  "description": "Native scroll progress resolves word opacity and blur while leveling the phrase.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/scroll-reveal.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { useReferenceRef } from \"@/lib/cojeev/reference-ref\";\nimport { cn } from \"@/lib/utils\";\nimport { bounded,scrollWordProgress } from \"@/lib/cojeev/reference-text-math\";\nimport { useReferenceText,type ReferenceTextSize } from \"@/lib/cojeev/reference-text-motion\";\nexport type ScrollRevealProps=Omit<React.ComponentProps<\"div\">,\"children\">&{text:string;/** Optional controlled 0–1 progress; omit for native scrolling. */progress?:number;scrollTarget?:React.RefObject<HTMLElement|null>;blur?:number;rotation?:number;paused?:boolean;size?:ReferenceTextSize};\n/** Native-scroll progress continuously resolves each word and levels the whole phrase. */\nexport function ScrollReveal({text,progress,scrollTarget,blur=3,rotation=-3,paused=false,size=\"default\",className,ref,...props}:ScrollRevealProps){\n const {host:hostRef,running}=useReferenceText(paused);\n React.useEffect(()=>{\n  const el=hostRef.current;if(!el)return;let frame=0;\n  const paint=()=>{\n   const box=el.getBoundingClientRect(),root=scrollTarget?.current?.getBoundingClientRect();\n   const height=root?.height??window.innerHeight,top=root?.top??0;\n   const p=running?progress===undefined?bounded((height*.9-(box.top-top))/(height*.65),0,1,1):bounded(progress,0,1,1):1;\n   el.style.setProperty(\"--scroll-reveal-rotation\",`${bounded(rotation,-12,12,-3)*(1-p)}deg`);\n   el.dataset.progress=p.toFixed(3);\n   const words=el.querySelectorAll<HTMLElement>(\"[data-scroll-word]\");words.forEach((word,i)=>{const q=scrollWordProgress(p,i,words.length);word.style.opacity=String(.28+.72*q);word.style.filter=`blur(${bounded(blur,0,8,3)*(1-q)}px)`;});\n  };\n  const schedule=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(paint);};paint();\n  if(!running||progress!==undefined)return;\n  const target=scrollTarget?.current??window;target.addEventListener(\"scroll\",schedule,{passive:true});window.addEventListener(\"resize\",schedule,{passive:true});\n  return()=>{cancelAnimationFrame(frame);target.removeEventListener(\"scroll\",schedule);window.removeEventListener(\"resize\",schedule);};\n },[hostRef,running,progress,scrollTarget,blur,rotation,text]);\n return <div {...props} ref={useReferenceRef(hostRef,ref)} data-slot=\"scroll-reveal\" data-size={size} data-running={running} className={cn(\"v-scroll-reveal\",className)}><span className=\"v-scroll-reveal__accessible\">{text}</span><span aria-hidden=\"true\" className=\"v-scroll-reveal__words\">{text.split(/(\\s+)/).map((word,i)=>/^\\s+$/.test(word)?word:<span key={i} data-scroll-word=\"\">{word}</span>)}</span></div>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/scroll-reveal.css",
+      "content": "@layer cojeev-states {\n.v-scroll-reveal { display:grid; position:relative; place-items:center; min-inline-size:0; inline-size:100%; min-block-size:260px; padding:var(--s-6); overflow:hidden; border-radius:var(--r-panel,24px); color:var(--v-text); background:var(--v-beige); font-family:var(--font-display,\"Bricolage Grotesque\",sans-serif); font-size:clamp(2rem,5vw,3.5rem); line-height:1.15; isolation:isolate; }\n.v-scroll-reveal[data-size=\"sm\"] { min-block-size:200px; font-size:clamp(1.5rem,4vw,2.5rem); padding:var(--s-4); }\n.v-scroll-reveal[data-size=\"lg\"] { min-block-size:340px; font-size:clamp(2.25rem,6vw,4.5rem); }\n.v-scroll-reveal__accessible { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }\n.v-scroll-reveal__words {display:block;max-inline-size:100%;overflow-wrap:anywhere;transform:rotate(var(--scroll-reveal-rotation,0deg));transform-origin:0 50%;line-height:1.4;}\n.v-scroll-reveal [data-scroll-word] {display:inline-block;max-inline-size:100%;}\n.v-scroll-reveal[data-running=\"false\"] [data-scroll-word] {opacity:1;filter:none;}\n@media(prefers-reduced-motion:reduce){.v-scroll-reveal__words{transform:none;}.v-scroll-reveal [data-scroll-word]{opacity:1;filter:none;}}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/scroll-reveal.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/scroll-reveal.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Scroll Reveal",
+      "variants": [
+        "scroll",
+        "controlled"
+      ],
+      "sizes": [
+        "sm",
+        "default",
+        "lg"
+      ],
+      "states": [
+        "playing",
+        "paused",
+        "still",
+        "offscreen"
+      ],
+      "reviewOnly": false
+    },
+    "api": [
+      {
+        "name": "ScrollRevealProps",
+        "props": [
+          {
+            "name": "text",
+            "type": "string",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "progress",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "scrollTarget",
+            "type": "React.RefObject<HTMLElement|null>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "blur",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "rotation",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "paused",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "ReferenceTextSize",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Typography",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

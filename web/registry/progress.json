@@ -1,0 +1,116 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "progress",
+  "title": "Progress",
+  "description": "One measured amount, explained as an inline task, a small report or connected milestones—with independent organic track geometry.",
+  "dependencies": [
+    "motion",
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/progress.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport {motion,useTransform,type MotionValue} from \"motion/react\";\nimport {cva,type VariantProps} from \"class-variance-authority\";\nimport {cn} from \"@/lib/utils\";\nimport {assignMotionRef} from \"@/lib/cojeev-motion/refs\";\nimport {useMotionVisibility} from \"@/lib/cojeev-motion/use-motion-visibility\";\nimport {useOrganicValue,usePaintSize} from \"@/lib/cojeev-motion/use-organic-value\";\nimport {organicBandPath,organicLinePath,organicOrbitPath,progressRatio,segmentCount} from \"@/lib/cojeev-motion/progress-geometry\";\n\nconst ProgressVariants=cva(\"v-track\",{variants:{variant:{default:\"\",cream:\"-cream\",unavail:\"-unavail\"},size:{default:\"\",lg:\"-lg\",sm:\"-sm\"}},defaultVariants:{variant:\"default\",size:\"default\"}});\nexport type ProgressAppearance=\"organic\"|\"line\"|\"segmented\"|\"orbit\";\nexport type ProgressProps=React.ComponentProps<\"div\"> & VariantProps<typeof ProgressVariants> & {value?:number|null;max?:number;appearance?:ProgressAppearance;segments?:number};\nfunction Segment({index,count,width,height,position,energy}:{index:number;count:number;width:MotionValue<number>;height:MotionValue<number>;position:MotionValue<number>;energy:MotionValue<number>}){\n const background=useTransform([width,height],([w,h])=>organicBandPath(Math.max(0,Number(w)/count-3),Number(h)));\n const fill=useTransform([width,height,position,energy],([w,h,p,e])=>organicBandPath(Math.max(0,Number(w)/count-3),Number(h),Math.max(0,Math.min(1,Number(p)*count-index)),Number(e)));\n const x=useTransform(width,w=>w/count*index);\n return <motion.g style={{x}}><motion.path d={background} className=\"v-progress__track\"/><motion.path d={fill} className=\"v-progress__fill\"/></motion.g>;\n}\nfunction ProgressPaint({position,energy,appearance,segments}:{position:MotionValue<number>;energy:MotionValue<number>;appearance:ProgressAppearance;segments:number}){\n const ref=React.useRef<SVGSVGElement|null>(null),{width,height}=usePaintSize(ref);\n const box=useTransform([width,height],([w,h])=>`0 0 ${w} ${h}`);\n const track=useTransform([width,height],([w,h])=>appearance===\"line\"?organicLinePath(Number(w),Number(h)):organicBandPath(Number(w),Number(h)));\n const fill=useTransform([width,height,position,energy],([w,h,p,e])=>appearance===\"line\"?organicLinePath(Number(w),Number(h),Number(p),Number(e)):organicBandPath(Number(w),Number(h),Number(p),Number(e)));\n const arc=useTransform([position,energy],([p,e])=>organicOrbitPath(Number(p),Number(e)));\n const opacity=useTransform(position,p=>p<=0?0:1);\n if(appearance===\"orbit\")return <svg className=\"v-progress__paint\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><path className=\"v-progress__track\" d={organicOrbitPath(1)}/><motion.path className=\"v-progress__fill\" d={arc} style={{opacity}}/></svg>;\n return <motion.svg ref={ref} className=\"v-progress__paint\" viewBox={box} preserveAspectRatio=\"none\" aria-hidden=\"true\">{appearance===\"segmented\"?Array.from({length:segments},(_,index)=><Segment key={index} {...{index,count:segments,width,height,position,energy}}/>):<><motion.path className=\"v-progress__track\" d={track}/><motion.path className=\"v-progress__fill\" d={fill} style={{opacity}}/></>}</motion.svg>;\n}\nexport function Progress({ref,className,variant,size,value,max=100,appearance=\"organic\",segments=12,children,style,...props}:ProgressProps){\n const total=Number.isFinite(max)&&max>0?max:100,supplied=value??props[\"aria-valuenow\"],current=typeof supplied===\"number\"&&Number.isFinite(supplied)?Math.max(0,Math.min(supplied,total)):undefined;\n const unavailable=variant===\"unavail\"||current===undefined,ratio=unavailable?0:progressRatio(current,total);\n const host=React.useRef<HTMLDivElement|null>(null),{enabled,inView}=useMotionVisibility(host);\n const attach=React.useCallback((node:HTMLDivElement|null)=>{host.current=node;const release=assignMotionRef(ref,node);return()=>{host.current=null;release()}},[ref]);\n const {position,energy}=useOrganicValue(ratio,!enabled||!inView||unavailable||children!==undefined);\n return <div {...props} ref={attach} data-slot=\"progress\" data-part=\"root\" role=\"progressbar\" aria-valuemin={0} aria-valuemax={total} aria-valuenow={unavailable?undefined:current} aria-valuetext={props[\"aria-valuetext\"]??(unavailable?\"Unavailable\":undefined)} data-state={unavailable?\"unavailable\":\"determinate\"} data-appearance={appearance} data-custom={children!==undefined||undefined} className={cn(ProgressVariants({variant:unavailable?\"unavail\":variant,size}),className)} style={style}>{children??<><i data-slot=\"progress-indicator\" data-part=\"indicator\" data-organic=\"true\"><ProgressPaint key={appearance} {...{position,energy,appearance,segments:segmentCount(segments)}}/></i>{appearance===\"orbit\"&&<span className=\"v-progress__value\" aria-hidden=\"true\">{unavailable?\"—\":`${Math.round(ratio*100)}%`}</span>}</>}</div>;\n}\n/** Custom indicators retain their original --p width / --c color composition API. */\nexport type ProgressIndicatorProps=React.ComponentProps<\"i\">;\nexport function ProgressIndicator(props:ProgressIndicatorProps){return <i data-slot=\"progress-indicator\" data-part=\"indicator\" {...props}/>}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/progress.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"progress\"].v-track {\n  --c: var(--v-yellow);\n  position: relative;\n  display: block;\n  width: 100%;\n  min-width: 0;\n  height: var(--track-h, 12px);\n  flex: 1;\n  border-radius: var(--r-pill);\n  color: var(--c);\n}\n[data-slot=\"progress\"].-lg {\n  height: var(--track-h-lg, 20px);\n}\n[data-slot=\"progress\"].-sm {\n  height: var(--track-h-sm, 6px);\n}\n[data-slot=\"progress\"] > [data-slot=\"progress-indicator\"] {\n  position: absolute;\n  inset: 0 auto 0 0;\n  width: var(--p, 0%);\n  border-radius: inherit;\n  background: var(--c, var(--v-yellow));\n}\n[data-slot=\"progress\"][data-custom=\"true\"] {\n  background: var(--v-beige);\n  overflow: hidden;\n}\n[data-slot=\"progress\"] > [data-slot=\"progress-indicator\"][data-organic=\"true\"] {\n  width: 100%;\n  height: 100%;\n  background: none;\n  transition: none;\n}\n.v-progress__paint {\n  display: block;\n  width: 100%;\n  height: 100%;\n  overflow: visible;\n  pointer-events: none;\n}\n.v-progress__track {\n  fill: var(--v-beige);\n}\n.v-progress__fill {\n  fill: currentColor;\n}\n[data-slot=\"progress\"].-cream .v-progress__track {\n  fill: var(--v-canvas);\n}\n[data-slot=\"progress\"][data-appearance=\"line\"] {\n  height: 12px;\n}\n[data-slot=\"progress\"][data-appearance=\"line\"]\n  :is(.v-progress__track, .v-progress__fill) {\n  fill: none;\n  stroke: var(--v-beige);\n  stroke-width: 3px;\n  stroke-linecap: round;\n}\n[data-slot=\"progress\"][data-appearance=\"line\"] .v-progress__fill {\n  stroke: currentColor;\n}\n[data-slot=\"progress\"][data-appearance=\"orbit\"] {\n  flex: none;\n  width: var(--progress-diameter, 112px);\n  height: var(--progress-diameter, 112px);\n  display: inline-grid;\n  place-items: center;\n}\n[data-slot=\"progress\"][data-appearance=\"orbit\"].-sm {\n  --progress-diameter: 72px;\n}\n[data-slot=\"progress\"][data-appearance=\"orbit\"].-lg {\n  --progress-diameter: 148px;\n}\n[data-slot=\"progress\"][data-appearance=\"orbit\"]\n  :is(.v-progress__track, .v-progress__fill) {\n  fill: none;\n  stroke: var(--v-beige);\n  stroke-width: 7px;\n  stroke-linecap: round;\n}\n[data-slot=\"progress\"][data-appearance=\"orbit\"] .v-progress__fill {\n  stroke: currentColor;\n}\n.v-progress__value {\n  color: var(--v-text);\n  font-size: var(--fs-control);\n  font-weight: var(--fw-semibold);\n  font-variant-numeric: tabular-nums;\n}\n[data-slot=\"progress\"].-unavail {\n  background: repeating-linear-gradient(\n    135deg,\n    var(--v-skel-edge) 0 3px,\n    transparent 3px 9px\n  );\n  box-shadow: inset 0 0 0 1px var(--v-skel-edge);\n}\n[data-slot=\"progress\"].-unavail > [data-slot=\"progress-indicator\"] {\n  display: none;\n}\n[data-slot=\"progress\"].-unavail[data-appearance=\"orbit\"] {\n  border-radius: 50%;\n}\n\n.v-progress-example {\n  width: 100%;\n  min-width: 0;\n  display: grid;\n  gap: var(--s-5);\n  container-type: inline-size;\n}\n.v-progress-example__paper {\n  display: grid;\n  gap: var(--s-6);\n  min-width: 0;\n  padding: var(--s-6);\n  background: var(--v-canvas);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-panel);\n}\n.v-progress-example__heading {\n  display: flex;\n  justify-content: space-between;\n  gap: var(--s-3);\n  font-size: var(--fs-caps);\n  color: var(--v-text-2);\n  letter-spacing: 0.03em;\n}\n.v-progress-example__summary {\n  display: flex;\n  justify-content: space-between;\n  gap: var(--s-5);\n  align-items: center;\n}\n.v-progress-example__summary h3 {\n  margin: 0 0 var(--s-2);\n  font-family: var(--font-display);\n  font-size: var(--fs-title);\n  line-height: 1.3;\n}\n.v-progress-example__summary p {\n  font-size: var(--fs-small);\n  line-height: 1.5;\n  color: var(--v-text-2);\n  margin: 0;\n}\n.v-progress-example__value {\n  font-family: var(--font-mono);\n  font-size: 30px;\n  font-variant-numeric: tabular-nums;\n  color: var(--v-text);\n}\n.v-progress-example__meter {\n  min-width: 0;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n.v-progress-example__meter [data-slot=\"progress\"] {\n  --c: var(--v-pink);\n}\n.v-progress-example__controls {\n  display: flex;\n  gap: var(--s-3);\n  justify-content: space-between;\n  align-items: start;\n  flex-wrap: wrap;\n}\n.v-progress-example__controls > div {\n  display: flex;\n  gap: var(--s-2);\n  flex-wrap: wrap;\n}\n.v-progress-example__controls .v-btn {\n  min-height: 44px;\n}\n.v-progress-example__hint {\n  margin: 0;\n  font-size: var(--fs-caps);\n  color: var(--v-text-2);\n  line-height: 1.6;\n}\n.v-progress-example[data-presentation=\"report\"] .v-progress-example__paper {\n  grid-template-columns: minmax(0, 1fr) minmax(112px, 0.6fr);\n  border-radius: var(--r-xs) var(--r-panel) var(--r-panel) var(--r-panel);\n  border-top: 3px solid var(--v-blue);\n}\n.v-progress-example[data-presentation=\"report\"] .v-progress-example__heading {\n  grid-column: 1/-1;\n  padding-bottom: var(--s-4);\n  border-bottom: 1px dashed var(--v-border);\n}\n.v-progress-example[data-presentation=\"report\"] .v-progress-example__summary {\n  grid-column: 1;\n  flex-direction: column;\n  align-items: start;\n}\n.v-progress-example[data-presentation=\"report\"] .v-progress-example__meter {\n  grid-column: 2;\n  grid-row: 2/4;\n}\n.v-progress-example[data-presentation=\"report\"]\n  .v-progress-example__meter\n  [data-slot=\"progress\"] {\n  --c: var(--v-blue);\n}\n.v-progress-example__totals {\n  display: flex;\n  gap: var(--s-8);\n  grid-column: 1;\n}\n.v-progress-example__totals > div {\n  display: grid;\n  gap: var(--s-1);\n}\n.v-progress-example__totals strong {\n  font-family: var(--font-mono);\n  font-size: var(--fs-section);\n  font-weight: var(--fw-body);\n}\n.v-progress-example__totals span {\n  font-size: var(--fs-caps);\n  color: var(--v-text-2);\n}\n.v-progress-example[data-presentation=\"milestones\"] .v-progress-example__paper {\n  border: none;\n  border-top: 2px solid var(--v-ink);\n  border-radius: 0;\n  padding: var(--s-5) 0;\n  background: transparent;\n}\n.v-progress-example__milestones {\n  list-style: none;\n  display: grid;\n  grid-template-columns: repeat(4, minmax(0, 1fr));\n  gap: var(--s-2);\n  padding: var(--s-4) 0 0;\n  margin: 0;\n  border-top: 1px dashed var(--v-border);\n}\n.v-progress-example__milestones li {\n  display: grid;\n  align-content: start;\n  gap: var(--s-3);\n  min-width: 0;\n}\n.v-progress-example__checkpoint {\n  display: grid;\n  place-items: center;\n  width: 36px;\n  height: 36px;\n  font-family: var(--font-mono);\n  font-size: var(--fs-meta);\n  color: var(--v-text-2);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-md);\n}\n.v-progress-example__milestones\n  li[data-state=\"complete\"]\n  .v-progress-example__checkpoint {\n  background: var(--v-olive);\n  color: var(--v-on-accent);\n  border-color: transparent;\n}\n.v-progress-example__milestones\n  li[data-state=\"in-progress\"]\n  .v-progress-example__checkpoint {\n  background: var(--v-blue);\n  color: var(--v-on-accent);\n  border-color: transparent;\n}\n.v-progress-example__checkpoint .v-icon {\n  width: 18px;\n  height: 18px;\n}\n.v-progress-example__milestones li > span:last-child {\n  display: grid;\n  gap: var(--s-1);\n}\n.v-progress-example__milestones strong {\n  font-size: var(--fs-small);\n  font-weight: var(--fw-title);\n}\n.v-progress-example__milestones small {\n  font-size: var(--fs-caps);\n  line-height: 1.5;\n  color: var(--v-text-2);\n}\n@container (max-width:400px) {\n  .v-progress-example__paper {\n    padding: var(--s-5);\n  }\n  .v-progress-example__heading {\n    flex-direction: column;\n    gap: var(--s-2);\n  }\n  .v-progress-example__summary {\n    align-items: start;\n    flex-direction: column;\n    gap: var(--s-4);\n  }\n  .v-progress-example[data-presentation=\"report\"] .v-progress-example__paper {\n    grid-template-columns: minmax(0, 1fr);\n  }\n  .v-progress-example[data-presentation=\"report\"] .v-progress-example__meter {\n    grid-row: auto;\n    grid-column: 1;\n  }\n  .v-progress-example__milestones {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n    gap: var(--s-6) var(--s-3);\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/progress.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/progress.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "progress",
+      "name": "Progress",
+      "tier": "base",
+      "evidence": "I04 I09 I16",
+      "status": "source",
+      "root": ".v-track",
+      "variants": [
+        "inline",
+        "report",
+        "milestones"
+      ],
+      "sizes": [
+        "default",
+        "sm",
+        "lg"
+      ],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "controls",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "paces"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/progress/contract.md",
+      "demo": "entries/progress/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ProgressProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"cream\" | \"unavail\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | \"lg\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "value",
+            "type": "number|null",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "max",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "ProgressAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "segments",
+            "type": "number",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ProgressIndicatorProps",
+        "props": []
+      }
+    ],
+    "category": "Feedback",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

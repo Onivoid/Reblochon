@@ -1,0 +1,317 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "calendar",
+  "title": "Calendar",
+  "description": "Choose one appointment day, a continuous date range, or separate days in an accessible month grid.",
+  "dependencies": [
+    "motion",
+    "react-day-picker",
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/calendar.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { LayoutGroup, motion } from \"motion/react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport {\n  DayPicker,\n  useDayPicker,\n  type PropsBase,\n  type DayPickerProps,\n  type DateRange,\n  type Matcher,\n  type DayButtonProps,\n  type MonthCaptionProps,\n  type MonthGridProps,\n  type WeekNumberProps,\n  type WeekdayProps,\n  type WeekNumberHeaderProps,\n  type RootProps,\n} from \"react-day-picker\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Icon, IconButton } from \"@/components/ui/icon\";\nimport {\n  motionTokens,\n  useChoreography,\n} from \"@/lib/cojeev-motion/choreography\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\nexport type CalendarMark = \"pink\" | \"blue\" | \"olive\" | \"yellow\" | \"ink\";\nconst MarksContext = React.createContext<Record<string, CalendarMark>>({});\nconst SelectionModeContext = React.createContext<\n  \"single\" | \"range\" | \"multiple\"\n>(\"single\");\n// Related, legible silhouettes: selection has a finite contour change, while\n// the native day button and its focus target never move or change shape.\nconst selectionContours = [\n  \"43% 57% 48% 52% / 55% 44% 56% 45%\",\n  \"55% 45% 58% 42% / 44% 54% 46% 56%\",\n  \"48% 52% 41% 59% / 59% 45% 55% 41%\",\n  \"58% 42% 53% 47% / 47% 59% 41% 53%\",\n];\nexport const calendarVariants = cva(\"v-cal [display:grid] [gap:var(--s-4)]\");\ntype CalendarBaseProps = Omit<\n  PropsBase,\n  \"mode\" | \"onSelect\" | \"selected\" | \"disabled\" | \"required\"\n> & {\n  disabled?: Matcher | Matcher[];\n  marks?: Record<string, CalendarMark>;\n  required?: boolean;\n};\nexport type CalendarSingleProps = CalendarBaseProps & {\n  mode?: \"single\";\n  selected?: Date;\n  defaultSelected?: Date;\n  onSelect?: (date: Date | undefined) => void;\n};\nexport type CalendarRangeProps = CalendarBaseProps & {\n  mode: \"range\";\n  selected?: DateRange;\n  defaultSelected?: DateRange;\n  onSelect?: (range: DateRange | undefined) => void;\n  min?: number;\n  max?: number;\n  excludeDisabled?: boolean;\n  resetOnSelect?: boolean;\n};\nexport type CalendarMultipleProps = CalendarBaseProps & {\n  mode: \"multiple\";\n  selected?: Date[];\n  defaultSelected?: Date[];\n  onSelect?: (dates: Date[] | undefined) => void;\n  min?: number;\n  max?: number;\n};\nexport type CalendarProps =\n  | CalendarSingleProps\n  | CalendarRangeProps\n  | CalendarMultipleProps;\nexport type { DateRange };\nexport function Calendar(calendarProps: CalendarProps) {\n  const {\n    className,\n    selected,\n    defaultSelected,\n    onSelect,\n    marks = {},\n    classNames,\n    components,\n    mode = \"single\",\n    required = false,\n    animate = true,\n    style,\n    ...props\n  } = calendarProps;\n  const { quiet } = useChoreography();\n  const layoutId = React.useId();\n  const [internal, setInternal] = React.useState({\n    mode,\n    value: defaultSelected,\n  });\n  const controlled = Object.prototype.hasOwnProperty.call(\n    calendarProps,\n    \"selected\",\n  );\n  const current = controlled\n    ? selected\n    : internal.mode === mode\n      ? internal.value\n      : defaultSelected;\n  const selection =\n    mode === \"range\"\n      ? {\n          mode,\n          selected: current as DateRange | undefined,\n          onSelect: (date: DateRange | undefined) => {\n            setInternal({ mode, value: date });\n            (onSelect as CalendarRangeProps[\"onSelect\"])?.(date);\n          },\n        }\n      : mode === \"multiple\"\n        ? {\n            mode,\n            selected: current as Date[] | undefined,\n            onSelect: (date: Date[] | undefined) => {\n              setInternal({ mode, value: date });\n              (onSelect as CalendarMultipleProps[\"onSelect\"])?.(date);\n            },\n          }\n        : {\n            mode,\n            selected: current as Date | undefined,\n            onSelect: (date: Date | undefined) => {\n              setInternal({ mode, value: date });\n              (onSelect as CalendarSingleProps[\"onSelect\"])?.(date);\n            },\n          };\n  // The public legacy required:boolean API is broader than DayPicker's literal\n  // required discriminant. Values/callbacks above are still paired by mode.\n  const selectionProps = { ...selection, required } as DayPickerProps;\n  return (\n    <LayoutGroup id={layoutId}>\n      <SelectionModeContext.Provider value={mode}>\n        <MarksContext.Provider value={marks}>\n          <DayPicker\n            {...selectionProps}\n            showWeekNumber\n            weekStartsOn={1}\n            ISOWeek\n            showOutsideDays={false}\n            hideNavigation\n            animate={animate && !quiet}\n            data-slot=\"calendar\"\n            data-selection-mode={mode}\n            data-part=\"root\"\n            data-cal=\"\"\n            className={cn(calendarVariants(), className)}\n            style={\n              {\n                ...style,\n                \"--v-calendar-duration\": `${quiet ? 0 : motionTokens.duration.enter}s`,\n                \"--v-calendar-ease\": `cubic-bezier(${motionTokens.ease.enter.join(\",\")})`,\n              } as React.CSSProperties\n            }\n            classNames={{\n              months: \"v-cal__months\",\n              month: \"v-cal__month-wrap\",\n              month_caption: \"v-cal__head\",\n              month_grid: \"v-cal__grid\",\n              weekday: \"v-cal__wd\",\n              week_number: \"v-cal__wk\",\n              week_number_header: \"v-cal__wd -wk\",\n              day_button: \"v-cal__d\",\n              weeks_before_enter: \"v-cal__weeks-before-enter\",\n              weeks_after_enter: \"v-cal__weeks-after-enter\",\n              weeks_before_exit: \"v-cal__weeks-before-exit\",\n              weeks_after_exit: \"v-cal__weeks-after-exit\",\n              caption_before_enter: \"v-cal__caption-enter\",\n              caption_after_enter: \"v-cal__caption-enter\",\n              caption_before_exit: \"v-cal__caption-exit\",\n              caption_after_exit: \"v-cal__caption-exit\",\n              ...classNames,\n            }}\n            formatters={{\n              formatWeekdayName: (date) =>\n                date\n                  .toLocaleDateString(\"en\", { weekday: \"short\" })\n                  .slice(0, 2)\n                  .toUpperCase(),\n              formatWeekNumberHeader: () => \"WK\",\n            }}\n            components={{\n              Root: CalendarRoot,\n              MonthCaption: CalendarCaption,\n              DayButton: CalendarDayButton,\n              MonthGrid: CalendarGrid,\n              WeekNumber: CalendarWeekNumber,\n              Weekday: CalendarWeekday,\n              WeekNumberHeader: CalendarWeekNumberHeader,\n              ...components,\n            }}\n            {...props}\n          />\n        </MarksContext.Provider>\n      </SelectionModeContext.Provider>\n    </LayoutGroup>\n  );\n}\n\n/** DayPicker retains an aria-hidden DOM snapshot during its finite month exit. */\nfunction CalendarRoot({ rootRef, ...props }: RootProps) {\n  const host = React.useRef<HTMLDivElement>(null);\n  const ref = React.useCallback(\n    (node: HTMLDivElement | null) => {\n      host.current = node;\n      const release = assignMotionRef(rootRef, node);\n      return () => {\n        host.current = null;\n        release();\n      };\n    },\n    [rootRef],\n  );\n  React.useLayoutEffect(() => {\n    const root = host.current;\n    if (!root) return;\n    const protectSnapshots = () =>\n      root\n        .querySelectorAll<HTMLElement>(\n          '[data-animated-month][aria-hidden=\"true\"]',\n        )\n        .forEach((snapshot) => {\n          snapshot.inert = true;\n          snapshot\n            .querySelectorAll(\"[id]\")\n            .forEach((element) => element.removeAttribute(\"id\"));\n        });\n    const observer = new MutationObserver(protectSnapshots);\n    observer.observe(root, { childList: true, subtree: true });\n    protectSnapshots();\n    return () => observer.disconnect();\n  }, []);\n  return <div ref={ref} {...props} />;\n}\nexport function CalendarCaption({\n  calendarMonth,\n  displayIndex,\n  className,\n  ...props\n}: MonthCaptionProps) {\n  const { goToMonth, previousMonth, nextMonth } = useDayPicker();\n  const month = calendarMonth.date;\n  return (\n    <div\n      data-slot=\"calendar-header\"\n      data-month-index={displayIndex}\n      data-part=\"header\"\n      className={cn(\"v-cal__head\", className)}\n      {...props}\n    >\n      <span\n        data-slot=\"calendar-caption\"\n        className=\"v-cal__month\"\n        aria-live=\"polite\"\n      >\n        <b>{month.toLocaleDateString(\"en\", { month: \"long\" })}</b>\n        <span>{month.getFullYear()}</span>\n      </span>\n      <span data-slot=\"calendar-nav\" className=\"v-cal__nav\">\n        <IconButton\n          data-slot=\"calendar-previous\"\n          data-part=\"trigger\"\n          size=\"sm\"\n          aria-label=\"Previous month\"\n          disabled={!previousMonth}\n          onClick={() => previousMonth && goToMonth(previousMonth)}\n        >\n          <Icon name=\"chevron-left\" />\n        </IconButton>\n        <IconButton\n          data-slot=\"calendar-next\"\n          data-part=\"trigger\"\n          size=\"sm\"\n          aria-label=\"Next month\"\n          disabled={!nextMonth}\n          onClick={() => nextMonth && goToMonth(nextMonth)}\n        >\n          <Icon name=\"chevron-right\" />\n        </IconButton>\n      </span>\n    </div>\n  );\n}\nexport function CalendarGrid({ className, ...props }: MonthGridProps) {\n  return (\n    <table\n      data-flow=\"off\"\n      data-slot=\"calendar-grid\"\n      data-part=\"viewport\"\n      className={cn(\"v-cal__grid\", className)}\n      {...props}\n    />\n  );\n}\nexport function CalendarDayButton({\n  day,\n  modifiers,\n  className,\n  children,\n  ...props\n}: DayButtonProps) {\n  const marks = React.useContext(MarksContext);\n  const mode = React.useContext(SelectionModeContext);\n  const { quiet } = useChoreography();\n  const ref = React.useRef<HTMLButtonElement>(null);\n  React.useEffect(() => {\n    if (modifiers.focused) ref.current?.focus();\n  }, [modifiers.focused]);\n  const date = day.date;\n  const contour = selectionContours[date.getDate() % selectionContours.length];\n  const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, \"0\")}-${String(date.getDate()).padStart(2, \"0\")}`;\n  const mark = marks[iso];\n  return (\n    <button\n      ref={ref}\n      data-slot=\"calendar-day\"\n      data-part=\"item\"\n      data-d={date.getDate()}\n      data-date={iso}\n      data-outside={modifiers.outside || undefined}\n      data-today={modifiers.today || undefined}\n      data-range-start={modifiers.range_start || undefined}\n      data-range-middle={modifiers.range_middle || undefined}\n      data-range-end={modifiers.range_end || undefined}\n      data-state={modifiers.selected ? \"active\" : \"inactive\"}\n      aria-pressed={modifiers.selected || undefined}\n      className={cn(\n        \"v-cal__d\",\n        (date.getDay() === 0 || date.getDay() === 6) && \"-off\",\n        modifiers.today && \"-today\",\n        className,\n      )}\n      {...props}\n    >\n      {modifiers.selected && !modifiers.range_middle && (\n        <motion.span\n          data-slot=\"calendar-selection\"\n          aria-hidden=\"true\"\n          className=\"v-cal__selection\"\n          layoutId={mode === \"single\" && !quiet ? \"selected-day\" : undefined}\n          initial={\n            quiet\n              ? false\n              : {\n                  opacity: 0,\n                  scale: 0.9,\n                  borderRadius: \"50% 50% 50% 50% / 50% 50% 50% 50%\",\n                }\n          }\n          animate={{ opacity: 1, scale: 1, borderRadius: contour }}\n          transition={{\n            duration: quiet ? 0 : motionTokens.duration.enter,\n            ease: motionTokens.ease.enter,\n          }}\n        />\n      )}\n      <span>{children}</span>\n      {mark && (\n        <i\n          data-slot=\"calendar-mark\"\n          className={`v-cal__mark -${mark}`}\n          aria-label=\"Marked day\"\n        />\n      )}\n    </button>\n  );\n}\nexport function CalendarWeekNumber({\n  week,\n  className,\n  ...props\n}: WeekNumberProps) {\n  const { isSelected } = useDayPicker();\n  const active = week.days.some((day) => isSelected?.(day.date));\n  const weekRef = useMorph<HTMLTableCellElement>(\"pills\");\n  return (\n    <th\n      ref={weekRef}\n      data-slot=\"calendar-week-number\"\n      className={cn(\"v-cal__wk\", active && \"-on\", className)}\n      {...props}\n    />\n  );\n}\n\nfunction CalendarWeekday(props: WeekdayProps) {\n  return <th data-slot=\"calendar-weekday\" {...props} />;\n}\n\nfunction CalendarWeekNumberHeader(props: WeekNumberHeaderProps) {\n  return <th data-slot=\"calendar-week-number-header\" {...props} />;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/calendar.css",
+      "content": "@layer cojeev-states {\n/* An open date grid: type carries the hierarchy; colour carries the date state. */\n[data-slot=\"calendar\"] { min-width:0; max-width:100%; color:var(--v-text); }\n[data-slot=\"calendar\"] .v-cal__months { display:flex; flex-wrap:wrap; gap:var(--s-7); min-width:0; max-width:100%; }\n[data-slot=\"calendar\"] .v-cal__month-wrap { display:grid; gap:var(--s-5); flex:0 1 360px; width:100%; min-width:0; max-width:360px; }\n[data-slot=\"calendar-header\"] { display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); min-height:44px; }\n[data-slot=\"calendar-caption\"] { display:grid; gap:1px; font-family:var(--font-display); background:transparent; color:var(--v-text); }\n[data-slot=\"calendar-caption\"] b { font-size:var(--fs-section); font-weight:var(--fw-semibold); line-height:1.1; letter-spacing:-.025em; }\n[data-slot=\"calendar-caption\"] > span { font-family:var(--font-text); font-size:var(--fs-small); font-weight:var(--fw-medium); line-height:1.5; color:var(--v-text-2); }\n[data-slot=\"calendar-nav\"] { display:inline-flex; gap:var(--s-2); }\n[data-slot=\"calendar-nav\"] .v-ibtn { width:36px; height:36px; color:var(--v-text); background:var(--v-beige); box-shadow:none; }\n[data-slot=\"calendar-nav\"] .v-ibtn:not(:disabled):hover { background:var(--v-blue); color:var(--v-on-accent); }\n[data-slot=\"calendar-nav\"] .v-icon { width:17px; height:17px; }\n[data-slot=\"calendar-grid\"] { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:center; justify-items:center; gap:var(--s-1) 2px; width:100%; border-collapse:collapse; }\n[data-slot=\"calendar-grid\"]:has(.v-cal__wk) { grid-template-columns:24px repeat(7,minmax(0,1fr)); }\n[data-slot=\"calendar-grid\"] :is(thead,tbody,tr) { display:contents; }\n[data-slot=\"calendar-grid\"] td { display:grid; place-items:center; position:relative; width:100%; min-width:0; height:42px; padding:0; }\n[data-slot=\"calendar-weekday\"], [data-slot=\"calendar-week-number-header\"] { display:grid; place-items:center; width:100%; height:28px; padding:0; font-size:var(--fs-caps); font-weight:var(--fw-semibold); color:var(--v-text-2); background:transparent; text-align:center; }\n[data-slot=\"calendar-week-number-header\"] { font-size:var(--fs-caps); letter-spacing:.02em; }\n[data-slot=\"calendar-week-number\"] { display:grid; place-items:center; width:20px; height:26px; font-size:var(--fs-caps); font-weight:var(--fw-regular); color:var(--v-text-2); padding:0; background:transparent; }\n[data-slot=\"calendar-week-number\"].-on { color:var(--v-text); font-weight:var(--fw-semibold); }\n[data-slot=\"calendar-day\"] { position:relative; isolation:isolate; display:grid; place-items:center; width:40px; max-width:100%; height:40px; margin:0; padding:0; border:0; border-radius:43% 57% 48% 52% / 55% 44% 56% 45%; background:transparent; color:var(--v-text); font-size:var(--fs-control); font-weight:var(--fw-medium); font-variant-numeric:tabular-nums; cursor:pointer; }\n[data-slot=\"calendar-day\"] > span { position:relative; z-index:1; }\n[data-slot=\"calendar-day\"]:not(:disabled):not([aria-pressed=\"true\"]):hover { background:var(--v-beige); }\n[data-slot=\"calendar-day\"][aria-pressed=\"true\"] { background:transparent; color:var(--v-on-accent); font-weight:var(--fw-bold); }\n[data-slot=\"calendar-day\"][data-today]:not([aria-pressed=\"true\"]) { box-shadow:inset 0 0 0 1.5px var(--v-blue); font-weight:var(--fw-bold); }\n[data-slot=\"calendar-day\"][data-today]::after { content:\"\"; position:absolute; width:3px; height:3px; bottom:4px; border-radius:50%; background:currentColor; }\n[data-slot=\"calendar-day\"][data-range-middle] { border-radius:0; color:var(--v-text); }\n[data-slot=\"calendar-day\"]:is([data-range-start],[data-range-end]) { color:var(--v-on-accent); }\n[data-slot=\"calendar-day\"] > [data-slot=\"calendar-selection\"] { position:absolute; inset:0; z-index:0; pointer-events:none; border-radius:43% 57% 48% 52% / 55% 44% 56% 45%; background:var(--v-pink); }\n[data-selection-mode=\"range\"] [data-slot=\"calendar-grid\"] td:has([data-range-middle],[data-range-start],[data-range-end])::before { content:\"\"; position:absolute; inset:3px -1px; background:color-mix(in oklab,var(--v-pink) 23%,var(--v-canvas)); pointer-events:none; }\n[data-selection-mode=\"range\"] [data-slot=\"calendar-grid\"] td:has([data-range-start])::before { inset-inline-start:50%; }\n[data-selection-mode=\"range\"] [data-slot=\"calendar-grid\"] td:has([data-range-end])::before { inset-inline-end:50%; }\n[data-selection-mode=\"range\"] [data-slot=\"calendar-grid\"] td:has([data-range-start][data-range-end])::before { display:none; }\n[data-slot=\"calendar-day\"]:disabled { color:var(--v-disabled-ink); cursor:not-allowed; }\n[data-slot=\"calendar-day\"]:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }\n[data-slot=\"calendar-mark\"] { position:absolute; bottom:4px; width:4px; height:4px; border-radius:50%; background:var(--v-pink-deep); z-index:1; }\n[data-slot=\"calendar-mark\"].-blue { background:var(--v-blue-deep); }\n[data-slot=\"calendar-mark\"].-olive { background:var(--v-olive); }\n[data-slot=\"calendar-mark\"].-yellow { background:var(--v-yellow-deep); }\n[data-slot=\"calendar-mark\"].-ink { background:var(--v-text); }\n[data-slot=\"calendar-day\"][aria-pressed=\"true\"] [data-slot=\"calendar-mark\"] { background:var(--v-on-accent); }\n@media(max-width:420px) { [data-slot=\"calendar-day\"] { width:36px; height:38px; font-size:var(--fs-small); } [data-slot=\"calendar-grid\"] td { height:40px; } [data-slot=\"calendar\"] .v-cal__month-wrap { gap:var(--s-4); } }\n@media(prefers-reduced-motion:reduce) { [data-slot=\"calendar\"] *, [data-slot=\"calendar\"] *::before, [data-slot=\"calendar\"] *::after { animation-duration:0s; transition-duration:0s; } }\n\n/* DayPicker owns retained month snapshots; shared timing keeps both sides finite. */\n.v-cal [data-animated-weeks] { display:grid; grid-column:1 / -1; grid-template-columns:inherit; gap:inherit; align-items:inherit; justify-items:inherit; }\n.v-cal .v-cal__caption-enter { animation:v-cal-caption-in var(--v-calendar-duration) var(--v-calendar-ease) both; }\n.v-cal .v-cal__caption-exit { animation:v-cal-caption-out var(--v-calendar-duration) var(--v-calendar-ease) both; }\n.v-cal .v-cal__weeks-after-enter,\n.v-cal:dir(rtl) .v-cal__weeks-before-enter { animation:v-cal-month-in-right var(--v-calendar-duration) var(--v-calendar-ease) both; }\n.v-cal .v-cal__weeks-before-enter,\n.v-cal:dir(rtl) .v-cal__weeks-after-enter { animation:v-cal-month-in-left var(--v-calendar-duration) var(--v-calendar-ease) both; }\n.v-cal .v-cal__weeks-before-exit,\n.v-cal:dir(rtl) .v-cal__weeks-after-exit { animation:v-cal-month-out-left var(--v-calendar-duration) var(--v-calendar-ease) both; }\n.v-cal .v-cal__weeks-after-exit,\n.v-cal:dir(rtl) .v-cal__weeks-before-exit { animation:v-cal-month-out-right var(--v-calendar-duration) var(--v-calendar-ease) both; }\n.v-cal [data-animated-month][aria-hidden=\"true\"] { width:100%; inset:0 auto auto 0; }\n@keyframes v-cal-caption-in { from { opacity:0; } to { opacity:1; } }\n@keyframes v-cal-caption-out { from { opacity:1; } to { opacity:0; } }\n@keyframes v-cal-month-in-right { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }\n@keyframes v-cal-month-in-left { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }\n@keyframes v-cal-month-out-left { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(-12px); } }\n@keyframes v-cal-month-out-right { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(12px); } }\n.v-calendar-example { width:100%; max-width:360px; margin-inline:auto; display:grid; gap:var(--s-5); }\n.v-calendar-example__intro { display:grid; gap:var(--s-2); }\n.v-calendar-example__intro h3 { margin:0; font-size:var(--fs-title); font-weight:var(--fw-medium); color:var(--v-text); }\n.v-calendar-example__intro p { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n.v-calendar-example__summary { display:grid; gap:var(--s-2); padding-top:var(--s-4); border-top:1px solid var(--v-border); color:var(--v-text); }\n.v-calendar-example__summary p { margin:0; font-size:var(--fs-small); line-height:1.5; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/calendar.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/calendar.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "calendar",
+      "name": "Calendar",
+      "tier": "base",
+      "evidence": "I15",
+      "status": "source",
+      "root": ".v-cal",
+      "variants": [
+        "single",
+        "range",
+        "multiple"
+      ],
+      "sizes": [],
+      "states": [
+        "selected",
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x480",
+      "contract": "entries/calendar/contract.md",
+      "demo": "entries/calendar/demo.html",
+      "isolation": [
+        "default-default-rest-480x480.html",
+        "default-default-rest-dark-480x480.html",
+        "default-default-selected-480x480.html",
+        "default-default-selected-dark-480x480.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "CalendarBaseProps",
+        "props": [
+          {
+            "name": "disabled",
+            "type": "Matcher | Matcher[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "marks",
+            "type": "Record<string, CalendarMark>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "required",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CalendarSingleProps",
+        "props": [
+          {
+            "name": "disabled",
+            "type": "Matcher | Matcher[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "marks",
+            "type": "Record<string, CalendarMark>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "required",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"single\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "selected",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultSelected",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onSelect",
+            "type": "(date: Date | undefined) => void",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CalendarRangeProps",
+        "props": [
+          {
+            "name": "disabled",
+            "type": "Matcher | Matcher[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "marks",
+            "type": "Record<string, CalendarMark>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "required",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"range\"",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "selected",
+            "type": "DateRange",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultSelected",
+            "type": "DateRange",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onSelect",
+            "type": "(range: DateRange | undefined) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "min",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "max",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "excludeDisabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "resetOnSelect",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CalendarMultipleProps",
+        "props": [
+          {
+            "name": "disabled",
+            "type": "Matcher | Matcher[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "marks",
+            "type": "Record<string, CalendarMark>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "required",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"multiple\"",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "selected",
+            "type": "Date[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultSelected",
+            "type": "Date[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onSelect",
+            "type": "(dates: Date[] | undefined) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "min",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "max",
+            "type": "number",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CalendarProps",
+        "props": [
+          {
+            "name": "disabled",
+            "type": "Matcher | Matcher[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "marks",
+            "type": "Record<string, CalendarMark>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "required",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"single\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "selected",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultSelected",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onSelect",
+            "type": "(date: Date | undefined) => void",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

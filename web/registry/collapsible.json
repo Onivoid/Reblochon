@@ -1,0 +1,104 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "collapsible",
+  "title": "Collapsible",
+  "description": "Shows or hides one optional section without leaving the surrounding layout.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-collapsible"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/collapsible.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { useDisclosureHeight } from \"@/lib/cojeev-motion/use-disclosure-height\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Icon } from \"@/components/ui/icon\";\nimport * as Primitive from \"@radix-ui/react-collapsible\";\nexport const collapsibleVariants = cva(\"v-collapsible\");\nexport type CollapsibleAppearance = \"inline\" | \"checklist\" | \"inspector\";\nexport type CollapsibleProps = React.ComponentProps<typeof Primitive.Root> & {\n  appearance?: CollapsibleAppearance;\n};\nexport function Collapsible({\n  className,\n  appearance,\n  ...props\n}: CollapsibleProps) {\n  const { quiet } = useChoreography();\n  return (\n    <Primitive.Root\n      data-slot=\"collapsible\"\n      data-part=\"root\"\n      data-appearance={appearance}\n      data-motion-quiet={quiet || undefined}\n      className={cn(collapsibleVariants(), className)}\n      {...props}\n    />\n  );\n}\nexport type CollapsibleTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n> & { indicator?: React.ReactNode };\nexport function CollapsibleTrigger({\n  className,\n  children,\n  indicator,\n  ...props\n}: CollapsibleTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"collapsible-trigger\"\n      data-part=\"trigger\"\n      className={cn(\n        \"inline-flex items-center gap-2 min-h-11 text-[length:var(--fs-control)] text-[color:var(--muted-foreground)]\",\n        className,\n      )}\n      {...props}\n    >\n      {props.asChild ? (\n        children\n      ) : (\n        <>\n          {children}\n          {indicator ?? <CollapsibleIndicator />}\n        </>\n      )}\n    </Primitive.Trigger>\n  );\n}\nexport type CollapsibleContentProps = React.ComponentProps<\n  typeof Primitive.Content\n>;\nexport function CollapsibleContent({\n  className,\n  ref,\n  children,\n  ...props\n}: CollapsibleContentProps) {\n  const contentRef = React.useRef<HTMLDivElement>(null);\n  React.useImperativeHandle(ref, () => contentRef.current!);\n  useDisclosureHeight(contentRef, props.style?.animationName);\n  return (\n    <Primitive.Content\n      ref={contentRef}\n      data-slot=\"collapsible-content\"\n      data-part=\"content\"\n      className={cn(\"v-collapsible__body text-[length:var(--fs-small)]\", className)}\n      {...props}\n    >\n      <div data-disclosure-inner>{children}</div>\n    </Primitive.Content>\n  );\n}\nexport type CollapsibleIndicatorProps = React.ComponentProps<\"svg\">;\nexport function CollapsibleIndicator({\n  className,\n  ...props\n}: CollapsibleIndicatorProps) {\n  return (\n    <Icon\n      name=\"chevron-down\"\n      data-slot=\"collapsible-indicator\"\n      data-part=\"indicator\"\n      aria-hidden=\"true\"\n      viewBox=\"0 0 24 24\"\n      className={cn(\"v-icon v-chev\", className)}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/collapsible.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-collapsible:where([data-slot=\"collapsible\"], [data-slot^=\"collapsible-\"])\n  [data-slot=\"collapsible-trigger\"] {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--s-2);\n  list-style: none;\n  cursor: pointer;\n  font-size: var(--fs-control);\n  color: var(--muted-foreground);\n  min-height: 44px;\n  height: auto;\n}\n.v-collapsible:where([data-slot=\"collapsible\"], [data-slot^=\"collapsible-\"])\n  [data-slot=\"collapsible-trigger\"]::-webkit-details-marker {\n  display: none;\n}\n.v-collapsible:where(\n    [data-slot=\"collapsible\"],\n    [data-slot^=\"collapsible-\"]\n  )[data-state=\"open\"]\n  [data-slot=\"collapsible-trigger\"]\n  .v-chev {\n  transform: rotate(180deg);\n}\n.v-collapsible__body:where(\n  [data-slot=\"collapsible\"],\n  [data-slot^=\"collapsible-\"]\n) {\n  margin: 0;\n  padding: 0;\n  overflow: hidden;\n  font-size: var(--fs-small);\n}\n.v-collapsible__body > [data-disclosure-inner] {\n  padding: var(--s-3) var(--s-4);\n  background: var(--card);\n  border-radius: var(--r-md);\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"collapsible\"],\n  [data-slot^=\"collapsible-\"],\n  [data-slot=\"collapsible\"]::before,\n  [data-slot=\"collapsible\"]::after,\n  [data-slot^=\"collapsible-\"]::before,\n  [data-slot^=\"collapsible-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"collapsible-content\"][data-state=\"open\"] {\n  animation: none;\n}\n[data-slot=\"collapsible-content\"][data-state=\"closed\"] {\n  pointer-events: none;\n}\n[data-slot=\"collapsible-trigger\"]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 2px;\n}\n\n.v-collapsible\n  [data-slot=\"collapsible-content\"][data-state=\"closed\"]:not([hidden]) {\n  display: block;\n  animation: v-collapsible-retain var(--disclosure-exit-duration, 220ms) linear;\n}\n@keyframes v-collapsible-retain {\n  from {\n    visibility: visible;\n  }\n  to {\n    visibility: visible;\n  }\n}\n.v-collapsible [data-slot=\"collapsible-indicator\"] {\n  width: 20px;\n  height: 20px;\n  flex: none;\n  transition: transform var(--t-element) var(--enter);\n}\n.v-collapsible[data-appearance] {\n  width: 100%;\n  max-width: 640px;\n  min-width: 0;\n  color: var(--v-text);\n}\n.v-collapsible[data-appearance] [data-slot=\"collapsible-trigger\"] {\n  width: 100%;\n  justify-content: space-between;\n  gap: var(--s-5);\n  min-height: 52px;\n  padding: var(--s-3) 0;\n  color: inherit;\n  text-align: start;\n  font-weight: var(--fw-medium);\n  border-radius: 0;\n}\n.v-collapsible[data-appearance] [data-disclosure-inner] {\n  background: transparent;\n  padding: var(--s-1) 0 var(--s-5);\n  border-radius: 0;\n}\n.v-collapsible[data-appearance] [data-disclosure-inner] p {\n  margin: 0 0 var(--s-3);\n  font-size: var(--fs-control);\n  line-height: 1.7;\n  color: var(--v-text-2);\n  max-width: 60ch;\n}\n.v-collapsible[data-appearance=\"inline\"] {\n  border-block: 1px solid var(--v-border);\n}\n.v-collapsible__summary {\n  display: grid;\n  gap: var(--s-1);\n}\n.v-collapsible__summary small {\n  color: var(--v-text-2);\n  font-size: var(--fs-small);\n  font-weight: var(--fw-regular);\n  line-height: 1.4;\n}\n.v-collapsible[data-appearance=\"checklist\"] {\n  border-radius: var(--r-card);\n  border: 1px solid var(--v-border);\n  background: var(--card);\n  padding: var(--s-3) var(--s-6);\n}\n.v-collapsible__checklist {\n  list-style: none;\n  margin: 0 0 var(--s-4);\n  padding: 0;\n  display: grid;\n  gap: var(--s-1);\n}\n.v-collapsible__checklist li {\n  display: flex;\n  gap: var(--s-4);\n  align-items: center;\n  min-height: 52px;\n  font-size: var(--fs-control);\n  line-height: 1.5;\n}\n.v-collapsible__checklist li > span {\n  display: grid;\n  place-items: center;\n  flex: none;\n  width: 32px;\n  height: 32px;\n  border-radius: 50% 50% 42% 58%;\n  background: var(--v-olive);\n  color: var(--v-on-accent);\n  font-size: var(--fs-caps);\n}\n.v-collapsible[data-appearance=\"inspector\"] {\n  border-radius: var(--r-card);\n  border: 1px solid var(--v-border);\n  overflow: hidden;\n  background: var(--card);\n}\n.v-collapsible[data-appearance=\"inspector\"] [data-slot=\"collapsible-trigger\"] {\n  padding: var(--s-5);\n  background: color-mix(in srgb, var(--v-blue) 13%, var(--card));\n}\n.v-collapsible[data-appearance=\"inspector\"] [data-disclosure-inner] {\n  padding: 0 var(--s-5) var(--s-3);\n}\n.v-collapsible__inspector {\n  margin: 0 0 var(--s-3);\n}\n.v-collapsible__inspector > div {\n  display: grid;\n  grid-template-columns: minmax(85px, 0.8fr) minmax(0, 1.2fr);\n  gap: var(--s-5);\n  padding: var(--s-4) 0;\n  border-bottom: 1px solid var(--v-border);\n  font-size: var(--fs-small);\n  line-height: 1.5;\n}\n.v-collapsible__inspector dt {\n  color: var(--v-text-2);\n}\n.v-collapsible__inspector dd {\n  margin: 0;\n  overflow-wrap: anywhere;\n}\n.v-collapsible__link {\n  display: inline-flex;\n  min-height: 44px;\n  align-items: center;\n  gap: var(--s-2);\n  color: var(--v-text);\n  font-size: var(--fs-small);\n  text-underline-offset: 4px;\n}\n.v-collapsible[data-motion-quiet=\"true\"] [data-slot=\"collapsible-indicator\"] {\n  transition: none;\n}\n@media (prefers-reduced-motion: reduce) {\n  .v-collapsible [data-slot=\"collapsible-content\"][data-state=\"closed\"] {\n    animation-duration: 0s;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/collapsible.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/collapsible.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "collapsible",
+      "name": "Collapsible",
+      "tier": "base",
+      "evidence": "Ext I11",
+      "status": "derived",
+      "root": ".v-collapsible",
+      "variants": [
+        "inline",
+        "checklist",
+        "inspector"
+      ],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "unfolds"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/collapsible/contract.md",
+      "demo": "entries/collapsible/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-open.html",
+        "default-default-open-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "CollapsibleProps",
+        "props": [
+          {
+            "name": "appearance",
+            "type": "CollapsibleAppearance",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CollapsibleTriggerProps",
+        "props": [
+          {
+            "name": "indicator",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CollapsibleContentProps",
+        "props": []
+      },
+      {
+        "name": "CollapsibleIndicatorProps",
+        "props": []
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

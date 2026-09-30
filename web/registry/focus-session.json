@@ -1,0 +1,41 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "focus-session",
+  "title": "Focus session",
+  "description": "A local focus timer composed from Cojeev cards, progress, badges and native controls.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/organism-composition.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/focus-session.tsx",
+      "content": "\"use client\";\nexport { FocusSession, type OrganismProps as FocusSessionProps } from \"@/components/ui/organism-composition\";\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Focus session",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "running",
+        "paused",
+        "complete",
+        "reduced-motion"
+      ]
+    },
+    "api": [],
+    "category": "Composition",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

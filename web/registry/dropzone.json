@@ -1,0 +1,127 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dropzone",
+  "title": "Dropzone",
+  "description": "Collects local files through drag and drop or a native file picker and reports the selection.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/shape.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/presence.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/dropzone.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { ShapeMorph } from \"@/components/ui/shape\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { MotionPresence, MotionSurface } from \"@/components/ui/presence\";\n\nexport const dropzoneVariants = cva(\"v-drop\", {\n  variants: { variant: { default: \"\", compact: \"-compact\" } },\n  defaultVariants: { variant: \"default\" },\n});\nexport type DropzoneFile = {\n  name: string;\n  size: number;\n  type: string;\n  lastModified: number;\n};\nexport type DropzoneRejection = {\n  file: File;\n  code: \"file-type\" | \"file-size\";\n  reason: string;\n};\nexport type DropzoneProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof dropzoneVariants> & {\n    onFilesSelected?: (files: File[]) => void;\n    onFilesRejected?: (files: DropzoneRejection[]) => void;\n    accept?: string;\n    /** Maximum bytes per file. Omit to leave file size unrestricted. */\n    maxSize?: number;\n    multiple?: boolean;\n    disabled?: boolean;\n    showReceipt?: boolean;\n  };\nfunction fileSize(bytes: number) {\n  return bytes < 1024\n    ? `${bytes} B`\n    : bytes < 1024 * 1024\n      ? `${Math.round(bytes / 1024)} KB`\n      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;\n}\nfunction acceptsFile(file: File, accept?: string) {\n  if (!accept?.trim()) return true;\n  return accept.split(\",\").some((rule) => {\n    const type = rule.trim().toLowerCase();\n    return type.startsWith(\".\")\n      ? file.name.toLowerCase().endsWith(type)\n      : type.endsWith(\"/*\")\n        ? file.type.toLowerCase().startsWith(type.slice(0, -1))\n        : file.type.toLowerCase() === type;\n  });\n}\nexport function Dropzone({\n  className,\n  children,\n  variant,\n  onFilesSelected,\n  onFilesRejected,\n  accept,\n  maxSize,\n  multiple = true,\n  disabled,\n  showReceipt = true,\n  onDragEnter,\n  onDragOver,\n  onDragLeave,\n  onDrop,\n  onClick,\n  onKeyDown,\n  \"aria-describedby\": describedBy,\n  ...props\n}: DropzoneProps) {\n  const picker = React.useRef<HTMLInputElement>(null),\n    depth = React.useRef(0);\n  const id = React.useId();\n  const [over, setOver] = React.useState(false);\n  const [selected, setSelected] = React.useState<DropzoneFile[]>([]);\n  const [rejections, setRejections] = React.useState<DropzoneRejection[]>([]);\n  const receive = (files: File[]) => {\n    const chosen = multiple ? files : files.slice(0, 1),\n      accepted: File[] = [],\n      rejected: DropzoneRejection[] = [];\n    for (const file of chosen) {\n      if (!acceptsFile(file, accept))\n        rejected.push({\n          file,\n          code: \"file-type\",\n          reason: \"This file type is not accepted.\",\n        });\n      else if (\n        maxSize !== undefined &&\n        Number.isFinite(maxSize) &&\n        maxSize >= 0 &&\n        file.size > maxSize\n      )\n        rejected.push({\n          file,\n          code: \"file-size\",\n          reason: `Choose a file smaller than ${fileSize(maxSize)}.`,\n        });\n      else accepted.push(file);\n    }\n    setSelected(\n      accepted.map(({ name, size, type, lastModified }) => ({\n        name,\n        size,\n        type,\n        lastModified,\n      })),\n    );\n    setRejections(rejected);\n    onFilesSelected?.(accepted);\n    if (rejected.length) onFilesRejected?.(rejected);\n  };\n  const state = disabled\n    ? \"disabled\"\n    : over\n      ? \"over\"\n      : rejections.length\n        ? \"error\"\n        : selected.length\n          ? \"selected\"\n          : \"rest\";\n  return (\n    <div\n      data-slot=\"dropzone\"\n      data-part=\"root\"\n      data-drop=\"\"\n      data-state={state}\n      role=\"button\"\n      tabIndex={disabled ? -1 : 0}\n      aria-disabled={disabled || undefined}\n      aria-label=\"Add files\"\n      aria-describedby={[\n        `${id}-help`,\n        showReceipt && selected.length ? `${id}-receipt` : null,\n        rejections.length ? `${id}-error` : null,\n        describedBy,\n      ]\n        .filter(Boolean)\n        .join(\" \")}\n      className={cn(dropzoneVariants({ variant }), className)}\n      onClick={(event) => {\n        onClick?.(event);\n        if (\n          !event.defaultPrevented &&\n          !disabled &&\n          event.target !== picker.current\n        )\n          picker.current?.click();\n      }}\n      onKeyDown={(event) => {\n        onKeyDown?.(event);\n        if (\n          !event.defaultPrevented &&\n          !disabled &&\n          (event.key === \"Enter\" || event.key === \" \")\n        ) {\n          event.preventDefault();\n          picker.current?.click();\n        }\n      }}\n      onDragEnter={(event) => {\n        onDragEnter?.(event);\n        const cancelled = event.defaultPrevented;\n        event.preventDefault();\n        if (!cancelled && !disabled && ++depth.current > 0) setOver(true);\n      }}\n      onDragOver={(event) => {\n        onDragOver?.(event);\n        event.preventDefault();\n        event.dataTransfer.dropEffect = disabled ? \"none\" : \"copy\";\n      }}\n      onDragLeave={(event) => {\n        onDragLeave?.(event);\n        event.preventDefault();\n        if (--depth.current <= 0) {\n          depth.current = 0;\n          setOver(false);\n        }\n      }}\n      onDrop={(event) => {\n        onDrop?.(event);\n        const cancelled = event.defaultPrevented;\n        event.preventDefault();\n        depth.current = 0;\n        setOver(false);\n        if (!cancelled && !disabled)\n          receive(Array.from(event.dataTransfer.files));\n      }}\n      {...props}\n    >\n      <input\n        ref={picker}\n        type=\"file\"\n        accept={accept}\n        multiple={multiple}\n        disabled={disabled}\n        tabIndex={-1}\n        className=\"sr-only\"\n        aria-hidden=\"true\"\n        onChange={(event) => {\n          receive(Array.from(event.target.files ?? []));\n          event.target.value = \"\";\n        }}\n      />\n      {children ?? (\n        <>\n          <span data-slot=\"dropzone-art\" aria-hidden=\"true\">\n            <ShapeMorph name=\"pebble-soft\" className=\"v-drop__pebble\" />\n            <ShapeMorph name=\"daisy-12\" className=\"v-drop__flower\" />\n            <span data-slot=\"dropzone-symbol\">\n              <Icon name={selected.length ? \"check\" : \"upload\"} />\n            </span>\n          </span>\n          <span data-slot=\"dropzone-copy\">\n            <b>\n              {over\n                ? \"Let them land here\"\n                : selected.length\n                  ? \"Ready when you are\"\n                  : \"A place for your files\"}\n            </b>\n            <span>\n              {over\n                ? \"Release to add your files\"\n                : \"Drop files here, or choose from your device.\"}\n            </span>\n          </span>\n          <span data-slot=\"dropzone-action\">\n            {selected.length ? \"Choose files again\" : \"Choose files\"}\n            <Icon name=\"arrow-up-right\" />\n          </span>\n        </>\n      )}\n      <span id={`${id}-help`} data-slot=\"dropzone-help\">\n        {accept\n          ? `Accepts ${accept\n              .split(\",\")\n              .map((type) => type.trim())\n              .join(\", \")}.`\n          : \"Any file type.\"}\n        {maxSize !== undefined && Number.isFinite(maxSize) && maxSize >= 0\n          ? ` Up to ${fileSize(maxSize)} per file.`\n          : \"\"}\n        {!multiple ? \" One file at a time.\" : \"\"}\n      </span>\n      <MotionPresence>\n        {showReceipt && selected.length > 0 && (\n          <MotionSurface key=\"receipt\" asChild preset=\"fade\">\n            <div\n              id={`${id}-receipt`}\n              data-slot=\"dropzone-receipt\"\n              data-drop-result=\"\"\n              role=\"status\"\n            >\n              <b>\n                {selected.length} file{selected.length === 1 ? \"\" : \"s\"}{\" \"}\n                selected\n              </b>\n              {selected.slice(0, 3).map((file, index) => (\n                <span data-slot=\"dropzone-file\" key={`${file.name}-${index}`}>\n                  <Icon name=\"file\" />\n                  <span title={file.name}>{file.name}</span>\n                  <small>{fileSize(file.size)}</small>\n                </span>\n              ))}\n              {selected.length > 3 && (\n                <small>And {selected.length - 3} more.</small>\n              )}\n            </div>\n          </MotionSurface>\n        )}\n        {rejections.length > 0 && (\n          <MotionSurface key=\"error\" asChild preset=\"fade\">\n            <p id={`${id}-error`} data-slot=\"dropzone-error\" role=\"alert\">\n              <b>\n                {rejections.length === 1\n                  ? rejections[0].file.name\n                  : `${rejections.length} files`}{\" \"}\n                couldn’t be added.\n              </b>{\" \"}\n              {rejections[0].reason}\n            </p>\n          </MotionSurface>\n        )}\n      </MotionPresence>\n    </div>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/dropzone.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"dropzone\"] { position:relative; isolation:isolate; display:grid; justify-items:center; gap:var(--s-4); width:100%; min-width:0; padding:var(--s-8) var(--s-6) var(--s-6); border:1.5px dashed var(--v-text-2); border-radius:var(--r-sheet) 34px var(--r-sheet) 38px; background:var(--v-canvas); color:var(--v-text); text-align:center; cursor:pointer; transition:background var(--t-element),border-color var(--t-element); }\n[data-slot=\"dropzone\"]:not([aria-disabled=\"true\"]):hover { background:color-mix(in oklab,var(--v-blue) 8%,var(--v-canvas)); border-color:var(--v-text); }\n[data-slot=\"dropzone\"][data-state=\"over\"] { background:color-mix(in oklab,var(--v-blue) 18%,var(--v-canvas)); border:1.5px solid var(--v-text); }\n[data-slot=\"dropzone\"][data-state=\"error\"] { border-color:var(--v-danger-ink); }\n[data-slot=\"dropzone\"]:focus-visible { outline:2px solid var(--ring); outline-offset:4px; }\n[data-slot=\"dropzone-art\"] { position:relative; display:grid; place-items:center; width:104px; height:90px; margin:0 0 var(--s-1); }\n[data-slot=\"dropzone-art\"] .v-drop__pebble { position:absolute; width:94px; height:94px; color:var(--v-blue); transform:rotate(-18deg); }\n[data-slot=\"dropzone-art\"] .v-drop__flower { position:absolute; right:-2px; bottom:-2px; width:38px; height:38px; color:var(--v-yellow); transform:rotate(8deg); }\n[data-slot=\"dropzone-symbol\"] { position:relative; display:grid; place-items:center; color:var(--ink-fixed); }\n[data-slot=\"dropzone-symbol\"] .v-icon { width:32px; height:32px; stroke-width:1.8; }\n[data-slot=\"dropzone-copy\"] { display:grid; gap:var(--s-2); max-width:38ch; }\n[data-slot=\"dropzone-copy\"] b { font-family:var(--font-display); font-size:var(--fs-title); font-weight:var(--fw-semibold); letter-spacing:-.02em; line-height:1.2; }\n[data-slot=\"dropzone-copy\"] > span { font-size:var(--fs-control); color:var(--v-text-2); line-height:1.45; }\n[data-slot=\"dropzone-action\"] { display:inline-flex; align-items:center; gap:var(--s-2); border-bottom:1px solid currentColor; padding-bottom:2px; font-size:var(--fs-small); font-weight:var(--fw-semibold); }\n[data-slot=\"dropzone-action\"] .v-icon { width:15px; height:15px; }\n[data-slot=\"dropzone-help\"] { max-width:48ch; font-size:var(--fs-meta); line-height:1.5; color:var(--v-text-2); overflow-wrap:anywhere; }\n[data-slot=\"dropzone-receipt\"] { display:grid; gap:var(--s-2); width:100%; min-width:0; margin-top:2px; padding-top:var(--s-4); border-top:1px solid var(--v-border); text-align:start; font-size:var(--fs-small); }\n[data-slot=\"dropzone-receipt\"] > b { font-size:var(--fs-meta); font-weight:var(--fw-semibold); }\n[data-slot=\"dropzone-file\"] { display:grid; grid-template-columns:16px minmax(0,1fr) auto; gap:var(--s-2); align-items:start; }\n[data-slot=\"dropzone-file\"] .v-icon { width:16px; height:16px; }\n[data-slot=\"dropzone-file\"] > span { overflow-wrap:anywhere; line-height:1.4; }\n[data-slot=\"dropzone-file\"] small { color:var(--v-text-2); font-size:var(--fs-caps); line-height:1.6; }\n[data-slot=\"dropzone-error\"] { width:100%; padding:var(--s-3) var(--s-4); background:color-mix(in oklab,var(--v-danger-ink) 8%,var(--v-canvas)); border-radius:var(--r-md); color:var(--v-danger-ink); font-size:var(--fs-small); line-height:1.5; text-align:start; overflow-wrap:anywhere; }\n[data-slot=\"dropzone\"][aria-disabled=\"true\"] { cursor:not-allowed; color:var(--v-disabled-ink); background:var(--v-disabled-face); border-color:var(--v-disabled-edge); }\n[data-slot=\"dropzone\"][aria-disabled=\"true\"] [data-slot=\"dropzone-art\"] { opacity:.5; }\n[data-slot=\"dropzone\"].-compact { grid-template-columns:60px minmax(0,1fr); justify-items:start; gap:var(--s-2) var(--s-4); padding:var(--s-5); text-align:start; }\n[data-slot=\"dropzone\"].-compact [data-slot=\"dropzone-art\"] { grid-row:1 / 4; width:60px; height:64px; margin:0; }\n[data-slot=\"dropzone\"].-compact .v-drop__pebble { width:62px; height:62px; }\n[data-slot=\"dropzone\"].-compact .v-drop__flower { width:24px; height:24px; }\n[data-slot=\"dropzone\"].-compact [data-slot=\"dropzone-symbol\"] .v-icon { width:24px; height:24px; }\n[data-slot=\"dropzone\"].-compact [data-slot=\"dropzone-copy\"] b { font-size:var(--fs-lead); }\n[data-slot=\"dropzone\"].-compact :is([data-slot=\"dropzone-help\"],[data-slot=\"dropzone-receipt\"],[data-slot=\"dropzone-error\"]) { grid-column:1 / -1; }\n@media(max-width:420px) { [data-slot=\"dropzone\"] { padding:var(--s-6) var(--s-5) var(--s-5); } }\n@media(prefers-reduced-motion:reduce) { [data-slot=\"dropzone\"] { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/dropzone.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/dropzone.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "dropzone",
+      "name": "Dropzone",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": ".v-drop",
+      "variants": [
+        "default",
+        "compact"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "empty",
+        "dragging",
+        "selected",
+        "invalid",
+        "disabled"
+      ],
+      "dataStates": [],
+      "category": "controls",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "paces"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/dropzone/contract.md",
+      "demo": "entries/dropzone/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "DropzoneProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"compact\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onFilesSelected",
+            "type": "(files: File[]) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onFilesRejected",
+            "type": "(files: DropzoneRejection[]) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "accept",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "maxSize",
+            "type": "number",
+            "required": false,
+            "description": "Maximum bytes per file. Omit to leave file size unrestricted."
+          },
+          {
+            "name": "multiple",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "showReceipt",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

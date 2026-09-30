@@ -1,0 +1,124 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "table",
+  "title": "Tables",
+  "description": "Scan a compact ledger, explore detailed records or compare them side by side. One Tables guide for native parts and the composed DataTable.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/table.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { ScrollArea, ScrollBar } from \"@/components/ui/scroll-area\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\nexport const tableVariants = cva(\"v-table w-full border-collapse text-[length:var(--fs-small)]\");\nexport type TableContainerProps = React.ComponentProps<\"div\">;\nexport function TableContainer({\n  ref,\n  className,\n  onScroll,\n  children,\n  ...props\n}: TableContainerProps) {\n  const element = React.useRef<HTMLDivElement>(null);\n  const mark = React.useCallback(() => {\n    const el = element.current;\n    if (!el) return;\n    const room = el.scrollWidth - el.clientWidth;\n    if (room < 2) el.removeAttribute(\"data-scrollable\");\n    else {\n      const rtl = getComputedStyle(el).direction === \"rtl\";\n      const travelled = rtl ? -el.scrollLeft : el.scrollLeft;\n      el.dataset.scrollable = travelled >= room - 14 ? \"end\" : \"more\";\n    }\n  }, []);\n  React.useLayoutEffect(() => {\n    const el = element.current;\n    if (!el) return;\n    const resize = new ResizeObserver(mark);\n    const observe = () => {\n      resize.disconnect();\n      resize.observe(el);\n      Array.from(el.children).forEach((child) => resize.observe(child));\n      mark();\n    };\n    const mutation = new MutationObserver(observe);\n    mutation.observe(el, { childList: true, subtree: true });\n    observe();\n    return () => {\n      resize.disconnect();\n      mutation.disconnect();\n    };\n  }, [mark]);\n  const mergeRef = React.useCallback(\n    (node: HTMLDivElement | null) => {\n      element.current = node;\n      const release = assignMotionRef(ref, node);\n      return () => {\n        element.current = null;\n        release();\n      };\n    },\n    [ref],\n  );\n  return (\n    <ScrollArea\n      dir={\n        props.dir === \"rtl\" ? \"rtl\" : props.dir === \"ltr\" ? \"ltr\" : undefined\n      }\n      variant=\"plain\"\n      className=\"v-table-scroll v-table-wrap\"\n      viewportProps={{\n        ...props,\n        ...{ \"data-slot\": \"table-container\", \"data-part\": \"viewport\" },\n        ref: mergeRef,\n        className: cn(\"v-table-viewport\", className),\n        onScroll: (event) => {\n          mark();\n          onScroll?.(event);\n        },\n      }}\n      viewportWrapper={(viewport) => (\n        <>\n          {viewport}\n          <ScrollBar orientation=\"horizontal\" />\n        </>\n      )}\n    >\n      {children}\n    </ScrollArea>\n  );\n}\nexport type TableProps = React.ComponentProps<\"table\"> & {\n  appearance?: \"ledger\" | \"rich\" | \"comparison\";\n};\nexport function Table({ className, appearance, ...props }: TableProps) {\n  return (\n    <table\n      data-slot=\"table\"\n      data-appearance={appearance}\n      data-part=\"root\"\n      className={cn(tableVariants(), className)}\n      {...props}\n    />\n  );\n}\nexport type TableHeaderProps = React.ComponentProps<\"thead\">;\nexport function TableHeader(props: TableHeaderProps) {\n  return <thead data-slot=\"table-header\" {...props} />;\n}\nexport type TableBodyProps = React.ComponentProps<\"tbody\">;\nexport function TableBody(props: TableBodyProps) {\n  return <tbody data-slot=\"table-body\" {...props} />;\n}\nexport type TableFooterProps = React.ComponentProps<\"tfoot\">;\nexport function TableFooter(props: TableFooterProps) {\n  return <tfoot data-slot=\"table-footer\" {...props} />;\n}\nexport type TableRowProps = React.ComponentProps<\"tr\">;\nexport function TableRow(props: TableRowProps) {\n  return <tr data-slot=\"table-row\" {...props} />;\n}\nexport type TableHeadProps = React.ComponentProps<\"th\"> & { numeric?: boolean };\nexport function TableHead({ className, numeric, ...props }: TableHeadProps) {\n  return (\n    <th\n      data-slot=\"table-head\"\n      scope=\"col\"\n      className={cn(\n        \"h-[44px] px-[var(--s-3)] py-0 text-left text-[length:var(--fs-caps)] font-semibold tracking-[.07em] uppercase text-[color:var(--v-text-2)] whitespace-nowrap\",\n        numeric && \"-num text-right tabular-nums\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type TableCellProps = React.ComponentProps<\"td\"> & { numeric?: boolean };\nexport function TableCell({ className, numeric, ...props }: TableCellProps) {\n  return (\n    <td\n      data-slot=\"table-cell\"\n      className={cn(\n        \"h-[60px] px-[var(--s-3)] py-0 align-middle text-[length:var(--fs-control)] whitespace-nowrap\",\n        numeric && \"-num text-right tabular-nums font-semibold\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type TableCaptionProps = React.ComponentProps<\"caption\">;\nexport function TableCaption({ className, ...props }: TableCaptionProps) {\n  return (\n    <caption\n      data-slot=\"table-caption\"\n      className={cn(\n        \"text-[length:var(--fs-meta)] text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/table.css",
+      "content": "@layer cojeev-states {\n/* Cross-part state, scrollbar, and row interaction cascade. */\n.v-table-demo {\n  display: grid;\n  gap: var(--s-5);\n  min-width: 0;\n}\n.v-table-demo__heading {\n  display: flex;\n  align-items: center;\n  gap: var(--s-4);\n}\n.v-table-demo__heading small {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.1em;\n  color: var(--v-accent-ink);\n}\n.v-table-demo__heading h3 {\n  margin: var(--s-1) 0 0;\n  font-size: clamp(20px, 2.4vw, 26px);\n  font-weight: var(--fw-semibold);\n  line-height: 1.3;\n}\n.v-table-demo__emblem {\n  flex: none;\n  display: grid;\n  place-items: center;\n  width: 48px;\n  height: 48px;\n  border-radius: var(--r-card-sm) var(--r-panel) var(--r-card-sm) var(--r-card);\n  background: var(--v-pink-soft);\n  color: var(--v-accent-ink);\n}\n.v-table-demo__count {\n  margin-inline-start: auto;\n  white-space: nowrap;\n  color: var(--v-text-2);\n  font-size: var(--fs-meta);\n}\n.v-table-demo__cue {\n  margin: 0;\n  color: var(--v-text-2);\n  font-size: var(--fs-control);\n  max-width: 64ch;\n}\n.v-table-demo__receipt {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-height: 70px;\n  padding: var(--s-4) var(--s-5);\n  border-inline-start: 3px solid var(--v-accent-ink);\n  background: var(--v-canvas);\n  border-radius: 0 var(--r-card-sm) var(--r-card-sm) 0;\n  color: var(--v-text-2);\n  font-size: var(--fs-control);\n}\n.v-table-demo__receipt b {\n  display: block;\n  font-weight: var(--fw-semibold);\n  color: var(--v-text);\n}\n.v-table-demo__receipt small {\n  display: block;\n  margin-top: var(--s-1);\n  font-size: var(--fs-meta);\n}\n.v-table-demo__comparison {\n  display: grid;\n  gap: var(--s-4);\n  min-width: 0;\n}\n.v-table-demo__compare-nav {\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: space-between;\n  align-items: center;\n  gap: var(--s-2);\n  font-size: var(--fs-meta);\n  color: var(--v-text-2);\n}\n.v-table-demo [data-slot=\"button\"] {\n  min-height: 44px;\n}\n.v-table__record {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n}\n.v-table__record b {\n  font-weight: var(--fw-medium);\n}\n.v-table__record small {\n  display: block;\n  max-width: 30ch;\n  margin-top: var(--s-2);\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-regular);\n  color: var(--v-text-2);\n  white-space: normal;\n}\n.v-table__record-number {\n  font-variant-numeric: tabular-nums;\n  font-size: var(--fs-caps);\n  font-weight: var(--fw-regular);\n  color: var(--v-accent-ink);\n}\n.v-table__updated {\n  display: block;\n  margin-top: var(--s-2);\n  font-size: var(--fs-caps);\n  color: var(--v-text-2);\n}\n.v-table__status {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--s-2);\n  color: var(--v-text-2);\n  font-size: var(--fs-meta);\n  white-space: nowrap;\n}\n.v-table__status::before {\n  content: \"\";\n  width: 6px;\n  height: 6px;\n  border: 1px solid currentColor;\n  border-radius: 50%;\n}\n.v-table__status[data-ready=\"true\"]::before {\n  background: currentColor;\n}\n.v-table__status[data-ready=\"true\"] {\n  color: var(--v-accent-ink);\n}\n.v-table__actions {\n  display: flex;\n  gap: var(--s-2);\n  align-items: center;\n}\n[data-slot=\"table\"][data-appearance=\"ledger\"] {\n  min-width: 480px;\n}\n[data-slot=\"table\"][data-appearance=\"ledger\"] td {\n  height: 54px;\n  border-bottom: 1px solid var(--v-edge);\n}\n[data-slot=\"table\"][data-appearance=\"ledger\"] .v-table__record-number {\n  min-width: 24px;\n}\n[data-slot=\"table\"][data-appearance=\"rich\"] {\n  min-width: 690px;\n}\n[data-slot=\"table\"][data-appearance=\"rich\"] td {\n  height: 96px;\n  padding-block: var(--s-4);\n  border-bottom: 1px solid var(--v-edge);\n}\n[data-slot=\"table\"][data-appearance=\"rich\"] .v-table__record-number {\n  display: grid;\n  place-items: center;\n  width: 36px;\n  height: 42px;\n  border-radius: var(--r-md) var(--r-card-sm) var(--r-md) var(--r-card-sm);\n  background: var(--v-pink-soft);\n  flex: none;\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] {\n  min-width: 680px;\n  table-layout: fixed;\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] th:first-child {\n  width: 104px;\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] th,\n[data-slot=\"table\"][data-appearance=\"comparison\"] td {\n  padding: var(--s-5) var(--s-4);\n  white-space: normal;\n  border-bottom: 1px solid var(--v-edge);\n  border-inline-end: 1px solid var(--v-edge);\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] th:last-child,\n[data-slot=\"table\"][data-appearance=\"comparison\"] td:last-child {\n  border-inline-end: 0;\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] thead th:not(:first-child) {\n  background: var(--v-pink-soft);\n  color: var(--v-text);\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] thead b {\n  display: block;\n  margin-top: var(--s-3);\n  font-size: var(--fs-reading);\n  text-transform: none;\n  letter-spacing: normal;\n  line-height: 1.5;\n}\n[data-slot=\"table\"][data-appearance=\"comparison\"] caption {\n  caption-side: bottom;\n  padding: var(--s-5) 0 0;\n  text-align: start;\n}\n@media (max-width: 640px) {\n  .v-table-demo__heading {\n    flex-wrap: wrap;\n  }\n  .v-table-demo__heading > div {\n    flex: 1;\n  }\n  .v-table-demo__count {\n    margin: 0;\n  }\n  .v-table-demo__compare-nav > span {\n    order: -1;\n    flex-basis: 100%;\n    text-align: center;\n  }\n}\n.v-table-scroll[data-slot=\"scroll-area\"].v-scroll {\n  max-height: none;\n  border-radius: var(--r-card);\n  background: var(--card);\n}\n.v-table-scroll > [data-radix-scroll-area-viewport] {\n  height: auto;\n  max-height: none;\n  padding: var(--s-2) var(--s-3) var(--s-7);\n}\n.v-table-scroll > [data-radix-scroll-area-viewport] > div {\n  table-layout: fixed;\n  width: 100%;\n}\n.v-table-scroll [data-orientation=\"horizontal\"] {\n  margin-inline: var(--s-3);\n}\n[data-slot=\"table\"] td.-num,\n[data-slot=\"table\"] th.-num {\n  text-align: right;\n  font-variant-numeric: tabular-nums;\n}\n[data-slot=\"table\"] td.-num {\n  font-weight: var(--fw-bold);\n}\n[data-slot=\"table\"] tbody tr {\n  transition: background var(--t-micro);\n}\n[data-slot=\"table\"] tbody tr:hover {\n  background: color-mix(in oklab, var(--card) 92%, var(--v-ink));\n}\n[data-slot=\"table\"] td:first-child,\n[data-slot=\"table\"] th:first-child {\n  padding-left: 0;\n}\n[data-slot=\"table\"] td:last-child,\n[data-slot=\"table\"] th:last-child {\n  padding-right: 0;\n}\n[data-slot=\"table\"] .v-actions {\n  display: inline-flex;\n  gap: var(--s-2);\n}\n[data-slot=\"table\"] td.-num[data-unavailable] {\n  color: var(--unavail-ink);\n}\n:root[data-mode=\"dark\"] [data-slot=\"table\"] td.-num,\n:root[data-mode=\"dark\"] [data-slot=\"table\"] th {\n  color: var(--v-text);\n}\n[data-slot=\"table\"] tbody tr:last-child td {\n  border-bottom: 0;\n}\n[data-slot=\"table\"] tbody tr {\n  position: relative;\n  transition:\n    background var(--t-element) var(--enter),\n    box-shadow var(--t-element) var(--enter);\n}\n[data-slot=\"table\"] tbody tr[data-row],\n[data-slot=\"table\"] tbody tr[tabindex] {\n  cursor: pointer;\n}\n[data-slot=\"table\"] tbody tr:hover {\n  background: transparent;\n  box-shadow: none;\n}\n[data-slot=\"table\"] tbody tr > td {\n  position: relative;\n  background: transparent;\n  transition: color var(--t-element) var(--enter);\n}\n[data-slot=\"table\"] tbody tr > td .v-disk {\n  transition:\n    transform var(--t-element) var(--enter),\n    box-shadow var(--t-element) var(--enter);\n}\n[data-slot=\"table\"] tbody tr:hover > td .v-disk {\n  transform: translateY(-1px);\n  box-shadow:\n    0 0 0 3px var(--v-canvas),\n    0 2px 0 3px color-mix(in oklab, var(--v-ink) 10%, transparent);\n}\n[data-slot=\"table\"] tbody tr:hover > td {\n  color: var(--v-text);\n}\n[data-slot=\"table\"] tbody tr > td.v-id,\n[data-slot=\"table\"] tbody tr > td .v-id {\n  color: var(--v-text-2);\n  transition: color var(--t-element);\n}\n[data-slot=\"table\"] tbody tr:hover > td.v-id,\n[data-slot=\"table\"] tbody tr:hover > td .v-id {\n  color: var(--v-text);\n}\n[data-slot=\"table\"] tbody tr:hover > td b {\n  text-decoration: underline;\n  text-decoration-color: var(--v-pink-deep);\n  text-decoration-thickness: 2px;\n  text-underline-offset: 4px;\n}\n[data-slot=\"table\"] tbody tr:active > td .v-disk {\n  transform: translateY(0);\n  box-shadow: 0 0 0 3px var(--v-canvas);\n}\n[data-slot=\"table\"] tbody tr:focus-visible {\n  outline: none;\n}\n[data-slot=\"table\"] tbody tr[tabindex]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: -2px;\n}\n[data-slot=\"table\"] tbody tr:focus-visible > td:first-child .v-disk {\n  box-shadow:\n    0 0 0 3px var(--v-canvas),\n    0 0 0 5px var(--ring);\n}\n[data-slot=\"table\"] tbody tr:focus-visible > td b {\n  text-decoration: underline;\n  text-decoration-color: var(--ring);\n  text-decoration-thickness: 2px;\n  text-underline-offset: 4px;\n}\n[data-slot=\"table\"] tbody tr[aria-selected=\"true\"] > td {\n  background: var(--v-pink-soft);\n}\n[data-slot=\"table\"] tbody tr[aria-selected=\"true\"] > td:first-child {\n  border-radius: var(--r-card-sm) 0 0 var(--r-card-sm);\n}\n[data-slot=\"table\"] tbody tr[aria-selected=\"true\"] > td:last-child {\n  border-radius: 0 var(--r-card-sm) var(--r-card-sm) 0;\n}\n[data-slot=\"table\"] td:first-child {\n  transition: none;\n}\n[data-slot=\"table\"] td:first-child {\n  padding-left: var(--s-3);\n}\n[data-slot=\"table\"] th:first-child {\n  padding-left: var(--s-3);\n}\n[data-slot=\"table\"] td:last-child {\n  padding-right: var(--s-3);\n}\n[data-slot=\"table\"] th:last-child {\n  padding-right: var(--s-3);\n}\n[data-slot=\"table\"] .v-actions .v-ibtn {\n  opacity: 0.6;\n  transition:\n    opacity var(--t-element) var(--enter),\n    background var(--t-element) var(--enter),\n    color var(--t-element);\n}\n[data-slot=\"table\"] tbody tr:hover .v-actions .v-ibtn,\n[data-slot=\"table\"] tbody tr:focus-within .v-actions .v-ibtn {\n  opacity: 1;\n}\n[data-slot=\"table\"] .v-actions .v-ibtn:hover {\n  background: var(--v-pink-soft);\n  box-shadow: inset 0 0 0 1px var(--v-pink);\n  color: var(--v-on-accent);\n}\n[data-slot=\"table\"] td.-num {\n  font-weight: var(--fw-semibold);\n}\n[data-slot=\"table\"] td .v-id {\n  font-size: var(--fs-small);\n  color: var(--v-text-2);\n}\n[data-slot=\"table-container\"][tabindex]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 2px;\n}\n@media (hover: none) {\n  [data-slot=\"table\"] .v-actions .v-ibtn {\n    opacity: 1;\n  }\n}\n[data-slot=\"table-container\"]::-webkit-scrollbar {\n  width: 12px;\n  height: 12px;\n}\n[data-slot=\"table-container\"]::-webkit-scrollbar-track {\n  background: transparent;\n  border-radius: var(--r-pill);\n}\n[data-slot=\"table-container\"]:hover::-webkit-scrollbar-track {\n  background: color-mix(in oklab, var(--v-pink) 22%, transparent);\n  border: 4px solid transparent;\n  background-clip: content-box;\n}\n[data-slot=\"table-container\"]::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-ink) 34%, transparent);\n  border-radius: var(--r-pill);\n  border: 4px solid transparent;\n  background-clip: content-box;\n  min-height: 36px;\n}\n[data-slot=\"table-container\"]:hover::-webkit-scrollbar-thumb {\n  background: var(--v-ink);\n  background-clip: content-box;\n  border-width: 3px;\n}\n[data-slot=\"table\"] th:first-child,\n[data-slot=\"table\"] td:first-child {\n  padding-left: var(--s-4);\n}\n[data-slot=\"table\"] th:last-child,\n[data-slot=\"table\"] td:last-child {\n  padding-right: var(--s-4);\n}\n[data-slot=\"table-container\"]::-webkit-scrollbar {\n  height: 7px;\n  width: 7px;\n}\n[data-slot=\"table-container\"]::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-border) 90%, transparent);\n  border-radius: var(--r-xs);\n}\n[data-slot=\"table-container\"]::-webkit-scrollbar-track {\n  background: transparent;\n}\n[data-slot=\"table-container\"][data-scrollable] {\n  -webkit-mask-image: linear-gradient(\n    to right,\n    var(--mask-ink) 0,\n    var(--mask-ink) calc(100% - 26px),\n    color-mix(in oklab, var(--mask-ink) 25%, transparent) 100%\n  );\n  mask-image: linear-gradient(\n    to right,\n    var(--mask-ink) 0,\n    var(--mask-ink) calc(100% - 26px),\n    color-mix(in oklab, var(--mask-ink) 25%, transparent) 100%\n  );\n}\n[data-slot=\"table-container\"][data-scrollable=\"end\"] {\n  -webkit-mask-image: none;\n  mask-image: none;\n}\n[data-slot=\"table-container\"]:dir(rtl)[data-scrollable=\"more\"] {\n  -webkit-mask-image: linear-gradient(\n    to left,\n    var(--mask-ink) 0,\n    var(--mask-ink) calc(100% - 26px),\n    color-mix(in oklab, var(--mask-ink) 25%, transparent) 100%\n  );\n  mask-image: linear-gradient(\n    to left,\n    var(--mask-ink) 0,\n    var(--mask-ink) calc(100% - 26px),\n    color-mix(in oklab, var(--mask-ink) 25%, transparent) 100%\n  );\n}\n[data-slot=\"table\"] tbody tr[tabindex]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: -2px;\n}\n:root[data-mode=\"dark\"] [data-slot=\"table\"] tbody tr:hover,\n:root[data-mode=\"dark\"] [data-slot=\"table\"] tbody tr:focus-visible {\n  background: var(--v-beige-2);\n}\n[data-slot=\"table\"] th {\n  border-bottom: 1px solid color-mix(in oklab, var(--v-edge) 40%, transparent);\n}\n[data-slot=\"table\"] td {\n  border-bottom: 1px solid color-mix(in oklab, var(--v-border) 70%, transparent);\n}\n[data-slot=\"table-container\"] {\n  scrollbar-gutter: stable;\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/table.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/table.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "table",
+      "name": "Tables",
+      "tier": "base",
+      "evidence": "I18",
+      "status": "source",
+      "root": ".v-table",
+      "variants": [
+        "ledger",
+        "rich",
+        "comparison"
+      ],
+      "sizes": [],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "breathes"
+      ],
+      "canvas": "720x320",
+      "contract": "entries/table/contract.md",
+      "demo": "entries/table/demo.html",
+      "isolation": [
+        "default-default-rest-720x320.html",
+        "default-default-rest-dark-720x320.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "TableContainerProps",
+        "props": []
+      },
+      {
+        "name": "TableProps",
+        "props": [
+          {
+            "name": "appearance",
+            "type": "\"ledger\" | \"rich\" | \"comparison\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "TableHeaderProps",
+        "props": []
+      },
+      {
+        "name": "TableBodyProps",
+        "props": []
+      },
+      {
+        "name": "TableFooterProps",
+        "props": []
+      },
+      {
+        "name": "TableRowProps",
+        "props": []
+      },
+      {
+        "name": "TableHeadProps",
+        "props": [
+          {
+            "name": "numeric",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "TableCellProps",
+        "props": [
+          {
+            "name": "numeric",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "TableCaptionProps",
+        "props": []
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

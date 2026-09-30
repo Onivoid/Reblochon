@@ -1,0 +1,283 @@
+@layer cojeev-states {
+/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */
+.v-resizable__pane:where([data-slot="resizable-panel"] > *) {
+  padding: var(--s-4);
+  overflow: auto;
+  min-width: 0;
+}
+.v-resizable__handle:where([data-slot="resizable"], [data-slot^="resizable-"]) {
+  background: transparent;
+  cursor: col-resize;
+  place-items: center;
+  touch-action: none;
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle {
+  cursor: row-resize;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  )::before {
+  content: "";
+  width: 2px;
+  height: 28px;
+  border-radius: 1px;
+  background: var(--v-border);
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle::before {
+  width: 28px;
+  height: 2px;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):hover::before,
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible::before {
+  background: var(--v-pink);
+}
+.v-resizable__pane:where([data-slot="resizable-panel"] > *) {
+  padding: var(--s-5) var(--s-5);
+  gap: var(--s-2);
+  align-content: start;
+  background: var(--v-canvas);
+}
+:where([data-slot="resizable-panel"]:last-child) > .v-resizable__pane {
+  background: var(--surface-work);
+}
+.v-resizable__pane:where([data-slot="resizable-panel"] > *) > b {
+  font-family: var(--font-display);
+  font-size: var(--fs-reading);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
+}
+.v-resizable__pane:where([data-slot="resizable-panel"] > *) .v-caps {
+  margin-bottom: var(--s-1);
+}
+.v-resizable__handle:where([data-slot="resizable"], [data-slot^="resizable-"]) {
+  position: relative;
+  background: var(--card);
+  cursor: col-resize;
+  place-items: center;
+  touch-action: none;
+  transition: background var(--t-micro);
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  )::before {
+  content: "";
+  width: 6px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--v-edge);
+  opacity: 0.6;
+  transition: all var(--t-micro) var(--enter);
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  )::after {
+  content: "";
+  position: absolute;
+  width: 2px;
+  height: 14px;
+  background: var(--v-canvas);
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity var(--t-micro);
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):hover::before,
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible::before {
+  background: var(--v-pink);
+  opacity: 1;
+  height: 56px;
+  width: 8px;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):hover::after,
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible::after {
+  opacity: 1;
+  background: var(--ink-fixed);
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):active::before,
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-dragging
+  .v-resizable__handle::before {
+  background: var(--v-ink);
+  opacity: 1;
+  width: 8px;
+  height: 64px;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):active::after,
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-dragging
+  .v-resizable__handle::after {
+  background: var(--v-canvas);
+  opacity: 1;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible {
+  outline: none;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible::before {
+  box-shadow:
+    0 0 0 2px var(--v-canvas),
+    0 0 0 4px var(--ring);
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle {
+  cursor: row-resize;
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle::before {
+  width: 44px;
+  height: 6px;
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle::after {
+  width: 14px;
+  height: 2px;
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle:hover::before {
+  width: 56px;
+  height: 8px;
+}
+.v-resizable__handle:where([data-slot="resizable"], [data-slot^="resizable-"]) {
+  position: relative;
+  width: 14px;
+  cursor: col-resize;
+  background: transparent;
+  place-items: center;
+  flex: none;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  )::before {
+  content: "";
+  width: 4px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  background: var(--v-edge);
+  transition:
+    background var(--t-micro),
+    height var(--t-element) var(--enter);
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):hover::before,
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible::before,
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):active::before,
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-dragging
+  .v-resizable__handle::before {
+  background: var(--v-pink-deep);
+  height: 52px;
+}
+.v-resizable__handle:where(
+    [data-slot="resizable"],
+    [data-slot^="resizable-"]
+  ):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+  border-radius: var(--r-sm);
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle {
+  width: auto;
+  height: 14px;
+  cursor: row-resize;
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle::before {
+  width: 36px;
+  height: 4px;
+}
+.v-resizable:where([data-slot="resizable"], [data-slot^="resizable-"]).-v
+  .v-resizable__handle:hover::before {
+  width: 52px;
+  height: 4px;
+}
+.v-resizable__pane:where([data-slot="resizable-panel"] > *) {
+  border-radius: var(--r-card-sm);
+}
+:root[data-mode="dark"]
+  .v-resizable__pane:where([data-slot="resizable-panel"] > *) {
+  background: var(--v-beige);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="resizable"],
+  [data-slot^="resizable-"],
+  [data-slot="resizable"]::before,
+  [data-slot="resizable"]::after,
+  [data-slot^="resizable-"]::before,
+  [data-slot^="resizable-"]::after {
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+    transition-duration: 0s;
+    scroll-behavior: auto;
+  }
+}
+
+[data-slot="resizable-panel"] > .v-resizable__pane {
+  display: grid;
+  /* The panel owns scrolling; its composed content owns spacing. */
+  padding: 0;
+}
+[data-slot="resizable-handle"] {
+  display: grid;
+  flex-basis: 14px;
+}
+[data-slot="resizable-handle"]:not([data-with-handle])::before,
+[data-slot="resizable-handle"]:not([data-with-handle])::after {
+  display: none;
+}
+.v-resizable__pane:where([data-slot="resizable-panel"] > *) {
+  overflow: hidden;
+  padding: 0;
+}
+.v-resizable .v-resizable__scroll[data-slot="scroll-area"] {
+  --h: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 0;
+}
+.v-resizable .v-resizable__scroll > [data-slot="scroll-area-viewport"] {
+  height: 100%;
+  max-height: 100%;
+  padding: var(--s-5) var(--s-6) var(--s-6) var(--s-5);
+}
+
+}

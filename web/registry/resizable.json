@@ -1,0 +1,100 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "resizable",
+  "title": "Resizable",
+  "description": "Divides a region into panels whose relative sizes can be adjusted with a separator.",
+  "dependencies": [
+    "class-variance-authority",
+    "react-resizable-panels"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/resizable.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"react-resizable-panels\";\nimport { ScrollArea, ScrollBar } from \"@/components/ui/scroll-area\";\nexport const resizableVariants = cva(\n  \"v-resizable [height:var(--h,240px)] [background:var(--card)] [border-radius:var(--r-panel)] [overflow:hidden] [box-shadow:inset_0_0_0_1px_var(--v-border)] [isolation:isolate] flex\",\n  {\n    variants: { variant: { default: \"\", v: \"-v\" } },\n    defaultVariants: { variant: \"default\" },\n  },\n);\nexport type ResizablePanelGroupProps = React.ComponentProps<\n  typeof Primitive.Group\n> &\n  VariantProps<typeof resizableVariants> & {\n    direction?: \"horizontal\" | \"vertical\";\n  };\nexport function ResizablePanelGroup({\n  className,\n  variant,\n  direction,\n  orientation,\n  elementRef,\n  style,\n  ...props\n}: ResizablePanelGroupProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"cards\", elementRef);\n  const resolved =\n    orientation ?? direction ?? (variant === \"v\" ? \"vertical\" : \"horizontal\");\n  return (\n    <Primitive.Group\n      elementRef={morphRef}\n      data-slot=\"resizable\"\n      data-part=\"root\"\n      data-resizable=\"\"\n      orientation={resolved}\n      style={{ height: \"var(--h,240px)\", ...style }}\n      className={cn(\n        resizableVariants({\n          variant: resolved === \"vertical\" ? \"v\" : \"default\",\n        }),\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type ResizablePanelProps = React.ComponentProps<typeof Primitive.Panel>;\nexport function ResizablePanel({\n  className,\n  children,\n  minSize = \"15%\",\n  maxSize = \"85%\",\n  ...props\n}: ResizablePanelProps) {\n  return (\n    <Primitive.Panel\n      data-slot=\"resizable-panel\"\n      data-part=\"content\"\n      minSize={minSize}\n      maxSize={maxSize}\n      className={cn(\"v-resizable__pane min-w-0 overflow-hidden\", className)}\n      {...props}\n    >\n      <ScrollArea\n        variant=\"plain\"\n        className=\"v-resizable__scroll\"\n        viewportProps={{\n          \"aria-label\": props[\"aria-label\"] ?? \"Resizable panel content\",\n        }}\n        viewportWrapper={(viewport) => (\n          <>\n            {viewport}\n            <ScrollBar orientation=\"horizontal\" />\n          </>\n        )}\n      >\n        {children}\n      </ScrollArea>\n    </Primitive.Panel>\n  );\n}\nexport type ResizableHandleProps = React.ComponentProps<\n  typeof Primitive.Separator\n> & { withHandle?: boolean };\nexport function ResizableHandle({\n  className,\n  withHandle = true,\n  children,\n  ...props\n}: ResizableHandleProps) {\n  return (\n    <Primitive.Separator\n      data-slot=\"resizable-handle\"\n      data-part=\"thumb\"\n      data-with-handle={withHandle || undefined}\n      className={cn(\n        \"v-resizable__handle grid place-items-center touch-none shrink-0 basis-2\",\n        className,\n      )}\n      {...props}\n    >\n      {children}\n    </Primitive.Separator>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/resizable.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) {\n  padding: var(--s-4);\n  overflow: auto;\n  min-width: 0;\n}\n.v-resizable__handle:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]) {\n  background: transparent;\n  cursor: col-resize;\n  place-items: center;\n  touch-action: none;\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle {\n  cursor: row-resize;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  )::before {\n  content: \"\";\n  width: 2px;\n  height: 28px;\n  border-radius: 1px;\n  background: var(--v-border);\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle::before {\n  width: 28px;\n  height: 2px;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):hover::before,\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible::before {\n  background: var(--v-pink);\n}\n.v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) {\n  padding: var(--s-5) var(--s-5);\n  gap: var(--s-2);\n  align-content: start;\n  background: var(--v-canvas);\n}\n:where([data-slot=\"resizable-panel\"]:last-child) > .v-resizable__pane {\n  background: var(--surface-work);\n}\n.v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) > b {\n  font-family: var(--font-display);\n  font-size: var(--fs-reading);\n  font-weight: var(--fw-medium);\n  letter-spacing: -0.01em;\n}\n.v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) .v-caps {\n  margin-bottom: var(--s-1);\n}\n.v-resizable__handle:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]) {\n  position: relative;\n  background: var(--card);\n  cursor: col-resize;\n  place-items: center;\n  touch-action: none;\n  transition: background var(--t-micro);\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  )::before {\n  content: \"\";\n  width: 6px;\n  height: 44px;\n  border-radius: var(--r-pill);\n  background: var(--v-edge);\n  opacity: 0.6;\n  transition: all var(--t-micro) var(--enter);\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  )::after {\n  content: \"\";\n  position: absolute;\n  width: 2px;\n  height: 14px;\n  background: var(--v-canvas);\n  border-radius: 1px;\n  opacity: 0;\n  transition: opacity var(--t-micro);\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):hover::before,\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible::before {\n  background: var(--v-pink);\n  opacity: 1;\n  height: 56px;\n  width: 8px;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):hover::after,\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible::after {\n  opacity: 1;\n  background: var(--ink-fixed);\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):active::before,\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-dragging\n  .v-resizable__handle::before {\n  background: var(--v-ink);\n  opacity: 1;\n  width: 8px;\n  height: 64px;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):active::after,\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-dragging\n  .v-resizable__handle::after {\n  background: var(--v-canvas);\n  opacity: 1;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible {\n  outline: none;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible::before {\n  box-shadow:\n    0 0 0 2px var(--v-canvas),\n    0 0 0 4px var(--ring);\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle {\n  cursor: row-resize;\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle::before {\n  width: 44px;\n  height: 6px;\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle::after {\n  width: 14px;\n  height: 2px;\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle:hover::before {\n  width: 56px;\n  height: 8px;\n}\n.v-resizable__handle:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]) {\n  position: relative;\n  width: 14px;\n  cursor: col-resize;\n  background: transparent;\n  place-items: center;\n  flex: none;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  )::before {\n  content: \"\";\n  width: 4px;\n  height: 36px;\n  border-radius: var(--r-pill);\n  background: var(--v-edge);\n  transition:\n    background var(--t-micro),\n    height var(--t-element) var(--enter);\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):hover::before,\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible::before,\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):active::before,\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-dragging\n  .v-resizable__handle::before {\n  background: var(--v-pink-deep);\n  height: 52px;\n}\n.v-resizable__handle:where(\n    [data-slot=\"resizable\"],\n    [data-slot^=\"resizable-\"]\n  ):focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: -2px;\n  border-radius: var(--r-sm);\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle {\n  width: auto;\n  height: 14px;\n  cursor: row-resize;\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle::before {\n  width: 36px;\n  height: 4px;\n}\n.v-resizable:where([data-slot=\"resizable\"], [data-slot^=\"resizable-\"]).-v\n  .v-resizable__handle:hover::before {\n  width: 52px;\n  height: 4px;\n}\n.v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) {\n  border-radius: var(--r-card-sm);\n}\n:root[data-mode=\"dark\"]\n  .v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) {\n  background: var(--v-beige);\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"resizable\"],\n  [data-slot^=\"resizable-\"],\n  [data-slot=\"resizable\"]::before,\n  [data-slot=\"resizable\"]::after,\n  [data-slot^=\"resizable-\"]::before,\n  [data-slot^=\"resizable-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"resizable-panel\"] > .v-resizable__pane {\n  display: grid;\n  /* The panel owns scrolling; its composed content owns spacing. */\n  padding: 0;\n}\n[data-slot=\"resizable-handle\"] {\n  display: grid;\n  flex-basis: 14px;\n}\n[data-slot=\"resizable-handle\"]:not([data-with-handle])::before,\n[data-slot=\"resizable-handle\"]:not([data-with-handle])::after {\n  display: none;\n}\n.v-resizable__pane:where([data-slot=\"resizable-panel\"] > *) {\n  overflow: hidden;\n  padding: 0;\n}\n.v-resizable .v-resizable__scroll[data-slot=\"scroll-area\"] {\n  --h: 100%;\n  height: 100%;\n  max-height: 100%;\n  border-radius: 0;\n}\n.v-resizable .v-resizable__scroll > [data-slot=\"scroll-area-viewport\"] {\n  height: 100%;\n  max-height: 100%;\n  padding: var(--s-5) var(--s-6) var(--s-6) var(--s-5);\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/resizable.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/resizable.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "resizable",
+      "name": "Resizable",
+      "tier": "base",
+      "evidence": "Ext I16",
+      "status": "derived",
+      "root": ".v-resizable",
+      "variants": [
+        "v"
+      ],
+      "sizes": [],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press"
+      ],
+      "canvas": "720x320",
+      "contract": "entries/resizable/contract.md",
+      "demo": "entries/resizable/demo.html",
+      "isolation": [
+        "default-default-rest-720x320.html",
+        "default-default-rest-dark-720x320.html",
+        "v-default-rest-720x320.html",
+        "v-default-rest-dark-720x320.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ResizablePanelGroupProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"v\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "direction",
+            "type": "\"horizontal\" | \"vertical\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ResizablePanelProps",
+        "props": []
+      },
+      {
+        "name": "ResizableHandleProps",
+        "props": [
+          {
+            "name": "withHandle",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

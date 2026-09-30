@@ -1,0 +1,313 @@
+@layer cojeev-states {
+.v-milestone-path[data-slot] {
+  min-width: 0;
+  width: 100%;
+  color: var(--v-text);
+}
+.v-milestone-path__header {
+  display: grid;
+  gap: var(--s-2);
+  margin-block-end: var(--s-7);
+}
+.v-milestone-path__header :is(h3, p) {
+  margin: 0;
+}
+.v-milestone-path[data-slot] .v-milestone-path__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.v-milestone-path[data-slot] .v-milestone-path__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+  column-gap: var(--s-5);
+  min-width: 0;
+  padding-block: 0 var(--s-8);
+}
+.v-milestone-path__item:last-child {
+  padding-block-end: 0;
+}
+.v-milestone-path__item::marker {
+  content: none;
+}
+.v-milestone-path[data-slot] .v-milestone-path__item::before {
+  display: none;
+}
+.v-milestone-path[data-slot] .v-milestone-path__marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 45% 55% 51% 49% / 50% 46% 54% 50%;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px var(--v-edge);
+  color: var(--v-text-2);
+  font-size: var(--fs-small);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.v-milestone-path[data-slot]
+  .v-milestone-path__item[data-state="complete"]
+  .v-milestone-path__marker {
+  background: var(--v-olive);
+  color: var(--v-on-accent);
+  box-shadow: none;
+}
+.v-milestone-path[data-slot]
+  .v-milestone-path__item[data-state="current"]
+  .v-milestone-path__marker {
+  background: var(--v-pink);
+  color: var(--v-on-accent);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--v-pink) 18%, transparent);
+}
+.v-milestone-path__connection {
+  position: absolute;
+  pointer-events: none;
+  inset-inline-start: 0;
+  inset-block-start: 24px;
+  inline-size: 36px;
+  block-size: calc(100% - 13px);
+  overflow: visible;
+}
+.v-milestone-path__connection path {
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.v-milestone-path__track {
+  stroke: var(--v-edge);
+}
+.v-milestone-path__progress {
+  stroke: var(--v-olive);
+}
+.v-milestone-path__content {
+  display: grid;
+  align-content: start;
+  gap: var(--s-2);
+  min-width: 0;
+  padding-block-start: var(--s-1);
+}
+.v-milestone-path__heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+  min-width: 0;
+}
+.v-milestone-path[data-slot] .v-milestone-path__title {
+  flex: 1 1 14rem;
+  min-width: 0;
+  font-size: var(--fs-reading);
+  font-weight: var(--fw-semibold);
+  line-height: 1.45;
+  color: var(--v-text);
+  overflow-wrap: anywhere;
+}
+.v-milestone-path__select[data-slot] {
+  min-height: 44px;
+  height: auto;
+  padding: 3px var(--s-2);
+  margin-inline-start: -8px;
+  font-size: var(--fs-reading);
+  line-height: 1.45;
+  white-space: normal;
+  text-align: start;
+  justify-content: flex-start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.v-milestone-path__status[data-slot] {
+  flex-shrink: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 20px;
+  padding-block: 3px;
+  white-space: normal;
+  line-height: 1.2;
+}
+.v-milestone-path__description[data-slot] {
+  max-width: 62ch;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+.v-milestone-path__meta[data-slot] {
+  overflow-wrap: anywhere;
+}
+.v-milestone-path__description :first-child {
+  margin-block-start: 0;
+}
+.v-milestone-path__description :last-child {
+  margin-block-end: 0;
+}
+@media (max-width: 480px) {
+  .v-milestone-path[data-slot] .v-milestone-path__item {
+    column-gap: var(--s-3);
+    padding-block-end: var(--s-7);
+  }
+  .v-milestone-path__heading {
+    gap: var(--s-2) var(--s-3);
+  }
+}
+.v-milestone-path[data-slot] .v-milestone-path__item:last-child {
+  padding-block-end: 0;
+}
+
+.v-milestone-path[data-presentation] .v-milestone-path__marker {
+  --mfill: var(--v-pink);
+  box-shadow: none;
+}
+.v-milestone-path[data-presentation]
+  .v-milestone-path__marker:has(> svg.v-morph) {
+  background: transparent;
+}
+.v-milestone-path[data-presentation="journey"] .v-milestone-path__content {
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-xs) var(--r-card) var(--r-card) var(--r-card);
+}
+.v-milestone-path[data-presentation="journey"]
+  .v-milestone-path__item[data-state="current"]
+  .v-milestone-path__content {
+  border-color: color-mix(in srgb, var(--v-pink) 50%, var(--v-border));
+  background: var(--v-paper);
+}
+.v-milestone-path[data-presentation="journey"] .v-milestone-path__marker {
+  margin-top: var(--s-5);
+}
+.v-milestone-path[data-presentation="journey"] .v-milestone-path__connection {
+  top: 42px;
+}
+.v-milestone-path[data-slot] .v-milestone-path__scroll {
+  --h: none;
+  height: auto;
+  max-width: 100%;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 220px;
+  width: max-content;
+  min-width: 100%;
+  gap: var(--s-5);
+  padding: var(--s-2) var(--s-1) var(--s-7);
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__item {
+  grid-template-columns: 1fr;
+  gap: var(--s-6);
+  padding: 0;
+  align-content: start;
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__connection {
+  left: 28px;
+  right: auto;
+  top: 0;
+  width: calc(100% - 12px);
+  height: 36px;
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__content {
+  background: var(--v-paper);
+  border: 1px solid var(--v-border);
+  border-radius: var(--r-card) var(--r-card) var(--r-xs) var(--r-card);
+  padding: var(--s-4);
+  min-height: 228px;
+}
+.v-milestone-path[data-presentation="sequence"]
+  .v-milestone-path__item[data-state="current"]
+  .v-milestone-path__content {
+  border-top: 3px solid var(--v-pink);
+  padding-top: var(--s-4);
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__heading {
+  display: grid;
+  gap: var(--s-3);
+  justify-items: start;
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__title {
+  grid-column: 1/-1;
+  width: 100%;
+}
+.v-milestone-path[data-presentation="sequence"] .v-milestone-path__item {
+  grid-template-rows: 36px minmax(0, 1fr);
+}
+.v-milestone-path__scroll-note[data-slot] {
+  margin-top: var(--s-3);
+  font-size: var(--fs-meta);
+}
+.v-milestone-path[data-presentation="review"] .v-milestone-path__list {
+  background: var(--v-paper);
+  border: 1px solid var(--v-border);
+  border-radius: var(--r-card);
+  padding: var(--s-1) var(--s-5);
+}
+.v-milestone-path[data-presentation="review"] .v-milestone-path__item {
+  grid-template-columns: 28px minmax(0, 1fr);
+  padding: var(--s-4) 0;
+  gap: var(--s-4);
+  align-items: center;
+}
+.v-milestone-path[data-presentation="review"]
+  .v-milestone-path__item:last-child {
+  padding-block-end: var(--s-4);
+}
+.v-milestone-path[data-presentation="review"]
+  .v-milestone-path__item
+  + .v-milestone-path__item {
+  border-top: 1px solid var(--v-border);
+}
+.v-milestone-path[data-presentation="review"] .v-milestone-path__connection {
+  display: none;
+}
+.v-milestone-path[data-presentation="review"] .v-milestone-path__marker {
+  width: 28px;
+  height: 28px;
+  font-size: var(--fs-caps);
+}
+.v-milestone-path[data-presentation="review"] .v-milestone-path__content {
+  padding: 0;
+  gap: var(--s-1);
+}
+.v-milestone-path[data-presentation="review"] .v-milestone-path__description {
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+}
+.v-milestone-example {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: var(--s-6);
+}
+.v-milestone-example__actions {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.v-milestone-example__actions > [data-slot="button"] {
+  min-height: 44px;
+  width: auto;
+}
+.v-milestone-example__detail {
+  border-left: 2px solid var(--v-blue);
+  padding: var(--s-2) 0 var(--s-2) var(--s-5);
+  display: grid;
+  gap: var(--s-2);
+}
+.v-milestone-example__detail strong {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+}
+.v-milestone-example__detail p {
+  margin: 0;
+  color: var(--v-text-2);
+  font-size: var(--fs-control);
+  line-height: 1.6;
+}
+
+}

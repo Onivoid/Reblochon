@@ -1,0 +1,135 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "label",
+  "title": "Label",
+  "description": "Provides a native form label plus compact stat-label primitives for named values.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/label.tsx",
+      "content": "\"use client\"\nimport * as React from \"react\"\nimport { cva, type VariantProps } from \"class-variance-authority\"\nimport { cn } from \"@/lib/utils\"\n\nconst LabelVariants=cva(\"v-label [font-size:var(--fs-control)] [font-weight:var(--fw-semibold)] [line-height:1.5] [box-shadow:none] [border:0] [background:none]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\",\"sm\":\"-sm [font-size:var(--fs-small)]\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type LabelProps=React.ComponentProps<\"label\"> & VariantProps<typeof LabelVariants> & { as?:React.ElementType }\nexport function Label({as:Tag=\"label\",className,variant,size,...props}:LabelProps){return <Tag data-slot=\"label\" data-part=\"root\" className={cn(LabelVariants({variant,size}),className)} {...props}/>}\n\nconst StatsVariants=cva(\"v-stats [display:flex] [gap:var(--s-5)_var(--s-5)] [flex-wrap:wrap] [margin-top:var(--s-4)] [max-width:100%]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type StatsProps=React.ComponentProps<\"div\"> & VariantProps<typeof StatsVariants> & { as?:React.ElementType }\nexport function Stats({as:Tag=\"div\",className,variant,size,...props}:StatsProps){return <Tag data-slot=\"label-stats\" data-part=\"stats\" className={cn(StatsVariants({variant,size}),className)} {...props}/>}\n\nconst StatVariants=cva(\"v-stat [display:grid] [gap:var(--s-1)] [min-width:0]\",{variants:{variant:{\"default\":\"\",\"ul\":\"-ul [padding-bottom:var(--s-2)] [border-bottom:2px_solid_var(--wm,var(--v-text))]\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type StatProps=React.ComponentProps<\"div\"> & VariantProps<typeof StatVariants> & { as?:React.ElementType }\nexport function Stat({as:Tag=\"div\",className,variant,size,...props}:StatProps){return <Tag data-slot=\"label-stat\" data-part=\"stat\" className={cn(StatVariants({variant,size}),className)} {...props}/>}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/label.css",
+      "content": "@layer cojeev-states {\n/* Orthogonal authored class modifiers remain composable with CVA axes. */\n.v-stat[data-slot].-ul{padding-bottom:var(--s-2);border-bottom:2px solid var(--wm,var(--v-text))}\n.v-label[data-slot].-sm{font-size:var(--fs-small)}\n\n/* Authored contextual and pseudo-element rules, scoped to component-owned roots. */\n.v-stats[data-slot]+.v-bars{margin-top:var(--s-6)}\n.v-stats[data-slot]+.v-line{margin-top:var(--s-6)}\n.v-stat[data-slot] span{white-space:normal}\n.v-stat[data-slot] b{font-size:var(--fs-body);font-weight:var(--fw-bold);font-variant-numeric:tabular-nums;line-height:1.2}\n.v-stat[data-slot] b .u{font-weight:var(--fw-regular);margin-left:3px}\n.v-stat[data-slot] span{font-size:var(--fs-caps);letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground)}\n.v-stat[data-slot] b{font-size:var(--fs-reading)}\n.v-stat[data-slot].-ul.-dashed{border-bottom-style:dashed}\n@media (max-width:640px){.v-stats[data-slot]{gap:var(--s-4)}}\n.v-label[data-slot]{box-shadow:none;border:0}\n.v-stat[data-slot]{box-shadow:none;border:0}\n.v-stats[data-slot]{box-shadow:none;border:0}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/label.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/label.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "label",
+      "name": "Label",
+      "tier": "base",
+      "evidence": "I07",
+      "status": "source",
+      "root": ".v-label",
+      "variants": [
+        "required",
+        "optional",
+        "help"
+      ],
+      "sizes": [
+        "sm"
+      ],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "none",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x240",
+      "contract": "entries/label/contract.md",
+      "demo": "entries/label/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "LabelProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "StatsProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "StatProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"ul\" | \"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

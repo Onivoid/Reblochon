@@ -1,0 +1,134 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "card",
+  "title": "Card",
+  "description": "Groups related content, metadata, and actions into a distinct surface.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/card.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { useDepth } from \"@/lib/cojeev-motion/use-depth\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Button, type ButtonProps } from \"@/components/ui/button\";\nimport { useChoreography } from \"@/lib/cojeev-motion/choreography\";\n\nconst cardVariants = cva(\n  \"v-card relative min-w-0 content-start overflow-hidden rounded-[var(--r-card)] p-[var(--card-pad)] bg-[var(--card)] text-[color:var(--card-foreground)]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        pink: \"-pink bg-[var(--v-pink)] text-[color:var(--v-on-accent)] [--wm:var(--v-pink-deep)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        yellow:\n          \"-yellow bg-[var(--v-yellow)] text-[color:var(--v-on-accent)] [--wm:var(--v-yellow-deep)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        olive:\n          \"-olive bg-[var(--v-olive)] text-[color:var(--v-on-accent)] [--wm:var(--v-olive-deep)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        blue: \"-blue bg-[var(--v-blue)] text-[color:var(--v-on-accent)] [--wm:var(--v-blue-deep)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        ink: \"-ink bg-[var(--v-ink)] text-[color:var(--v-on-ink)]\",\n        cream:\n          \"-cream bg-[var(--card-2)] [--muted-foreground:var(--muted-foreground-tinted)]\",\n        featured:\n          \"-featured bg-[var(--v-canvas)] [box-shadow:inset_0_0_0_var(--bw-featured)_var(--v-pink)]\",\n        panel: \"-panel\",\n        lift: \"-lift hover:[transform:translateY(-1px)] hover:[box-shadow:var(--shadow-lift)]\",\n      },\n      size: {\n        default: \"\",\n        sm: \"-sm rounded-[var(--r-card-sm)] p-[var(--s-4)]\",\n      },\n      lift: {\n        true: \"-lift hover:[transform:translateY(-1px)] hover:[box-shadow:var(--shadow-lift)]\",\n        false: \"\",\n      },\n    },\n    compoundVariants: [\n      { variant: \"panel\", className: \"rounded-[var(--r-panel)]\" },\n    ],\n    defaultVariants: { variant: \"default\", size: \"default\", lift: false },\n  },\n);\n\nexport type CardAppearance = \"editorial\" | \"project\" | \"collection\";\ntype CardProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof cardVariants> & { appearance?: CardAppearance };\nfunction Card({\n  ref: externalRef,\n  className,\n  variant,\n  size,\n  lift,\n  appearance,\n  onPointerMove,\n  onPointerLeave,\n  onFocus,\n  onBlur,\n  ...props\n}: CardProps) {\n  const { quiet } = useChoreography();\n  const host = React.useRef<HTMLDivElement>(null);\n  const attach = React.useCallback(\n    (node: HTMLDivElement | null) => {\n      host.current = node;\n      const release = assignMotionRef(externalRef, node);\n      return () => {\n        host.current = null;\n        release();\n      };\n    },\n    [externalRef],\n  );\n  const morphRef = useMorph<HTMLDivElement>(\"cards\", attach);\n  const depth = useDepth(host, Boolean(lift || variant === \"lift\"));\n  return (\n    <div\n      ref={morphRef}\n      data-slot=\"card\"\n      data-part=\"root\"\n      data-state=\"rest\"\n      data-appearance={appearance}\n      data-motion-quiet={quiet || undefined}\n      data-depth={depth.active ? \"on\" : undefined}\n      className={cn(cardVariants({ variant, size, lift }), className)}\n      {...props}\n      onPointerMove={(event) => {\n        onPointerMove?.(event);\n        if (!event.defaultPrevented) depth.onPointerMove(event);\n      }}\n      onPointerLeave={(event) => {\n        onPointerLeave?.(event);\n        depth.onPointerLeave();\n      }}\n      onFocus={(event) => {\n        onFocus?.(event);\n        if (!event.defaultPrevented) depth.onFocus();\n      }}\n      onBlur={(event) => {\n        onBlur?.(event);\n        depth.onBlur(event);\n      }}\n    />\n  );\n}\nfunction CardHeader({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"card-header\"\n      data-part=\"header\"\n      className={cn(\n        \"v-card__head flex min-w-0 items-start justify-between gap-[var(--s-3)] mb-[var(--s-4)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nfunction CardTitle({ className, ...props }: React.ComponentProps<\"h3\">) {\n  return (\n    <h3\n      data-slot=\"card-title\"\n      data-part=\"title\"\n      className={cn(\n        \"v-card__title text-[length:var(--fs-reading)] font-semibold leading-[1.2] tracking-[-.012em]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nfunction CardContent({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"card-content\"\n      className={cn(\"min-w-0 grid gap-[var(--s-3)]\", className)}\n      {...props}\n    />\n  );\n}\nfunction CardDescription({ className, ...props }: React.ComponentProps<\"p\">) {\n  return (\n    <p\n      data-slot=\"card-description\"\n      className={cn(\"v-body-2\", className)}\n      {...props}\n    />\n  );\n}\nfunction CardFooter({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"card-footer\"\n      className={cn(\n        \"flex min-w-0 flex-wrap items-center gap-[var(--s-3)] mt-[var(--s-5)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nfunction CardWatermark({ className, ...props }: React.ComponentProps<\"span\">) {\n  return (\n    <span\n      data-slot=\"card-watermark\"\n      data-part=\"watermark\"\n      aria-hidden=\"true\"\n      className={cn(\"v-wm v-shape\", className)}\n      {...props}\n    />\n  );\n}\nfunction CardCover({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"card-cover\"\n      className={cn(\"v-card__cover\", className)}\n      {...props}\n    />\n  );\n}\n/** Keep card actions as real Cojeev buttons rather than making the whole card a moving hit area. */\nfunction CardAction({ className, ...props }: ButtonProps) {\n  return (\n    <Button\n      size=\"default\"\n      variant=\"outline\"\n      className={cn(\"v-card__action\", className)}\n      style={{\n        minHeight: 44,\n        background: \"var(--v-canvas)\",\n        color: \"var(--v-text)\",\n      }}\n      {...props}\n    />\n  );\n}\nexport {\n  Card,\n  CardHeader,\n  CardTitle,\n  CardContent,\n  CardDescription,\n  CardFooter,\n  CardWatermark,\n  CardCover,\n  CardAction,\n  cardVariants,\n};\nexport type { CardProps };\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/card.css",
+      "content": "@layer cojeev-states {\n.v-card[data-slot] {\n  transition:\n    transform var(--t-micro) var(--enter),\n    box-shadow var(--t-micro);\n}\n\n/* Composition is separate from the original palette, size and lift choices. */\n.v-card[data-appearance] {\n  display: grid;\n  gap: var(--s-6);\n  width: 100%;\n  max-width: 680px;\n  padding: var(--s-6);\n  border: 1px solid var(--v-border);\n  border-radius: min(var(--v-control-radius, var(--r-card)), 32px);\n}\n.v-card[data-appearance] [data-slot=\"card-content\"] {\n  align-content: center;\n  gap: var(--s-4);\n}\n.v-card[data-appearance] [data-slot=\"card-title\"] {\n  font-size: clamp(22px, 3cqi, 30px);\n  line-height: 1.15;\n  letter-spacing: -0.025em;\n}\n.v-card[data-appearance] [data-slot=\"card-description\"] {\n  font-size: var(--fs-control);\n  line-height: 1.7;\n  margin: 0;\n}\n.v-card[data-appearance] [data-slot=\"card-footer\"] {\n  margin-top: var(--s-2);\n  justify-content: space-between;\n  gap: var(--s-4);\n}\n.v-card[data-appearance] .v-card__eyebrow {\n  font-size: var(--fs-meta);\n  color: var(--card-secondary-ink);\n  line-height: 1.5;\n}\n.v-card[data-appearance] .v-card__action {\n  justify-self: start;\n  flex: none;\n}\n.v-card[data-appearance] .v-card__cover {\n  position: relative;\n  overflow: hidden;\n  display: grid;\n  place-items: center;\n  min-height: 240px;\n  border-radius: var(--r-card-sm);\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n  isolation: isolate;\n}\n.v-card[data-appearance=\"editorial\"] {\n  grid-template-columns: minmax(140px, 0.85fr) minmax(0, 1.25fr);\n}\n.v-card__cover-label {\n  position: relative;\n  z-index: 1;\n  font-size: clamp(24px, 4cqi, 40px);\n  line-height: 1;\n  letter-spacing: -0.055em;\n  font-weight: var(--fw-semibold);\n  transform: rotate(-5deg);\n}\n.v-card__cover-orbit {\n  position: absolute;\n  inset: 15%;\n  border: 1px solid currentColor;\n  border-radius: 48% 52% 38% 62%;\n  transform: rotate(30deg);\n  transition:\n    transform var(--t-max) var(--enter),\n    border-radius var(--t-max) var(--enter);\n}\n.v-card[data-appearance=\"editorial\"]:hover .v-card__cover-orbit {\n  transform: rotate(45deg);\n  border-radius: 35% 65% 48% 52%;\n}\n.v-card[data-appearance=\"project\"] {\n  max-width: 520px;\n}\n.v-card__project-head {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-5);\n}\n.v-card__project-number {\n  display: grid;\n  place-items: center;\n  width: 52px;\n  height: 52px;\n  border-radius: 42% 58% 54% 46%;\n  background: var(--v-yellow);\n  color: var(--v-on-accent);\n  font-size: var(--fs-title);\n  font-variant-numeric: tabular-nums;\n}\n.v-card__steps {\n  list-style: none;\n  display: grid;\n  gap: 0;\n  padding: 0;\n  margin: 0;\n}\n.v-card__steps li {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-height: 44px;\n  font-size: var(--fs-control);\n}\n.v-card__steps li + li {\n  border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);\n}\n.v-card__steps li > span:first-child {\n  display: grid;\n  place-items: center;\n  width: 22px;\n  height: 22px;\n  border: 1px solid currentColor;\n  border-radius: 50%;\n  font-size: var(--fs-caps);\n}\n.v-card__steps [data-complete=\"true\"] > span:first-child {\n  background: var(--v-olive);\n  color: var(--v-on-accent);\n  border-color: transparent;\n}\n.v-card[data-appearance=\"collection\"] {\n  max-width: 460px;\n}\n.v-card[data-appearance=\"collection\"] .v-card__cover {\n  min-height: 185px;\n  background: var(--v-blue);\n}\n.v-card__stack-page {\n  position: relative;\n  display: grid;\n  place-items: center;\n  width: 150px;\n  height: 116px;\n  padding: var(--s-6);\n  background: var(--v-canvas);\n  color: var(--v-text);\n  border: 1px solid currentColor;\n  border-radius: var(--r-md);\n  font-size: var(--fs-reading);\n  line-height: 1.3;\n  letter-spacing: -0.02em;\n  transform: rotate(-4deg);\n}\n.v-card__stack-page::before,\n.v-card__stack-page::after {\n  content: \"\";\n  position: absolute;\n  inset: 0;\n  border: 1px solid currentColor;\n  border-radius: inherit;\n  pointer-events: none;\n  z-index: -1;\n  transform: rotate(8deg);\n  transition: transform var(--t-element) var(--enter);\n}\n.v-card__stack-page::after {\n  transform: rotate(-8deg);\n}\n.v-card[data-appearance=\"collection\"]:hover .v-card__stack-page::before {\n  transform: translate(5px, -3px) rotate(12deg);\n}\n.v-card[data-appearance=\"collection\"]:hover .v-card__stack-page::after {\n  transform: translate(-5px, 3px) rotate(-12deg);\n}\n.v-card[data-appearance].-sm {\n  padding: var(--s-4);\n  gap: var(--s-4);\n}\n.v-card[data-motion-quiet=\"true\"] .v-card__cover-orbit {\n  transform: rotate(30deg);\n  transition: none;\n}\n.v-card[data-motion-quiet=\"true\"] .v-card__stack-page::before {\n  transform: rotate(8deg);\n  transition: none;\n}\n.v-card[data-motion-quiet=\"true\"] .v-card__stack-page::after {\n  transform: rotate(-8deg);\n  transition: none;\n}\n@media (max-width: 600px) {\n  .v-card[data-appearance] {\n    padding: var(--s-5);\n    gap: var(--s-5);\n  }\n  .v-card[data-appearance=\"editorial\"] {\n    grid-template-columns: minmax(0, 1fr);\n  }\n  .v-card[data-appearance=\"editorial\"] .v-card__cover {\n    min-height: 180px;\n  }\n}\n.v-card[data-slot] > :not(.v-wm) {\n  position: relative;\n  z-index: 1;\n}\n.v-card[data-slot] > .v-wm {\n  position: absolute;\n  right: -6%;\n  top: -14%;\n  width: 38%;\n  max-width: 150px;\n  height: auto;\n  aspect-ratio: 1;\n  color: var(--wm, var(--v-beige-2));\n  pointer-events: none;\n  z-index: 0;\n  opacity: 0.55;\n}\n.v-card[data-slot] > .v-wm.-bl {\n  right: auto;\n  left: -10%;\n  top: auto;\n  bottom: -20%;\n}\n.v-card[data-slot] > .v-wm.-br {\n  top: auto;\n  bottom: -16%;\n}\n.v-card[data-slot] > .v-wm.-tr-sm {\n  width: 30%;\n  right: 8%;\n  top: 8%;\n}\n.v-card[data-slot] > .v-body-2 + * {\n  margin-top: var(--s-5);\n}\n.v-card[data-slot]\n  :is([data-slot=\"card-title\"], [data-slot=\"card-description\"]) {\n  min-width: 0;\n  overflow-wrap: anywhere;\n}\n.v-card[data-slot]\n  [data-slot=\"card-header\"]\n  > :is(button, svg, [data-slot=\"badge\"]) {\n  flex-shrink: 0;\n}\n.v-card[data-slot][data-depth=\"on\"] {\n  rotate: var(--depth-axis-x, 0) var(--depth-axis-y, 1) 0\n    var(--depth-angle, 0deg);\n  translate: var(--presence-x, 0px)\n    calc(var(--presence-y, 0px) + var(--depth-lift, 0px));\n  perspective: 900px;\n}\n.v-card[data-depth=\"on\"]::after {\n  content: \"\";\n  position: absolute;\n  inset: 0;\n  pointer-events: none;\n  z-index: 2;\n  opacity: var(--depth-light, 0);\n  background: radial-gradient(\n    ellipse at var(--depth-light-x, 50%) var(--depth-light-y, 50%),\n    var(--cream-fixed),\n    transparent 65%\n  );\n  mix-blend-mode: soft-light;\n}\n.v-card[data-depth=\"on\"] > .v-wm {\n  translate: var(--depth-x, 0px) var(--depth-y, 0px);\n}\n.v-card[data-depth=\"on\"] > :not(.v-wm, .v-morph) {\n  translate: calc(var(--depth-x, 0px) * -0.2) calc(var(--depth-y, 0px) * -0.2);\n}\n/* The complete source cascade resets Stat control geometry (components-2.css). */\n.v-card[data-slot] .v-stat[data-slot].-ul {\n  border: 0;\n  box-shadow: none;\n}\n/* A nested card supplies its own secondary ink instead of inheriting its host's. */\n.v-card[data-slot] {\n  --card-secondary-ink: var(--v-text-2);\n}\n.v-card[data-slot].-cream {\n  --card-secondary-ink: var(--muted-foreground-tinted);\n}\n:root[data-mode=\"dark\"] .v-card[data-slot].-cream {\n  --card-secondary-ink: var(--v-text-2);\n}\n.v-card[data-slot]:is(.-pink, .-yellow, .-olive, .-blue) {\n  --card-secondary-ink: var(--muted-foreground-ink);\n}\n.v-card[data-slot].-ink {\n  --card-secondary-ink: var(--v-on-ink);\n}\n.v-card[data-slot] :is(.v-meta, .v-body-2, .v-caps, .v-stat span),\n:root[data-mode=\"dark\"]\n  .v-card[data-slot]\n  :is(.v-meta, .v-body-2, .v-caps, .v-stat span) {\n  color: var(--card-secondary-ink);\n}\n\n[data-slot=\"card-watermark\"] {\n  display: inline-block;\n  background: var(--c, currentColor);\n  -webkit-mask: var(--m) center/contain no-repeat;\n  mask: var(--m) center/contain no-repeat;\n  flex: none;\n}\n[data-slot=\"card-watermark\"].-cross {\n  --m: url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cpath%20d%3D%22M36%204H64Q68%204%2068%208V32H92Q96%2032%2096%2036V64Q96%2068%2092%2068H68V92Q68%2096%2064%2096H36Q32%2096%2032%2092V68H8Q4%2068%204%2064V36Q4%2032%208%2032H32V8Q32%204%2036%204Z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E\"); /* @kind other */\n}\n[data-slot=\"card-watermark\"].-heart {\n  --m: url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cpath%20d%3D%22M50%2090C22%2068%206%2052%206%2033A20%2020%200%200%201%2050%2021A20%2020%200%200%201%2094%2033C94%2052%2078%2068%2050%2090Z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E\"); /* @kind other */\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/card.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/card.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "card",
+      "name": "Card",
+      "tier": "base",
+      "evidence": "I07 I11 I15 I17",
+      "status": "source",
+      "root": ".v-card",
+      "variants": [
+        "editorial",
+        "project",
+        "collection"
+      ],
+      "sizes": [
+        "sm"
+      ],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "cards",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x240",
+      "contract": "entries/card/contract.md",
+      "demo": "entries/card/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-sm-rest.html",
+        "default-sm-rest-dark.html",
+        "pink-default-rest.html",
+        "pink-default-rest-dark.html",
+        "pink-sm-rest.html",
+        "pink-sm-rest-dark.html",
+        "yellow-default-rest.html",
+        "yellow-default-rest-dark.html",
+        "yellow-sm-rest.html",
+        "yellow-sm-rest-dark.html",
+        "olive-default-rest.html",
+        "olive-default-rest-dark.html",
+        "olive-sm-rest.html",
+        "olive-sm-rest-dark.html",
+        "blue-default-rest.html",
+        "blue-default-rest-dark.html",
+        "blue-sm-rest.html",
+        "blue-sm-rest-dark.html",
+        "ink-default-rest.html",
+        "ink-default-rest-dark.html",
+        "ink-sm-rest.html",
+        "ink-sm-rest-dark.html",
+        "cream-default-rest.html",
+        "cream-default-rest-dark.html",
+        "cream-sm-rest.html",
+        "cream-sm-rest-dark.html",
+        "featured-default-rest.html",
+        "featured-default-rest-dark.html",
+        "featured-sm-rest.html",
+        "featured-sm-rest-dark.html",
+        "panel-default-rest.html",
+        "panel-default-rest-dark.html",
+        "panel-sm-rest.html",
+        "panel-sm-rest-dark.html",
+        "lift-default-rest.html",
+        "lift-default-rest-dark.html",
+        "lift-sm-rest.html",
+        "lift-sm-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "CardProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"pink\" | \"yellow\" | \"blue\" | \"olive\" | \"ink\" | \"cream\" | \"featured\" | \"panel\" | \"lift\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "lift",
+            "type": "boolean | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "CardAppearance",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

@@ -1,0 +1,152 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pagination",
+  "title": "Pagination",
+  "description": "Lets users move between numbered pages and see their current position.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/input.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/pagination.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Button } from \"@/components/ui/button\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { Input } from \"@/components/ui/input\";\nexport const paginationVariants = cva(\"v-pager\");\nexport type PaginationProps = React.ComponentProps<\"nav\"> & {\n  page?: number;\n  defaultPage?: number;\n  totalPages?: number;\n  onPageChange?: (page: number) => void;\n  /** Direct pages, a reading position, or exact entry for a large collection. */\n  appearance?: \"pages\" | \"chapter\" | \"jump\";\n};\nexport function Pagination({\n  ref,\n  className,\n  page,\n  defaultPage = 1,\n  totalPages,\n  onPageChange,\n  children,\n  appearance = \"pages\",\n  ...props\n}: PaginationProps) {\n  const [local, setLocal] = React.useState(defaultPage);\n  const total = Math.max(\n    1,\n    Math.floor(Number.isFinite(totalPages) ? totalPages! : 1),\n  );\n  const current = Math.min(\n    total,\n    Math.max(\n      1,\n      Math.floor(Number.isFinite(page ?? local) ? (page ?? local) : 1),\n    ),\n  );\n  // A fixed seven-slot window does not move the next/previous hit targets.\n  const pages: (number | \"start-gap\" | \"end-gap\")[] =\n    total <= 7\n      ? Array.from({ length: total }, (_, index) => index + 1)\n      : current <= 4\n        ? [1, 2, 3, 4, 5, \"end-gap\", total]\n        : current >= total - 3\n          ? [1, \"start-gap\", total - 4, total - 3, total - 2, total - 1, total]\n          : [\n              1,\n              \"start-gap\",\n              current - 1,\n              current,\n              current + 1,\n              \"end-gap\",\n              total,\n            ];\n  const change = (next: number) => {\n    const clamped = Math.max(1, Math.min(total, next));\n    if (page === undefined) setLocal(clamped);\n    if (clamped !== current) onPageChange?.(clamped);\n  };\n  return (\n    <nav\n      ref={ref}\n      data-slot=\"pagination\"\n      data-part=\"root\"\n      data-pager=\"\"\n      data-pages={total}\n      data-page={current}\n      data-appearance={appearance}\n      data-composed={children == null || undefined}\n      aria-label=\"Pagination\"\n      className={cn(paginationVariants(), className)}\n      {...props}\n    >\n      {children ?? (\n        <>\n          <PaginationPrevious\n            disabled={current === 1}\n            onClick={() => change(current - 1)}\n          />\n          {appearance === \"pages\" ? (\n            <div className=\"v-pager__pages\">\n              {pages.map((n) =>\n                typeof n === \"number\" ? (\n                  <PaginationLink\n                    key={n}\n                    isActive={n === current}\n                    aria-label={`Page ${n}`}\n                    onClick={() => change(n)}\n                  >\n                    {n}\n                  </PaginationLink>\n                ) : (\n                  <PaginationEllipsis key={n} />\n                ),\n              )}\n            </div>\n          ) : appearance === \"chapter\" ? (\n            <div className=\"v-pager__chapter\" aria-hidden=\"true\">\n              <span>Chapter</span>\n              <strong>\n                {String(current).padStart(2, \"0\")}{\" \"}\n                <small>/ {String(total).padStart(2, \"0\")}</small>\n              </strong>\n              <span className=\"v-pager__track\">\n                <span style={{ transform: `scaleX(${current / total})` }} />\n              </span>\n            </div>\n          ) : (\n            <PaginationJump current={current} total={total} onChange={change} />\n          )}\n          <PaginationNext\n            disabled={current === total}\n            onClick={() => change(current + 1)}\n          />\n          <span className=\"v-pager__info\" aria-live=\"polite\">\n            Page {current} of {total}\n          </span>\n        </>\n      )}\n    </nav>\n  );\n}\nfunction PaginationJump({\n  current,\n  total,\n  onChange,\n}: {\n  current: number;\n  total: number;\n  onChange: (page: number) => void;\n}) {\n  const input = React.useRef<HTMLInputElement>(null);\n  const id = React.useId();\n  const [error, setError] = React.useState(\"\");\n  React.useEffect(() => {\n    if (input.current) input.current.value = String(current);\n  }, [current]);\n  const submit = () => {\n    const value = input.current?.valueAsNumber;\n    if (!Number.isInteger(value) || value! < 1 || value! > total) {\n      setError(`Choose a whole page from 1 to ${total}.`);\n      input.current?.focus();\n      return;\n    }\n    setError(\"\");\n    onChange(value!);\n  };\n  return (\n    <div className=\"v-pager__jump\">\n      <label htmlFor={id}>Go to page</label>\n      <div className=\"v-pager__entry\">\n        <Input\n          ref={input}\n          id={id}\n          type=\"number\"\n          min={1}\n          max={total}\n          step={1}\n          defaultValue={current}\n          aria-invalid={!!error}\n          aria-describedby={`${id}-hint`}\n          onChange={() => setError(\"\")}\n          onKeyDown={(event) => {\n            if (event.key === \"Enter\") {\n              event.preventDefault();\n              submit();\n            }\n          }}\n        />\n        <span>of {total}</span>\n        <Button variant=\"secondary\" onClick={submit}>\n          Go\n        </Button>\n      </div>\n      <span id={`${id}-hint`} className=\"v-pager__hint\" role=\"status\">\n        {error || \"Enter an exact page number.\"}\n      </span>\n    </div>\n  );\n}\nexport type PaginationContentProps = React.ComponentProps<\"ul\">;\nexport function PaginationContent({\n  className,\n  ...props\n}: PaginationContentProps) {\n  return (\n    <ul\n      data-slot=\"pagination-content\"\n      className={cn(\"contents list-none\", className)}\n      {...props}\n    />\n  );\n}\nexport type PaginationItemProps = React.ComponentProps<\"li\">;\nexport function PaginationItem({ className, ...props }: PaginationItemProps) {\n  return (\n    <li\n      data-slot=\"pagination-item\"\n      className={cn(\"contents\", className)}\n      {...props}\n    />\n  );\n}\nexport type PaginationLinkProps = React.ComponentProps<typeof Button> & {\n  isActive?: boolean;\n};\nexport function PaginationLink({\n  className,\n  isActive,\n  variant,\n  style,\n  ...props\n}: PaginationLinkProps) {\n  return (\n    <Button\n      type=\"button\"\n      data-slot=\"pagination-link\"\n      data-stable-hit=\"\"\n      data-part=\"item\"\n      aria-current={isActive ? \"page\" : undefined}\n      variant={variant ?? (isActive ? \"accent\" : \"outline\")}\n      className={cn(\"v-pager__link\", className)}\n      style={{\n        minWidth: 44,\n        minHeight: 44,\n        paddingInline: 10,\n        transform: \"none\",\n        ...style,\n      }}\n      {...props}\n    />\n  );\n}\nexport type PaginationPreviousProps = PaginationLinkProps;\nexport function PaginationPrevious({\n  children,\n  ...props\n}: PaginationPreviousProps) {\n  return (\n    <PaginationLink\n      aria-label=\"Previous\"\n      data-pager-direction=\"previous\"\n      {...props}\n    >\n      {children ?? <Icon name=\"arrow-left\" size=\"sm\" aria-hidden=\"true\" />}\n    </PaginationLink>\n  );\n}\nexport type PaginationNextProps = PaginationLinkProps;\nexport function PaginationNext({ children, ...props }: PaginationNextProps) {\n  return (\n    <PaginationLink aria-label=\"Next\" data-pager-direction=\"next\" {...props}>\n      {children ?? <Icon name=\"arrow-right\" size=\"sm\" aria-hidden=\"true\" />}\n    </PaginationLink>\n  );\n}\nexport type PaginationEllipsisProps = React.ComponentProps<\"span\">;\nexport function PaginationEllipsis({\n  className,\n  ...props\n}: PaginationEllipsisProps) {\n  return (\n    <span\n      data-slot=\"pagination-ellipsis\"\n      aria-hidden=\"true\"\n      className={cn(\n        \"v-ellipsis px-[var(--s-1)] text-[color:var(--muted-foreground)]\",\n        className,\n      )}\n      {...props}\n    >\n      …\n    </span>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/pagination.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"pagination\"] {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: var(--s-2);\n  min-width: 0;\n  color: var(--v-text);\n}\n[data-slot=\"pagination\"][data-composed] {\n  display: grid;\n  grid-template-columns: 44px minmax(0, 1fr) 44px;\n  column-gap: var(--s-3);\n  row-gap: var(--s-3);\n  max-width: 560px;\n  width: 100%;\n  box-sizing: border-box;\n  padding: var(--s-3);\n}\n.v-pager__pages {\n  display: flex;\n  justify-content: center;\n  gap: var(--s-1);\n  min-width: 0;\n}\n.v-pager__pages [data-slot=\"pagination-ellipsis\"] {\n  display: grid;\n  place-items: center;\n  min-width: 44px;\n  height: 44px;\n  padding: 0;\n}\n[data-slot=\"pagination\"] [data-slot=\"pagination-link\"] {\n  font-variant-numeric: tabular-nums;\n}\n.v-pager__info {\n  grid-column: 1/-1;\n  text-align: center;\n  font-size: var(--fs-meta);\n  color: var(--v-text-2);\n  font-variant-numeric: tabular-nums;\n}\n.v-pager__chapter {\n  display: grid;\n  justify-items: center;\n  gap: var(--s-2);\n  padding: var(--s-3) var(--s-4);\n  background: var(--v-canvas);\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-card-sm);\n}\n.v-pager__chapter > span:first-child {\n  font-size: var(--fs-meta);\n  letter-spacing: 0.1em;\n  text-transform: uppercase;\n  color: var(--v-text-2);\n}\n.v-pager__chapter strong {\n  font-size: var(--fs-section);\n  line-height: 1.2;\n  font-variant-numeric: tabular-nums;\n}\n.v-pager__chapter small {\n  font-size: var(--fs-control);\n  font-weight: var(--fw-regular);\n  color: var(--v-text-2);\n}\n.v-pager__track {\n  display: block;\n  height: 3px;\n  width: 100%;\n  overflow: hidden;\n  border-radius: var(--r-xs);\n  background: var(--v-edge);\n}\n.v-pager__track > span {\n  display: block;\n  width: 100%;\n  height: 100%;\n  background: var(--v-accent-ink);\n  transform-origin: left;\n}\n.v-pager__jump {\n  display: grid;\n  gap: var(--s-2);\n  min-width: 0;\n}\n.v-pager__jump label {\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-semibold);\n}\n.v-pager__entry {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: var(--s-2);\n}\n.v-pager__entry [data-slot=\"input\"] {\n  width: 80px;\n  min-width: 0;\n  min-height: 44px;\n  flex: 1;\n}\n.v-pager__entry [data-slot=\"button\"] {\n  min-height: 44px;\n}\n.v-pager__entry > span {\n  white-space: nowrap;\n  font-size: var(--fs-meta);\n  color: var(--v-text-2);\n}\n.v-pager__hint {\n  font-size: var(--fs-meta);\n  min-height: 18px;\n  color: var(--v-text-2);\n}\n.v-pager__example {\n  display: grid;\n  gap: var(--s-6);\n  min-width: 0;\n}\n.v-pager__specimen {\n  background: var(--v-canvas);\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-card);\n  padding: var(--s-6);\n  display: grid;\n  gap: var(--s-3);\n}\n.v-pager__specimen > small {\n  color: var(--v-accent-ink);\n  letter-spacing: 0.12em;\n  font-size: var(--fs-caps);\n  text-transform: uppercase;\n}\n.v-pager__specimen h3 {\n  font-size: var(--fs-section);\n  margin: 0;\n}\n.v-pager__specimen p {\n  color: var(--v-text-2);\n  margin: 0;\n}\n@media (max-width: 640px) {\n  .v-pager__pages [data-slot=\"pagination-ellipsis\"] {\n    min-width: 16px;\n  }\n  [data-slot=\"pagination\"][data-composed][data-appearance=\"pages\"]\n    .v-pager__pages {\n    grid-row: 1;\n    grid-column: 1/-1;\n    gap: 2px;\n    flex-wrap: wrap;\n  }\n  [data-slot=\"pagination\"][data-appearance=\"pages\"]\n    [data-pager-direction=\"previous\"] {\n    grid-row: 2;\n    grid-column: 1;\n  }\n  [data-slot=\"pagination\"][data-appearance=\"pages\"]\n    [data-pager-direction=\"next\"] {\n    grid-row: 2;\n    grid-column: 3;\n  }\n  [data-slot=\"pagination\"][data-appearance=\"pages\"] .v-pager__info {\n    grid-row: 2;\n    grid-column: 2;\n  }\n  [data-slot=\"pagination\"][data-appearance=\"jump\"] {\n    column-gap: var(--s-2);\n  }\n  .v-pager__entry {\n    gap: var(--s-2);\n    flex-wrap: wrap;\n  }\n}\n[dir=\"rtl\"] .v-pager__track > span {\n  transform-origin: right;\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/pagination.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/pagination.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "pagination",
+      "name": "Pagination",
+      "tier": "base",
+      "evidence": "Ext I18",
+      "status": "derived",
+      "root": ".v-pager",
+      "variants": [
+        "pages",
+        "chapter",
+        "jump"
+      ],
+      "sizes": [],
+      "states": [
+        "selected",
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "nav",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/pagination/contract.md",
+      "demo": "entries/pagination/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-selected.html",
+        "default-default-selected-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "PaginationProps",
+        "props": [
+          {
+            "name": "page",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultPage",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "totalPages",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onPageChange",
+            "type": "(page: number) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"pages\" | \"chapter\" | \"jump\"",
+            "required": false,
+            "description": "Direct pages, a reading position, or exact entry for a large collection."
+          }
+        ]
+      },
+      {
+        "name": "PaginationContentProps",
+        "props": []
+      },
+      {
+        "name": "PaginationItemProps",
+        "props": []
+      },
+      {
+        "name": "PaginationLinkProps",
+        "props": [
+          {
+            "name": "isActive",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "PaginationPreviousProps",
+        "props": [
+          {
+            "name": "isActive",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "PaginationNextProps",
+        "props": [
+          {
+            "name": "isActive",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "PaginationEllipsisProps",
+        "props": []
+      }
+    ],
+    "category": "Navigation",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

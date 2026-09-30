@@ -1,0 +1,165 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tree",
+  "title": "Tree",
+  "description": "A controlled branch ledger for supplied hierarchical data, with separate disclosure, selection and trailing actions.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/tree.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { useFlowGroup } from \"@/lib/cojeev-motion/use-flow\";\nimport { cn } from \"@/lib/utils\";\nimport { Button } from \"@/components/ui/button\";\nimport { Icon } from \"@/components/ui/icon\";\n\nexport type TreeNode = {\n  /** Stable, unique identity owned by the caller. */\n  id: string;\n  label: string;\n  kind: \"file\" | \"folder\";\n  /** Undefined means not supplied; an empty array means loaded and empty. */\n  children?: readonly TreeNode[];\n  icon?: React.ReactNode;\n  status?: \"idle\" | \"loading\" | \"error\";\n  message?: string;\n  truncated?: boolean;\n  trailing?: React.ReactNode;\n  disabled?: boolean;\n};\n\nexport type TreeProps = Omit<React.ComponentProps<\"ul\">, \"children\"> & {\n  nodes: readonly TreeNode[];\n  expandedIds: readonly string[];\n  selectedId?: string;\n  onExpandedChange: (id: string, expanded: boolean) => void;\n  onSelectionChange: (id: string) => void;\n  onRetry?: (id: string) => void;\n};\n\ntype TreeBranchParameters = {\n  node: TreeNode;\n  expanded: ReadonlySet<string>;\n  selectedId?: string;\n  treeId: string;\n  expandRefs: React.RefObject<Map<string, HTMLButtonElement>>;\n  onExpandedChange: TreeProps[\"onExpandedChange\"];\n  onSelectionChange: TreeProps[\"onSelectionChange\"];\n  onRetry?: TreeProps[\"onRetry\"];\n};\n\nfunction branchId(treeId: string, id: string) {\n  return `${treeId}-${encodeURIComponent(id)}`;\n}\n\nfunction TreeBranch({\n  node,\n  expanded,\n  selectedId,\n  treeId,\n  expandRefs,\n  onExpandedChange,\n  onSelectionChange,\n  onRetry,\n}: TreeBranchParameters) {\n  const isFolder = node.kind === \"folder\";\n  const isExpanded = isFolder && expanded.has(node.id);\n  const isSelected = selectedId === node.id;\n  const contentId = branchId(treeId, node.id);\n  const hasChildren = Boolean(node.children?.length);\n  const branchNotice =\n    node.status === \"loading\"\n      ? (node.message ?? \"Loading this branch…\")\n      : node.status === \"error\"\n        ? (node.message ?? \"This branch could not be loaded.\")\n        : node.children === undefined\n          ? \"Children have not been supplied.\"\n          : !hasChildren\n            ? \"This branch is empty.\"\n            : null;\n  const noticeStatus =\n    node.status === \"loading\" || node.status === \"error\"\n      ? node.status\n      : \"empty\";\n\n  return (\n    <li\n      data-slot=\"tree-item\"\n      data-tree-node-id={node.id}\n      data-kind={node.kind}\n      data-selected={isSelected || undefined}\n      data-disabled={node.disabled || undefined}\n      aria-busy={node.status === \"loading\" || undefined}\n    >\n      {/* The row is the travelling-selection item: one surface for chevron, name and actions. */}\n      <div\n        data-slot=\"tree-row\"\n        data-selected={isSelected || undefined}\n        data-disabled={node.disabled || undefined}\n      >\n        {isFolder ? (\n          <button\n            ref={(element) => {\n              if (element) expandRefs.current.set(node.id, element);\n              else expandRefs.current.delete(node.id);\n            }}\n            type=\"button\"\n            data-slot=\"tree-expand\"\n            aria-label={`${isExpanded ? \"Collapse\" : \"Expand\"} ${node.label}`}\n            aria-expanded={isExpanded}\n            aria-controls={contentId}\n            disabled={node.disabled}\n            onClick={() => onExpandedChange(node.id, !isExpanded)}\n          >\n            <Icon name=\"chevron-right\" size=\"sm\" feedback={false} />\n          </button>\n        ) : (\n          <span data-slot=\"tree-expand-spacer\" aria-hidden=\"true\" />\n        )}\n\n        <button\n          type=\"button\"\n          data-slot=\"tree-select\"\n          aria-current={isSelected ? \"true\" : undefined}\n          disabled={node.disabled}\n          onClick={() => onSelectionChange(node.id)}\n        >\n          <span data-slot=\"tree-icon\" aria-hidden=\"true\">\n            {node.icon ?? (\n              <Icon\n                name={\n                  isFolder ? (isExpanded ? \"folder-open\" : \"folder\") : \"file-text\"\n                }\n                size=\"sm\"\n                feedback={false}\n              />\n            )}\n          </span>\n          <span data-slot=\"tree-label\" title={node.label} dir=\"auto\">\n            {node.label}\n          </span>\n        </button>\n\n        {node.trailing && (\n          <span data-slot=\"tree-trailing\">{node.trailing}</span>\n        )}\n      </div>\n\n      {isFolder && (\n        <ul id={contentId} data-slot=\"tree-branch\" hidden={!isExpanded}>\n          {hasChildren &&\n            node.children!.map((child) => (\n              <TreeBranch\n                key={child.id}\n                node={child}\n                expanded={expanded}\n                selectedId={selectedId}\n                treeId={treeId}\n                expandRefs={expandRefs}\n                onExpandedChange={onExpandedChange}\n                onSelectionChange={onSelectionChange}\n                onRetry={onRetry}\n              />\n            ))}\n          {branchNotice && (\n            <li\n              data-slot=\"tree-notice\"\n              data-status={noticeStatus}\n              role={node.status === \"loading\" ? \"status\" : undefined}\n            >\n              <span data-slot=\"tree-notice-icon\" aria-hidden=\"true\">\n                {node.status === \"loading\" ? (\n                  <Icon name=\"loader\" size=\"sm\" feedback={false} />\n                ) : node.status === \"error\" ? (\n                  <Icon name=\"triangle-alert\" size=\"sm\" feedback={false} />\n                ) : (\n                  <Icon name=\"circle-dashed\" size=\"sm\" feedback={false} />\n                )}\n              </span>\n              <span dir=\"auto\">{branchNotice}</span>\n              {node.status === \"error\" && onRetry && (\n                <Button\n                  size=\"sm\"\n                  variant=\"outline\"\n                  data-slot=\"tree-retry\"\n                  className=\"v-tree__retry\"\n                  style={{ \"--mstroke\": \"currentColor\" } as React.CSSProperties}\n                  onClick={() => onRetry(node.id)}\n                >\n                  <Icon name=\"refresh-cw\" size=\"sm\" />\n                  Retry\n                </Button>\n              )}\n            </li>\n          )}\n          {node.truncated && (\n            <li data-slot=\"tree-notice\" data-status=\"truncated\">\n              <span data-slot=\"tree-notice-icon\" aria-hidden=\"true\">\n                <Icon name=\"ellipsis\" size=\"sm\" feedback={false} />\n              </span>\n              <span dir=\"auto\">\n                {node.message ?? \"This branch is truncated by the consumer.\"}\n              </span>\n            </li>\n          )}\n        </ul>\n      )}\n    </li>\n  );\n}\n\nfunction parentIds(nodes: readonly TreeNode[]) {\n  const parents = new Map<string, string>();\n  const visit = (entries: readonly TreeNode[], parent?: string) => {\n    for (const node of entries) {\n      if (parent) parents.set(node.id, parent);\n      if (node.children) visit(node.children, node.id);\n    }\n  };\n  visit(nodes);\n  return parents;\n}\n\nexport function Tree({\n  ref,\n  className,\n  nodes,\n  expandedIds,\n  selectedId,\n  onExpandedChange,\n  onSelectionChange,\n  onRetry,\n  onFocusCapture,\n  onBlurCapture,\n  ...props\n}: TreeProps) {\n  const { quiet } = useChoreography();\n  const generatedId = React.useId();\n  const treeId = `tree-branch-${generatedId.replace(/[^a-zA-Z0-9_-]/g, \"-\")}`;\n  const rootRef = React.useRef<HTMLUListElement>(null);\n  // The shared travelling selection owns the selected surface and pointer preview.\n  // Rows are its items, so the surface glides between files instead of repainting.\n  const flowRef = useFlowGroup<HTMLUListElement>(rootRef, {\n    kind: \"pill\",\n    itemSelector: '[data-slot=\"tree-row\"]',\n    activeSelector: '[data-selected=\"true\"]',\n  });\n  const expandRefs = React.useRef(new Map<string, HTMLButtonElement>());\n  const focusedNode = React.useRef<string | undefined>(undefined);\n  const previousExpanded = React.useRef(new Set(expandedIds));\n  const parents = React.useMemo(() => parentIds(nodes), [nodes]);\n  const expanded = React.useMemo(() => new Set(expandedIds), [expandedIds]);\n\n  React.useImperativeHandle(ref, () => rootRef.current!);\n  React.useLayoutEffect(() => {\n    const collapsed = new Set(\n      [...previousExpanded.current].filter((id) => !expanded.has(id)),\n    );\n    let ancestor = focusedNode.current\n      ? parents.get(focusedNode.current)\n      : undefined;\n    let recoveryTarget: string | undefined;\n    while (ancestor) {\n      if (collapsed.has(ancestor)) recoveryTarget = ancestor;\n      ancestor = parents.get(ancestor);\n    }\n    if (recoveryTarget) {\n      expandRefs.current.get(recoveryTarget)?.focus({ preventScroll: true });\n      focusedNode.current = recoveryTarget;\n    }\n    previousExpanded.current = new Set(expanded);\n  }, [expanded, parents]);\n\n  return (\n    <ul\n      ref={flowRef}\n      data-slot=\"tree\"\n      data-flow-group=\"\"\n      data-motion-quiet={quiet || undefined}\n      className={cn(\"v-tree\", className)}\n      onFocusCapture={(event) => {\n        const item = (event.target as Element).closest<HTMLElement>(\n          \"[data-tree-node-id]\",\n        );\n        if (item?.dataset.treeNodeId)\n          focusedNode.current = item.dataset.treeNodeId;\n        onFocusCapture?.(event);\n      }}\n      onBlurCapture={(event) => {\n        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {\n          focusedNode.current = undefined;\n        }\n        onBlurCapture?.(event);\n      }}\n      {...props}\n    >\n      {nodes.map((node) => (\n        <TreeBranch\n          key={node.id}\n          node={node}\n          expanded={expanded}\n          selectedId={selectedId}\n          treeId={treeId}\n          expandRefs={expandRefs}\n          onExpandedChange={onExpandedChange}\n          onSelectionChange={onSelectionChange}\n          onRetry={onRetry}\n        />\n      ))}\n    </ul>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/tree.css",
+      "content": "@layer cojeev-states {\n/* Tree: an index card of ruled branch guides. Folders open along the guide,\n   one soft slip travels to the selected row, and every notice is a small\n   inset strip on the same paper. The shared flow layer owns the slip; the\n   rules below only supply its paint and the quiet fallback. */\n.v-tree:where([data-slot=\"tree\"]) {\n  --tree-guide: var(--v-border);\n  --tree-tile: 28px;\n  --tree-reach: 22px;\n  --tree-elbow: 20px;\n  --tree-slip: var(--v-pink-soft);\n  --tree-slip-edge: color-mix(in oklab, var(--v-pink) 54%, var(--v-border));\n  --glide-bg: var(--tree-slip);\n  --glide-fg: var(--v-text);\n  --glide-ring: inset 0 0 0 1px var(--tree-slip-edge);\n  --glide-hover-bg: color-mix(in oklab, var(--v-ink) 6%, transparent);\n  color: var(--v-text);\n  font-size: var(--fs-small);\n  line-height: 1.35;\n}\n\n.v-tree:where([data-slot=\"tree\"]),\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-branch\"] {\n  min-width: 0;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-item\"] {\n  position: relative;\n  min-width: 0;\n}\n\n/* One row, one surface: chevron tile, name and trailing actions share it. */\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-row\"] {\n  display: grid;\n  grid-template-columns: var(--tree-tile) minmax(0, 1fr) auto;\n  align-items: center;\n  gap: var(--s-2);\n  min-width: 0;\n  min-height: 36px;\n  padding: 2px var(--s-2) 2px 2px;\n  border-radius: var(--r-md);\n  color: var(--v-text);\n  transition:\n    background var(--t-micro),\n    box-shadow var(--t-micro),\n    color var(--t-micro);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-row\"]:not([data-selected=\"true\"]):not(\n    [data-disabled=\"true\"]\n  ):hover {\n  background: var(--glide-hover-bg);\n}\n\n/* The pointer preview layer paints hover while the flow group owns the row. */\n:root:not([data-flow-hover=\"off\"])\n  .v-tree[data-flow-owned].v-glide:not([data-flow-hover=\"off\"])\n  [data-slot=\"tree-row\"]:not([data-selected=\"true\"]):not(\n    [data-disabled=\"true\"]\n  ):hover {\n  background: transparent;\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-row\"][data-selected=\"true\"] {\n  background: var(--tree-slip);\n  box-shadow: var(--glide-ring);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-row\"][data-disabled=\"true\"] {\n  color: var(--v-disabled-ink);\n  background: var(--v-disabled-face);\n  box-shadow: inset 0 0 0 1px\n    color-mix(in oklab, var(--v-disabled-edge) 55%, transparent);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  :is([data-slot=\"tree-expand\"], [data-slot=\"tree-expand-spacer\"]) {\n  inline-size: var(--tree-tile);\n  block-size: var(--tree-tile);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-expand\"] {\n  display: grid;\n  place-items: center;\n  padding: 0;\n  border-radius: var(--r-sm);\n  color: var(--v-text-2);\n  background: transparent;\n  transition:\n    background var(--t-micro),\n    color var(--t-micro);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-expand\"]:where(:not(:disabled)):where(\n    :hover,\n    :focus-visible\n  ) {\n  color: var(--v-text);\n  background: color-mix(in oklab, var(--v-ink) 8%, transparent);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  :is([data-slot=\"tree-expand\"], [data-slot=\"tree-select\"]):disabled {\n  color: var(--v-disabled-ink);\n  cursor: not-allowed;\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-expand\"]:disabled {\n  background: transparent;\n}\n\n/* The chevron turns toward the branch it opens; the folder glyph opens with it. */\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-expand\"] .v-icon {\n  transition: transform var(--t-element) var(--enter);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-expand\"][aria-expanded=\"true\"]\n  .v-icon {\n  transform: rotate(90deg);\n}\n\n/* Direction is read from the tree itself, so a right-to-left container inside\n   a left-to-right document (a Radix root, for example) still mirrors the arrow. */\n.v-tree:where([data-slot=\"tree\"]):dir(rtl)\n  [data-slot=\"tree-expand\"][aria-expanded=\"false\"]\n  .v-icon {\n  transform: rotate(180deg);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-select\"] {\n  display: flex;\n  align-items: center;\n  gap: var(--s-2);\n  min-width: 0;\n  min-height: 32px;\n  padding: 0 var(--s-2) 0 2px;\n  border-radius: var(--r-sm);\n  color: inherit;\n  text-align: start;\n  background: transparent;\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-icon\"] {\n  display: grid;\n  place-items: center;\n  flex: none;\n  inline-size: 20px;\n  block-size: 20px;\n  color: var(--v-text-2);\n  transition: color var(--t-micro);\n}\n\n/* Containers read in ink, leaves in secondary ink; selection lifts both. */\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-item\"][data-kind=\"folder\"]\n  > [data-slot=\"tree-row\"]\n  [data-slot=\"tree-icon\"],\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-row\"][data-selected=\"true\"]\n  [data-slot=\"tree-icon\"],\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-row\"][data-glide-active]\n  [data-slot=\"tree-icon\"] {\n  color: currentColor;\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-row\"][data-disabled=\"true\"]\n  [data-slot=\"tree-icon\"] {\n  color: var(--v-disabled-ink);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-label\"] {\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: var(--fs-small);\n  line-height: 1.35;\n  font-weight: var(--fw-medium);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-trailing\"] {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--s-1);\n  min-width: 0;\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-trailing\"] button {\n  display: grid;\n  place-items: center;\n  min-inline-size: 32px;\n  min-block-size: 32px;\n  padding: 0 var(--s-2);\n  border-radius: var(--r-sm);\n  color: var(--v-text-2);\n  background: transparent;\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  :is(\n    [data-slot=\"tree-expand\"],\n    [data-slot=\"tree-select\"],\n    [data-slot=\"tree-trailing\"] button\n  ):focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 1px;\n}\n\n/* Branch guides: each child draws its own elbow, and every child except the\n   last continues the ruled line down to its sibling. The line therefore stops\n   at the last child instead of running past the branch. */\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-branch\"] {\n  position: relative;\n  margin-inline-start: calc(var(--tree-tile) / 2 + 2px);\n  padding-inline-start: var(--tree-reach);\n  transition: opacity var(--t-element) var(--enter);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-branch\"][hidden] {\n  display: none;\n}\n\n@starting-style {\n  .v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-branch\"]:not([hidden]) {\n    opacity: 0;\n  }\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-branch\"]\n  > :is([data-slot=\"tree-item\"], [data-slot=\"tree-notice\"])::before {\n  content: \"\";\n  position: absolute;\n  inset-block-start: 0;\n  inset-inline-start: calc(-1 * var(--tree-reach));\n  inline-size: calc(var(--tree-reach) - 6px);\n  block-size: var(--tree-elbow);\n  border-inline-start: 1px solid var(--tree-guide);\n  border-block-end: 1px solid var(--tree-guide);\n  border-end-start-radius: var(--r-sm);\n  pointer-events: none;\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-branch\"]\n  > :is([data-slot=\"tree-item\"], [data-slot=\"tree-notice\"]):not(\n    :last-child\n  )::after {\n  content: \"\";\n  position: absolute;\n  inset-block-start: var(--tree-elbow);\n  inset-block-end: 0;\n  inset-inline-start: calc(-1 * var(--tree-reach));\n  border-inline-start: 1px solid var(--tree-guide);\n  pointer-events: none;\n}\n\n/* Notices are inset strips on the same paper: quiet for empty, busy for\n   loading, paired danger paint for errors, and a plain mark for truncation. */\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-notice\"] {\n  position: relative;\n  display: flex;\n  align-items: center;\n  gap: var(--s-2);\n  min-width: 0;\n  min-height: 40px;\n  padding: var(--s-1) var(--s-3) var(--s-1) var(--s-2);\n  border-radius: var(--r-md);\n  color: var(--v-text-2);\n  font-size: var(--fs-meta);\n  line-height: 1.4;\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-notice-icon\"] {\n  display: grid;\n  place-items: center;\n  flex: none;\n  inline-size: 20px;\n  block-size: 20px;\n  color: var(--v-text-3);\n}\n\n.v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-notice\"] > span:not([data-slot]) {\n  min-width: 0;\n  overflow-wrap: anywhere;\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-notice\"][data-status=\"loading\"] {\n  background: color-mix(in oklab, var(--v-ink) 4%, transparent);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-notice\"][data-status=\"error\"] {\n  color: var(--status-danger-ink);\n  background: var(--status-danger-bg);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-notice\"][data-status=\"error\"]\n  [data-slot=\"tree-notice-icon\"] {\n  color: currentColor;\n}\n\n/* Retry is the shared outline Button in the notice's own ink; its living\n   edge and press pulse come from the shared morph and flow runtimes. */\n.v-tree[data-slot] [data-slot=\"tree-notice\"] .v-tree__retry.v-btn {\n  flex: none;\n  margin-inline-start: auto;\n  min-height: 32px;\n  padding-inline: var(--s-3);\n  color: inherit;\n  box-shadow: inset 0 0 0 1px currentColor;\n  font-size: var(--fs-meta);\n}\n\n.v-tree[data-slot] [data-slot=\"tree-notice\"] .v-tree__retry.v-btn:hover {\n  background: color-mix(in oklab, currentColor 10%, transparent);\n}\n\n.v-tree:where([data-slot=\"tree\"])\n  [data-slot=\"tree-notice\"][data-status=\"loading\"]\n  [data-slot=\"tree-notice-icon\"]\n  .v-icon {\n  animation: v-tree-loading 0.9s linear infinite;\n}\n\n@keyframes v-tree-loading {\n  to {\n    transform: rotate(1turn);\n  }\n}\n\n.v-tree:where([data-slot=\"tree\"])[data-motion-quiet=\"true\"] *,\n.v-tree:where([data-slot=\"tree\"])[data-motion-quiet=\"true\"] *::before,\n.v-tree:where([data-slot=\"tree\"])[data-motion-quiet=\"true\"] *::after {\n  animation-duration: 0s;\n  animation-iteration-count: 1;\n  transition-duration: 0s;\n}\n\n.v-tree[data-motion-quiet=\"true\"] [data-slot=\"tree-row\"],\n.v-tree[data-motion-quiet=\"true\"] [data-slot=\"tree-expand\"] .v-icon,\n.v-tree[data-motion-quiet=\"true\"]\n  [data-slot=\"tree-notice\"][data-status=\"loading\"]\n  .v-icon {\n  animation-duration: 0s;\n  animation-iteration-count: 1;\n  transition-duration: 0s;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .v-tree:where([data-slot=\"tree\"]) *,\n  .v-tree:where([data-slot=\"tree\"]) *::before,\n  .v-tree:where([data-slot=\"tree\"]) *::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n\n  .v-tree [data-slot=\"tree-row\"],\n  .v-tree [data-slot=\"tree-expand\"] .v-icon,\n  .v-tree [data-slot=\"tree-notice\"][data-status=\"loading\"] .v-icon {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n  }\n}\n\n@media (max-width: 480px) {\n  .v-tree:where([data-slot=\"tree\"]) {\n    --tree-reach: 18px;\n  }\n\n  .v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-row\"] {\n    grid-template-columns: var(--tree-tile) minmax(0, 1fr) min-content;\n  }\n\n  .v-tree:where([data-slot=\"tree\"]) [data-slot=\"tree-notice\"] {\n    align-items: flex-start;\n    flex-wrap: wrap;\n    padding-block: var(--s-2);\n  }\n\n  .v-tree[data-slot] [data-slot=\"tree-notice\"] .v-tree__retry.v-btn {\n    margin-inline-start: var(--s-7);\n  }\n}\n\n/* Documentation specimen: a bounded card, not a second Tree implementation. */\n.v-tree-example {\n  display: grid;\n  gap: var(--s-4);\n  width: 100%;\n  max-width: 640px;\n  min-width: 0;\n  margin-inline: auto;\n  color: var(--v-text);\n}\n\n.v-tree-example > header {\n  display: grid;\n  gap: var(--s-1);\n  padding-inline: var(--s-1);\n}\n\n.v-tree-example > header > span {\n  color: var(--v-accent-ink);\n  font-size: var(--fs-caps);\n  font-weight: var(--fw-semibold);\n  letter-spacing: 0.09em;\n  text-transform: uppercase;\n}\n\n.v-tree-example h3 {\n  margin: 0;\n  font: var(--fw-medium) var(--fs-title)/1.15 var(--font-display);\n  letter-spacing: -0.01em;\n}\n\n.v-tree-example > header p,\n.v-tree-example__status {\n  margin: 0;\n  color: var(--v-text-2);\n  font-size: var(--fs-meta);\n  line-height: 1.55;\n}\n\n.v-tree-example__card {\n  min-width: 0;\n  padding: var(--s-2);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-card-sm);\n  background: var(--v-paper);\n}\n\n.v-tree-example__status {\n  min-height: 1.55em;\n  padding-inline: var(--s-1);\n}\n\n.v-tree-example[data-compact=\"true\"] {\n  max-width: 520px;\n  margin-inline: 0;\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/tree.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/tree.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Tree",
+      "variants": [
+        "branch-ledger",
+        "loading-branch",
+        "empty-branch",
+        "failed-branch"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "selected",
+        "collapsed",
+        "loading",
+        "empty",
+        "error",
+        "truncated",
+        "disabled",
+        "reduced-motion"
+      ],
+      "reviewOnly": false
+    },
+    "api": [
+      {
+        "name": "TreeNode",
+        "props": [
+          {
+            "name": "id",
+            "type": "string",
+            "required": true,
+            "description": "Stable, unique identity owned by the caller."
+          },
+          {
+            "name": "label",
+            "type": "string",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "kind",
+            "type": "\"file\" | \"folder\"",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "children",
+            "type": "readonly TreeNode[]",
+            "required": false,
+            "description": "Undefined means not supplied; an empty array means loaded and empty."
+          },
+          {
+            "name": "icon",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "status",
+            "type": "\"idle\" | \"loading\" | \"error\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "truncated",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "trailing",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "TreeProps",
+        "props": [
+          {
+            "name": "nodes",
+            "type": "readonly TreeNode[]",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "expandedIds",
+            "type": "readonly string[]",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "selectedId",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onExpandedChange",
+            "type": "(id: string, expanded: boolean) => void",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "onSelectionChange",
+            "type": "(id: string) => void",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "onRetry",
+            "type": "(id: string) => void",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

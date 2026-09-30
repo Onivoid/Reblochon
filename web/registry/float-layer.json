@@ -1,0 +1,112 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "float-layer",
+  "title": "Float layer",
+  "description": "An entrance, scroll depth and gentle idle movement for a real component or a group of elements.",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/float-layer.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { Slot } from \"@radix-ui/react-slot\";\nimport { animate, motion, useMotionValue, useScroll, useSpring, useTransform, type HTMLMotionProps, type MotionStyle } from \"motion/react\";\nimport { cn } from \"@/lib/utils\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\nimport { motionTokens, trackMotion, useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\n\nconst MotionSlot = motion.create(Slot);\nconst clamp = (value: number, low: number, high: number, fallback: number) => Number.isFinite(value) ? Math.max(low, Math.min(high, value)) : fallback;\nexport type FloatLayerProps = Omit<HTMLMotionProps<\"div\">, \"initial\" | \"animate\" | \"transition\" | \"ref\"> & {\n  /** Total native-scroll displacement in px. Negative values reverse the plane. */\n  depth?: number;\n  /** Entrance delay in seconds; bounded to one second. */\n  delay?: number;\n  /** Gentle idle excursion in px. Set zero for scroll-only depth. */\n  drift?: number;\n  /** Repeat the entrance when the layer leaves and re-enters the viewport. */\n  replay?: boolean;\n  /** Entrance duration in seconds, clamped to 0.2–2. */\n  revealDuration?: number;\n  /** Initial vertical entrance offset in px, clamped to 0–80. */\n  revealDistance?: number;\n  asChild?: boolean;\n  ref?: React.Ref<HTMLElement>;\n  \"data-slot\"?: string;\n};\n\n/** A visible entrance and a separate native-scroll depth plane. The child keeps\n * its transform/scale and native identity; consumers owning `translate` can use\n * the default wrapper to put each movement on its own element. */\nexport function FloatLayer({ depth = 32, delay = 0, drift = 6, replay = false, revealDuration = .95, revealDistance = 24, asChild = false, className, style, ref, ...props }: FloatLayerProps) {\n  const host = React.useRef<HTMLElement | null>(null);\n  const attach = React.useCallback((element: HTMLElement | null) => { host.current = element; const release = assignMotionRef(ref, element); return () => { host.current = null; release(); }; }, [ref]);\n  const { quiet } = useChoreography(), { enabled, inView } = useMotionVisibility(host);\n  const active = !quiet && enabled && inView;\n  const distance = clamp(depth, -180, 180, 32), excursion = clamp(drift, 0, 24, 6), pause = clamp(delay, 0, 1, 0), entranceTime = clamp(revealDuration, .2, 2, .95), entranceDistance = clamp(revealDistance, 0, 80, 24);\n  // Server output remains readable; hydration prepares the entrance before paint.\n  const reveal = useMotionValue(1), phase = useMotionValue(0), prepared = React.useRef(false), entered = React.useRef(false);\n  const mark = React.useCallback((state: \"waiting\" | \"entering\" | \"shown\") => host.current?.setAttribute(\"data-reveal\", state), []);\n  const { scrollYProgress } = useScroll({ target: host, offset: [\"start end\", \"end start\"] });\n  const scroll = useSpring(.5, motionTokens.spring.gentle);\n  React.useLayoutEffect(() => {\n    if (prepared.current) return;\n    prepared.current = true;\n    if (!quiet) { reveal.jump(0); mark(\"waiting\"); }\n  }, [quiet, reveal, mark]);\n  React.useEffect(() => {\n    if (quiet || document.hidden) { reveal.jump(1); entered.current = true; mark(\"shown\"); return; }\n    if (!enabled) return;\n    if (!inView) {\n      if (replay) { reveal.jump(0); entered.current = false; mark(\"waiting\"); }\n      else if (entered.current) { reveal.jump(1); mark(\"shown\"); }\n      return;\n    }\n    if (reveal.get() >= 1) { mark(\"shown\"); return; }\n    const first = !entered.current;\n    entered.current = true;\n    mark(\"entering\");\n    const controls = animate(reveal, 1, { duration: entranceTime, delay: first ? pause : 0, ease: [...motionTokens.ease.enter], onComplete: () => mark(\"shown\") });\n    return trackMotion(controls);\n  }, [quiet, enabled, inView, reveal, pause, replay, entranceTime, mark]);\n  React.useEffect(() => {\n    if (!active) { scroll.jump(.5); return; }\n    scroll.set(scrollYProgress.get());\n    const unsubscribe = scrollYProgress.on(\"change\", value => scroll.set(value));\n    const start = phase.get();\n    const release = excursion > 0 ? trackMotion(animate(phase, start + 1, { duration: 14, ease: \"linear\", repeat: Infinity })) : () => {};\n    return () => { unsubscribe(); release(); scroll.stop(); };\n  }, [active, excursion, scroll, scrollYProgress, phase]);\n  const x = useTransform(() => `${active ? Math.sin(phase.get() * Math.PI * 2) * excursion * .4 : 0}px`);\n  const y = useTransform(() => `${(active ? (.5 - scroll.get()) * distance + Math.sin(phase.get() * Math.PI * 4) * excursion : 0) + (1 - reveal.get()) * entranceDistance}px`);\n  const Element = asChild ? MotionSlot : motion.div;\n  return <Element {...props} ref={attach} {...(asChild ? {} : { \"data-slot\": props[\"data-slot\"] ?? \"float-layer\" })}\n    data-float-layer=\"\" data-float-depth={distance} data-quiet={quiet} data-active={active}\n    className={cn(\"v-float-layer\", className)} style={{ ...style, \"--float-x\": x, \"--float-y\": y, \"--float-reveal\": reveal } as MotionStyle} initial={false} />;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/float-layer.css",
+      "content": "@layer cojeev-states {\n.v-float-layer { min-inline-size: 0; }\n/* Individual translate composes with a child's transform/scale, including Card\n   depth. The presence offsets allow a shared MotionSurface on the same root. */\n.v-float-layer[data-float-layer][data-active][data-quiet] {\n  translate: calc(var(--presence-x, 0px) + var(--float-x, 0px)) calc(var(--presence-y, 0px) + var(--float-y, 0px) + var(--depth-lift, 0px));\n  opacity: var(--float-reveal, 1);\n}\n[data-float-layer][data-quiet=\"true\"] { --float-x: 0px; --float-y: 0px; --float-reveal: 1; }\n@media (scripting: none), (prefers-reduced-motion: reduce) {\n  .v-float-layer[data-float-layer][data-active][data-quiet] { translate: none; opacity: 1; }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/float-layer.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/float-layer.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Float layer",
+      "variants": [
+        "default",
+        "scroll-only"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "entrance",
+        "scroll",
+        "idle",
+        "reduced-motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "FloatLayerProps",
+        "props": [
+          {
+            "name": "depth",
+            "type": "number",
+            "required": false,
+            "description": "Total native-scroll displacement in px. Negative values reverse the plane."
+          },
+          {
+            "name": "delay",
+            "type": "number",
+            "required": false,
+            "description": "Entrance delay in seconds; bounded to one second."
+          },
+          {
+            "name": "drift",
+            "type": "number",
+            "required": false,
+            "description": "Gentle idle excursion in px. Set zero for scroll-only depth."
+          },
+          {
+            "name": "replay",
+            "type": "boolean",
+            "required": false,
+            "description": "Repeat the entrance when the layer leaves and re-enters the viewport."
+          },
+          {
+            "name": "revealDuration",
+            "type": "number",
+            "required": false,
+            "description": "Entrance duration in seconds, clamped to 0.2–2."
+          },
+          {
+            "name": "revealDistance",
+            "type": "number",
+            "required": false,
+            "description": "Initial vertical entrance offset in px, clamped to 0–80."
+          },
+          {
+            "name": "asChild",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "ref",
+            "type": "React.Ref<HTMLElement>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "data-slot",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Motion",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

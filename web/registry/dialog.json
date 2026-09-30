@@ -1,0 +1,131 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dialog",
+  "title": "Dialog",
+  "description": "A decision slip, focused editor or illustrated exhibit. Give one task your attention without losing your place.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-dialog"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/scroll-area.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/dialog.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-dialog\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nimport { Button } from \"@/components/ui/button\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { ScrollArea, type ScrollAreaProps } from \"@/components/ui/scroll-area\";\nexport type DialogProps = React.ComponentProps<typeof Primitive.Root>;\nexport function Dialog(props: DialogProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type DialogTriggerProps = React.ComponentProps<typeof Primitive.Trigger>;\nexport function DialogTrigger(props: DialogTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"dialog-trigger\"\n      data-part=\"trigger\"\n      data-dialog-open=\"\"\n      {...props}\n    />\n  );\n}\nexport type DialogPortalProps = React.ComponentProps<typeof Primitive.Portal>;\nexport function DialogPortal(props: DialogPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type DialogOverlayProps = React.ComponentProps<typeof Primitive.Overlay>;\nexport function DialogOverlay({\n  className,\n  ref,\n  ...props\n}: DialogOverlayProps) {\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, ref, \"fade\");\n  return (\n    <Primitive.Overlay\n      ref={flowRef}\n      data-slot=\"dialog-overlay\"\n      data-part=\"overlay\"\n      className={cn(\n        \"v-scrim fixed inset-0 bg-[var(--v-scrim)] z-[calc(var(--z-dialog)-1)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport const dialogContentVariants = cva(\n  \"v-dialog [position:fixed] [inset:0] [margin:auto] [width:min(520px,calc(100%_-_48px))] [height:fit-content] [background:var(--v-canvas)] [border-radius:var(--r-sheet)] [padding:var(--s-8)] [z-index:var(--z-dialog)] [display:grid] [box-shadow:var(--shadow-float),inset_0_0_0_1px_var(--v-border)] [gap:var(--s-4)]\",\n);\nexport type DialogContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & {\n  showCloseButton?: boolean;\n  appearance?: \"confirmation\" | \"editor\" | \"exhibit\";\n};\nexport function DialogContent({\n  className,\n  ref,\n  children,\n  showCloseButton = false,\n  appearance,\n  ...props\n}: DialogContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, morphRef, \"enter\");\n  return (\n    <Primitive.Portal>\n      <DialogOverlay />\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"dialog-content\"\n        data-part=\"content\"\n        data-appearance={appearance}\n        data-morph={appearance ? \"both\" : undefined}\n        data-r={appearance ? \"css\" : undefined}\n        data-stable-hit=\"\"\n        className={cn(dialogContentVariants(), className)}\n        {...props}\n      >\n        {children}\n        {showCloseButton && (\n          <DialogClose asChild>\n            <Button\n              variant=\"ghost\"\n              aria-label=\"Close\"\n              className=\"v-dialog__close\"\n            >\n              <Icon name=\"x\" />\n            </Button>\n          </DialogClose>\n        )}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\n/** Bounded body; header and actions remain reachable while native content scrolls. */\nexport function DialogBody({\n  className,\n  viewportProps,\n  ...props\n}: ScrollAreaProps) {\n  return (\n    <ScrollArea\n      variant=\"plain\"\n      type=\"always\"\n      className={cn(\"v-dialog__body\", className)}\n      viewportProps={{ tabIndex: -1, ...viewportProps }}\n      {...props}\n    />\n  );\n}\nexport type DialogHeaderProps = React.ComponentProps<\"div\">;\nexport function DialogHeader({ className, ...props }: DialogHeaderProps) {\n  return (\n    <div\n      data-slot=\"dialog-header\"\n      data-part=\"header\"\n      className={cn(\n        \"v-dialog__head flex items-start justify-between gap-[var(--s-4)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DialogFooterProps = React.ComponentProps<\"div\">;\nexport function DialogFooter({ className, ...props }: DialogFooterProps) {\n  return (\n    <div\n      data-slot=\"dialog-footer\"\n      data-part=\"footer\"\n      className={cn(\n        \"v-dialog__actions flex gap-[var(--s-3)] justify-end mt-[var(--s-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DialogTitleProps = React.ComponentProps<typeof Primitive.Title>;\nexport function DialogTitle({ className, ...props }: DialogTitleProps) {\n  return (\n    <Primitive.Title\n      data-slot=\"dialog-title\"\n      data-part=\"title\"\n      className={cn(\n        \"v-section font-[family-name:var(--font-display)] text-[length:var(--fs-section)] leading-[1.15] tracking-[-0.01em] pt-1.5 font-medium\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DialogDescriptionProps = React.ComponentProps<\n  typeof Primitive.Description\n>;\nexport function DialogDescription({\n  className,\n  ...props\n}: DialogDescriptionProps) {\n  return (\n    <Primitive.Description\n      data-slot=\"dialog-description\"\n      data-part=\"description\"\n      className={cn(\n        \"v-body-2 text-[length:var(--fs-body)] leading-[1.5] text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DialogCloseProps = React.ComponentProps<typeof Primitive.Close>;\nexport function DialogClose(props: DialogCloseProps) {\n  return (\n    <Primitive.Close\n      data-slot=\"dialog-close\"\n      data-part=\"close\"\n      data-close=\"\"\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/dialog.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-scrim:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  position: fixed;\n  inset: 0;\n  background: var(--v-scrim);\n  z-index: var(--z-sheet);\n}\n.v-dialog__head:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-4);\n}\n.v-dialog__actions:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  display: flex;\n  gap: var(--s-2);\n  justify-content: flex-end;\n}\n/* Scrim paint and retained close use the shared opacity-only Motion lane. */\n.v-dialog:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  animation: none;\n}\n.v-dialog__head:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  align-items: start;\n}\n.v-dialog__head:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) .v-section {\n  font-size: var(--fs-section);\n  line-height: 1.15;\n  padding-top: var(--s-2);\n}\n.v-dialog:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) > .v-body-2 {\n  max-width: 52ch;\n}\n.v-dialog__actions:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  margin-top: var(--s-2);\n  gap: var(--s-3);\n}\n.v-dialog:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-dialog:where([data-slot=\"dialog\"], [data-slot^=\"dialog-\"]) {\n  scrollbar-gutter: stable;\n}\n@keyframes v-scrim-in {\n  from {\n    opacity: 0;\n  }\n}\n@keyframes v-dialog-in {\n  from {\n    opacity: 0;\n    transform: translateY(10px) scale(0.985);\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"dialog\"],\n  [data-slot^=\"dialog-\"],\n  [data-slot=\"dialog\"]::before,\n  [data-slot=\"dialog\"]::after,\n  [data-slot^=\"dialog-\"]::before,\n  [data-slot^=\"dialog-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n/* A long dialog stays inside the screen; its actions remain reachable. */\n[data-slot=\"dialog-content\"] {\n  max-height: calc(100dvh - 32px);\n  overflow-y: auto;\n  overscroll-behavior: contain;\n  min-width: 0;\n  grid-template-columns: minmax(0, 1fr);\n}\n[data-slot=\"dialog-title\"],\n[data-slot=\"dialog-description\"] {\n  overflow-wrap: anywhere;\n}\n[data-slot=\"dialog-footer\"] {\n  flex-wrap: wrap;\n}\n@media (max-width: 640px) {\n  [data-slot=\"dialog-content\"] {\n    width: calc(100% - 24px);\n    padding: var(--s-6);\n  }\n}\n\n.v-dialog .v-dialog__close {\n  position: absolute;\n  top: 12px;\n  right: 12px;\n  min-width: 44px;\n  min-height: 44px;\n  padding: 0;\n}\n.v-dialog[data-appearance] {\n  width: min(580px, calc(100% - 40px));\n  padding: var(--s-7);\n  gap: var(--s-5);\n  overflow: visible;\n  background: var(--v-paper);\n  border-radius: var(--r-sheet);\n  --mfill: var(--v-paper);\n  --mstroke: var(--v-border);\n  box-shadow: var(--shadow-float);\n}\n.v-dialog[data-appearance]:has(> svg [data-morph-body]) {\n  background: transparent;\n}\n.v-dialog[data-appearance] .v-dialog__head {\n  display: grid;\n  padding-right: var(--s-12);\n  gap: var(--s-3);\n}\n.v-dialog[data-appearance] [data-slot=\"dialog-title\"] {\n  margin: 0;\n  max-width: 22ch;\n}\n.v-dialog[data-appearance] [data-slot=\"dialog-description\"] {\n  margin: 0;\n  max-width: 48ch;\n}\n.v-dialog[data-appearance] .v-dialog__body {\n  --h: min(480px, calc(100dvh - 330px));\n  height: auto;\n  min-height: 0;\n  max-height: var(--h);\n  border-radius: 0;\n  background: transparent;\n  box-shadow: none;\n}\n.v-dialog[data-appearance]\n  .v-dialog__body[data-slot].-plain\n  > [data-slot=\"scroll-area-viewport\"] {\n  height: auto;\n  max-height: var(--h);\n  padding: var(--s-1) var(--s-5) var(--s-3) var(--s-1);\n}\n.v-dialog[data-appearance] .v-dialog__actions {\n  border-top: 1px solid var(--v-border);\n  padding-top: var(--s-5);\n  margin: 0;\n}\n.v-dialog[data-appearance=\"confirmation\"] {\n  width: min(480px, calc(100% - 40px));\n  --mfill: var(--v-yellow-soft);\n  background: var(--v-yellow-soft);\n  border-radius: var(--r-panel);\n}\n.v-dialog[data-appearance=\"exhibit\"] {\n  width: min(800px, calc(100% - 40px));\n}\n.v-dialog__stamp {\n  width: 40px;\n  height: 40px;\n  display: grid;\n  place-items: center;\n  border-radius: var(--r-md);\n  background: var(--v-blue);\n  color: var(--ink-fixed);\n}\n.v-dialog__exhibit {\n  display: grid;\n  grid-template-columns: 1.1fr 1fr;\n  gap: var(--s-7);\n  align-items: center;\n}\n.v-dialog__exhibit img {\n  display: block;\n  width: 100%;\n  aspect-ratio: 1;\n  object-fit: cover;\n  border-radius: var(--r-card);\n}\n.v-dialog__exhibit dl {\n  display: grid;\n  gap: var(--s-2);\n  margin: var(--s-4) 0;\n  font-size: var(--fs-small);\n}\n.v-dialog__exhibit dd {\n  margin: 0 0 var(--s-3);\n  color: var(--v-text-2);\n}\n.v-dialog-example {\n  display: grid;\n  gap: var(--s-5);\n  justify-items: start;\n  padding: var(--s-5);\n  min-width: 0;\n}\n.v-dialog-example__slip {\n  display: grid;\n  gap: var(--s-3);\n  width: 100%;\n  padding: var(--s-6);\n  border-left: 3px solid var(--v-brand);\n  background: var(--v-paper);\n  border-radius: 0 var(--r-card) var(--r-card) 0;\n}\n.v-dialog-example p {\n  margin: 0;\n  line-height: 1.6;\n}\n.v-dialog-example__eyebrow {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  color: var(--v-text-2);\n}\n@media (max-width: 540px) {\n  .v-dialog[data-appearance] {\n    padding: var(--s-6);\n    gap: var(--s-4);\n    max-height: calc(100dvh - 40px);\n  }\n  .v-dialog[data-appearance] .v-dialog__body {\n    max-height: calc(100dvh - 310px);\n  }\n  .v-dialog__exhibit {\n    grid-template-columns: minmax(0, 1fr);\n    gap: var(--s-5);\n  }\n  .v-dialog__exhibit img {\n    aspect-ratio: 1.7;\n  }\n  .v-dialog[data-appearance] [data-slot=\"dialog-title\"] {\n    font-size: var(--fs-title);\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/dialog.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/dialog.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "dialog",
+      "name": "Dialog",
+      "tier": "base",
+      "evidence": "Ext I07",
+      "status": "derived",
+      "root": ".v-dialog",
+      "variants": [
+        "confirmation",
+        "editor",
+        "exhibit"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "open",
+        "closed"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "opens"
+      ],
+      "canvas": "720x480",
+      "contract": "entries/dialog/contract.md",
+      "demo": "entries/dialog/demo.html",
+      "isolation": [
+        "default-default-rest-720x480.html",
+        "default-default-rest-dark-720x480.html",
+        "default-default-open-720x480.html",
+        "default-default-open-dark-720x480.html"
+      ],
+      "reviewOnly": false
+    },
+    "api": [
+      {
+        "name": "DialogProps",
+        "props": []
+      },
+      {
+        "name": "DialogTriggerProps",
+        "props": []
+      },
+      {
+        "name": "DialogPortalProps",
+        "props": []
+      },
+      {
+        "name": "DialogOverlayProps",
+        "props": []
+      },
+      {
+        "name": "DialogContentProps",
+        "props": [
+          {
+            "name": "showCloseButton",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"confirmation\" | \"editor\" | \"exhibit\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DialogHeaderProps",
+        "props": []
+      },
+      {
+        "name": "DialogFooterProps",
+        "props": []
+      },
+      {
+        "name": "DialogTitleProps",
+        "props": []
+      },
+      {
+        "name": "DialogDescriptionProps",
+        "props": []
+      },
+      {
+        "name": "DialogCloseProps",
+        "props": []
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

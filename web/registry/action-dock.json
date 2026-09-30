@@ -1,0 +1,39 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "action-dock",
+  "title": "Action dock",
+  "description": "A reusable action dock composed from Cojeev base components.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/organism-composition.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/action-dock.tsx",
+      "content": "\"use client\";\nexport { ActionDock, type OrganismProps as ActionDockProps } from \"@/components/ui/organism-composition\";\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Action dock",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "interactive",
+        "reduced-motion"
+      ]
+    },
+    "api": [],
+    "category": "Composition",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

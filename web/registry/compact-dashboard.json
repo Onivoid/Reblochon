@@ -1,0 +1,39 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "compact-dashboard",
+  "title": "Compact dashboard",
+  "description": "Historical compatibility alias for WorkSidePanel; use the dedicated panel composition in new work.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/organism-composition.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/compact-dashboard.tsx",
+      "content": "\"use client\";\nexport { CompactDashboard, type OrganismProps as CompactDashboardProps } from \"@/components/ui/organism-composition\";\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Compact dashboard",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "interactive",
+        "reduced-motion"
+      ]
+    },
+    "api": [],
+    "category": "Composition",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

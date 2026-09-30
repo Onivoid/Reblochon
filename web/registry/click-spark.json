@@ -1,0 +1,105 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "click-spark",
+  "title": "Click Spark",
+  "description": "A finite spray of accent marks responds to a real activation.",
+  "dependencies": [
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/click-spark.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { ReferenceField, type ReferenceFieldProps } from \"@/lib/cojeev/reference-field\";\nexport type ClickSparkProps = ReferenceFieldProps;\n/** Finite radial accents respond to pointer or keyboard activation. */\nexport function ClickSpark(props: ClickSparkProps) {\n  return <ReferenceField {...props} kind=\"click-spark\" />;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/lib/reference-field.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { frame, cancelFrame } from \"motion\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\nimport { cn } from \"@/lib/utils\";\nimport { createFieldPainter, type FieldKind } from \"@/lib/cojeev/reference-field-paint\";\nimport { boundedCount, boundedNumber } from \"@/lib/cojeev/reference-effect-geometry\";\n\nexport type ReferenceFieldProps = React.ComponentProps<\"div\"> & {\n  /** Stop movement while retaining a composed, meaningful still frame. */\n  paused?: boolean;\n  tone?: \"pink\" | \"olive\" | \"blue\" | \"yellow\";\n  speed?: number;\n  count?: number;\n  /** Height of the local effect stage, in CSS pixels. */\n  height?: number;\n  /** Optional texture for the elastic sheet or ripple. */\n  src?: string;\n  /** Optional image cards for the trail. Decorative; describe their subject nearby. */\n  images?: readonly string[];\n};\n\n/** One scoped paint surface shared by the actual field/cursor components. */\nexport function ReferenceField({ kind, paused = false, tone = \"pink\", speed = 1, count = 18, height = 320, src, images, className, style, children, ref, ...props }: ReferenceFieldProps & { kind: FieldKind }) {\n  const host = React.useRef<HTMLDivElement>(null), canvas = React.useRef<HTMLCanvasElement>(null);\n  const { enabled, inView } = useMotionVisibility(host);\n  const running = enabled && inView && !paused;\n  const safeCount = boundedCount(count, 18, 64), safeSpeed = boundedNumber(speed, 1, .1, 3);\n  const state = React.useRef({ running, speed: safeSpeed });\n  React.useLayoutEffect(() => { state.current = { running, speed: safeSpeed }; }, [running, safeSpeed]);\n  const painter = React.useRef<ReturnType<typeof createFieldPainter> | null>(null);\n  const imagesKey = JSON.stringify(images ?? []);\n\n  React.useEffect(() => {\n    const element = host.current, surface = canvas.current;\n    if (!element || !surface) return;\n    const context = surface.getContext(\"2d\");\n    if (!context) { element.dataset.renderState = \"unavailable\"; return; }\n    const renderer = createFieldPainter(kind, context, safeCount);\n    painter.current = renderer;\n    const assets = (src ? [src] : JSON.parse(imagesKey) as string[]).slice(0, 12).map(url => {\n      const image = new Image();\n      image.onload = () => { renderer.invalidate(); renderer.draw(0, false); };\n      image.onerror = () => { element.dataset.assetState = \"fallback\"; };\n      image.src = url; return image;\n    });\n    renderer.images = assets;\n    let appearanceKey = \"\";\n    const repaint = () => {\n      const css = getComputedStyle(element);\n      const palette = [\"--v-pink\", \"--v-olive\", \"--v-blue\", \"--v-yellow\"].map((key, i) => css.getPropertyValue(key).trim() || [\"#f5b8db\", \"#9aab63\", \"#b6caeb\", \"#f5d867\"][i]);\n      const nextKey = JSON.stringify([palette, css.color]);\n      if (appearanceKey === nextKey) return;\n      appearanceKey = nextKey;\n      renderer.palette = palette; renderer.ink = css.color;\n      renderer.invalidate(); renderer.draw(0, false);\n    };\n    const resize = () => {\n      const width = Math.max(1, element.clientWidth), h = Math.max(1, element.clientHeight);\n      const ratio = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(900000 / (width * h)));\n      surface.width = Math.round(width * ratio); surface.height = Math.round(h * ratio);\n      context.setTransform(ratio, 0, 0, ratio, 0, 0);\n      renderer.resize(width, h);\n      renderer.tone = [\"pink\", \"olive\", \"blue\", \"yellow\"].indexOf(tone);\n      repaint();\n      renderer.draw(0, false);\n      element.dataset.renderState = \"ready\";\n    };\n    const observer = new ResizeObserver(resize); observer.observe(element);\n    const theme = new MutationObserver(repaint);\n    for (let ancestor: Element | null = element; ancestor; ancestor = ancestor.parentElement) {\n      theme.observe(ancestor, { attributes: true, attributeFilter: [\"data-mode\", \"data-palette\", \"data-contrast\", \"class\", \"style\"] });\n    }\n    window.addEventListener(\"cojeev:appearancechange\", repaint);\n    const point = (event: PointerEvent | MouseEvent) => {\n      const box = element.getBoundingClientRect();\n      return { x: (event.clientX - box.left) * element.clientWidth / Math.max(1, box.width), y: (event.clientY - box.top) * element.clientHeight / Math.max(1, box.height) };\n    };\n    const move = (event: PointerEvent) => { if (state.current.running) renderer.move(point(event)); };\n    const leave = () => renderer.leave();\n    const click = (event: MouseEvent) => {\n      if (!state.current.running) return;\n      // A keyboard-activated child button has no pointer coordinates.\n      const p = event.detail === 0 ? { x: element.clientWidth / 2, y: element.clientHeight / 2 } : point(event);\n      renderer.click(p);\n    };\n    element.addEventListener(\"pointermove\", move, { passive: true });\n    element.addEventListener(\"pointerleave\", leave);\n    element.addEventListener(\"click\", click);\n    resize();\n    return () => {\n      observer.disconnect(); theme.disconnect(); window.removeEventListener(\"cojeev:appearancechange\", repaint); assets.forEach(asset => { asset.onload = null; asset.onerror = null; });\n      element.removeEventListener(\"pointermove\", move); element.removeEventListener(\"pointerleave\", leave); element.removeEventListener(\"click\", click);\n      painter.current = null;\n    };\n  }, [kind, safeCount, src, imagesKey, tone]);\n\n  React.useEffect(() => {\n    const renderer = painter.current;\n    if (!renderer) return;\n    if (!running) { renderer.draw(0, false); return; }\n    const tick = ({ delta }: { delta: number }) => renderer.draw(Math.min(delta, 33) * state.current.speed, true);\n    frame.update(tick, true);\n    return () => cancelFrame(tick);\n  }, [running, kind, safeCount, src, imagesKey, tone]);\n\n  return <div {...props} ref={React.useCallback((node: HTMLDivElement | null) => { host.current = node; if (typeof ref === \"function\") return ref(node); if (ref) ref.current = node; }, [ref])}\n    className={cn(`v-${kind}`, className)} data-slot={kind} data-running={running ? \"true\" : \"false\"} data-tone={tone}\n    style={{ position: \"relative\", isolation: \"isolate\", overflow: \"hidden\", minWidth: 0, width: \"100%\", height: boundedNumber(height, 320, 120, 1000), borderRadius: \"var(--r-panel)\", color: \"var(--v-text)\", background: \"var(--v-beige)\", ...style }}>\n    <canvas ref={canvas} aria-hidden=\"true\" style={{ position: \"absolute\", inset: 0, width: \"100%\", height: \"100%\", pointerEvents: \"none\" }} />\n    {children && <div style={{ position: \"relative\", zIndex: 1, minHeight: \"100%\", display: \"grid\", placeItems: \"center\", padding: 24, pointerEvents: \"none\" }}><div style={{ pointerEvents: \"auto\", maxWidth: \"100%\" }}>{children}</div></div>}\n  </div>;\n}\n",
+      "type": "registry:lib",
+      "target": "lib/cojeev/reference-field.tsx"
+    },
+    {
+      "path": "registry/cojeev/styles/click-spark.css",
+      "content": "@layer cojeev-states {\n.v-click-spark { --effect-accent:var(--v-pink); }\n.v-click-spark canvas { display:block; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/click-spark.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/click-spark.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Click Spark",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "active",
+        "paused",
+        "reduced-motion"
+      ],
+      "reviewOnly": false
+    },
+    "api": [
+      {
+        "name": "ClickSparkProps",
+        "props": [
+          {
+            "name": "paused",
+            "type": "boolean",
+            "required": false,
+            "description": "Stop movement while retaining a composed, meaningful still frame."
+          },
+          {
+            "name": "tone",
+            "type": "\"pink\" | \"olive\" | \"blue\" | \"yellow\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "speed",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "height",
+            "type": "number",
+            "required": false,
+            "description": "Height of the local effect stage, in CSS pixels."
+          },
+          {
+            "name": "src",
+            "type": "string",
+            "required": false,
+            "description": "Optional texture for the elastic sheet or ripple."
+          },
+          {
+            "name": "images",
+            "type": "readonly string[]",
+            "required": false,
+            "description": "Optional image cards for the trail. Decorative; describe their subject nearby."
+          }
+        ]
+      }
+    ],
+    "category": "Effects",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

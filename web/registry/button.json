@@ -1,0 +1,271 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "button",
+  "title": "Button",
+  "description": "Triggers an action with native button behavior and an optional busy indicator.",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/spinner.json",
+    "https://000h.cojeev.com/r/presence.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/button.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { Slot, Slottable } from \"@radix-ui/react-slot\";\nimport { Spinner } from \"@/components/ui/spinner\";\nimport { MotionPresence, MotionSurface } from \"@/components/ui/presence\";\nimport { useFlowPress } from \"@/lib/cojeev-motion/flow-press\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { controlRadiusStyle, type ControlRadius } from \"@/lib/cojeev/control-appearance\";\n\nconst buttonVariants = cva(\n  \"v-btn [display:inline-flex] items-center justify-center gap-[var(--s-2)] h-[var(--ctl-md)] px-[var(--s-5)] py-0 rounded-[var(--r-pill)] text-[length:var(--fs-control)] font-[number:var(--fw-control)] leading-none whitespace-nowrap bg-[var(--primary)] text-[color:var(--primary-foreground)] motion-safe:active:[transform:translateY(1px)]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        accent:\n          \"-accent bg-[var(--v-pink)] text-[color:var(--v-on-accent)] hover:bg-[var(--v-pink-deep)]\",\n        secondary:\n          \"-secondary bg-[var(--v-blue)] text-[color:var(--v-on-accent)]\",\n        ghost:\n          \"-ghost bg-transparent text-[color:var(--v-text)] hover:bg-[var(--v-beige)]\",\n        outline:\n          \"-outline bg-transparent text-[color:var(--v-text)] [box-shadow:inset_0_0_0_1px_var(--v-edge)] hover:bg-[var(--v-beige-2)]\",\n        danger:\n          \"-danger bg-[var(--v-danger-fill)] text-[color:var(--destructive-foreground)]\",\n        block: \"-block w-full\",\n      },\n      size: {\n        default: \"\",\n        sm: \"-sm h-[var(--ctl-sm)] px-[var(--s-4)] text-[length:var(--fs-small)]\",\n        lg: \"-lg h-[var(--ctl-lg)] px-[var(--s-6)] text-[length:var(--fs-body)]\",\n      },\n      shape: { pill: \"\", card: \"-card\" },\n      fullWidth: { true: \"-block w-full\", false: \"\" },\n    },\n    defaultVariants: { variant: \"default\", size: \"default\", shape: \"pill\", fullWidth: false },\n  },\n);\n\ntype ButtonProps = Omit<React.ComponentProps<\"button\">, \"ref\"> &\n  VariantProps<typeof buttonVariants> & {\n    /** Use one native element (for example a link) as the interactive root. */\n    asChild?: boolean;\n    ref?: React.Ref<HTMLButtonElement | HTMLAnchorElement>;\n    loading?: boolean;\n    loadingIndicator?: React.ReactNode;\n    radius?: ControlRadius;\n  };\n\nfunction Button({\n  ref: externalRef,\n  className,\n  variant,\n  size,\n  shape,\n  radius, style,\n  fullWidth,\n  loading,\n  loadingIndicator,\n  children,\n  asChild = false,\n  disabled,\n  type = \"button\",\n  \"aria-busy\": ariaBusy,\n  \"aria-disabled\": ariaDisabled,\n  onClick,\n  onClickCapture,\n  onAuxClickCapture,\n  ...props\n}: ButtonProps) {\n  const morphRef = useMorph<HTMLButtonElement | HTMLAnchorElement>(\"buttons\", externalRef);\n  const pressRef = useFlowPress(morphRef);\n  const busy = loading ?? (ariaBusy === true || ariaBusy === \"true\");\n  const blocked = disabled || busy || ariaDisabled === true || ariaDisabled === \"true\";\n  const Comp = asChild ? Slot : \"button\";\n  return (\n    <Comp\n      ref={pressRef}\n      data-slot=\"button\"\n      data-part=\"root\"\n      data-r={shape === \"card\" ? 12 : undefined}\n      data-control-shape={shape ?? undefined}\n      style={{ ...style, ...controlRadiusStyle(radius) }}\n      data-state={disabled ? \"disabled\" : busy ? \"busy\" : \"rest\"}\n      type={asChild ? undefined : type}\n      disabled={asChild ? undefined : disabled}\n      aria-busy={busy || undefined}\n      aria-disabled={blocked || undefined}\n      onClickCapture={(event) => {\n        // Stop a slotted link before its own router/click handler can activate.\n        if (asChild && blocked) { event.preventDefault(); event.stopPropagation(); return; }\n        onClickCapture?.(event);\n      }}\n      onAuxClickCapture={(event) => {\n        if (asChild && blocked) { event.preventDefault(); event.stopPropagation(); return; }\n        onAuxClickCapture?.(event);\n      }}\n      onClick={(event) => {\n        if (blocked) {\n          event.preventDefault();\n          return;\n        }\n        onClick?.(event);\n      }}\n      className={cn(\n        buttonVariants({ variant, size, shape, fullWidth }),\n        \"leading-none\",\n        className,\n      )}\n      {...props}\n      tabIndex={asChild && disabled ? -1 : props.tabIndex}\n    >\n      <MotionPresence>\n        {busy && (\n          <MotionSurface key=\"loading\" asChild preset=\"scale\">\n            <span\n              data-slot=\"button-loading\"\n              className=\"v-btn__loading\"\n              aria-hidden=\"true\"\n            >\n              {loadingIndicator ?? <ButtonIndicator />}\n            </span>\n          </MotionSurface>\n        )}\n      </MotionPresence>\n      {asChild ? <Slottable>{children}</Slottable> : children}\n    </Comp>\n  );\n}\n\nfunction ButtonIndicator({\n  className,\n  ...props\n}: React.ComponentProps<\"span\">) {\n  return (\n    <Spinner\n      data-slot=\"button-indicator\"\n      data-part=\"indicator\"\n      data-label=\"\"\n      aria-hidden=\"true\"\n      className={className}\n      {...props}\n    />\n  );\n}\n\nexport { Button, ButtonIndicator, buttonVariants };\nexport type { ButtonProps };\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/button.css",
+      "content": "@layer cojeev-states {\n/* The face and the morph layer share the same opaque state paint. Busy keeps its\n   variant identity; disabled is a separate, deliberately quiet state. */\n.v-btn[data-slot] {\n  text-decoration: none;\n  transition: background var(--t-micro) var(--enter), color var(--t-micro), transform var(--t-micro) var(--enter);\n}\n/* Card choices keep Button's interaction contract; callers own their layout. */\n.v-btn[data-slot].-card {\n  height:auto;\n  min-height:44px;\n  padding:var(--s-3);\n  border-radius:var(--r-md);\n  white-space:normal;\n}\n.v-btn[data-slot].-secondary { background:var(--v-blue); color:var(--v-on-accent); box-shadow:none; }\n.v-btn[data-slot]:not(.-accent):not(.-secondary):not(.-ghost):not(.-outline):not(.-danger):not(:disabled):not([aria-disabled=\"true\"]):hover {\n  background:color-mix(in oklab,var(--primary) 88%,var(--v-canvas));\n}\n.v-btn[data-slot].-secondary:not(:disabled):not([aria-disabled=\"true\"]):hover { background:color-mix(in oklab,var(--v-blue) 90%,var(--ink-fixed)); }\n.v-btn[data-slot].-danger:not(:disabled):not([aria-disabled=\"true\"]):hover { background:color-mix(in oklab,var(--v-danger-fill) 88%,black); }\n:root[data-mode=\"dark\"] .v-btn[data-slot]:not(.-accent):not(.-secondary):not(.-ghost):not(.-outline):not(.-danger):not(:disabled):not([aria-disabled=\"true\"]:not([aria-busy=\"true\"])) { background:var(--v-pink); color:var(--v-on-accent); }\n:root[data-mode=\"dark\"] .v-btn[data-slot]:is(.-ghost,.-outline) { color:var(--v-text); }\n.v-btn[data-slot] .v-icon { width:18px; height:18px; }\n.v-btn[data-slot][aria-busy=\"true\"] { position:relative; cursor:progress; gap:var(--s-3); }\n.v-btn__loading[data-slot] { --pulse:20px; display:inline-flex; align-items:center; justify-content:center; flex:none; pointer-events:none; }\n.v-btn[data-slot] [data-slot=\"button-indicator\"] { width:20px; height:20px; }\n.v-btn[data-slot] [data-slot=\"button-indicator\"] svg { width:100%; height:100%; overflow:visible; }\n.v-btn[data-slot] [data-slot=\"button-indicator\"] .seed { fill:currentColor; }\n.v-btn[data-slot] [data-slot=\"button-indicator\"] .core { fill:transparent; }\n/* Native disabled or a consumer's aria-disabled wins over every variant/theme;\n   aria-disabled added only for loading suppresses activation, not readability. */\n:root .v-btn[data-slot]:is(:disabled,[aria-disabled=\"true\"]:not([aria-busy=\"true\"])) {\n  background:var(--v-disabled-face); color:var(--v-disabled-ink); box-shadow:inset 0 0 0 1px var(--v-disabled-edge); cursor:not-allowed; transform:none;\n}\n@media(prefers-reduced-motion:reduce) { .v-btn[data-slot] { transition:none; } }\n[data-stable-hit].v-btn { transform:none; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/button.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/button.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "button",
+      "name": "Button",
+      "tier": "base",
+      "evidence": "I07 I15 I18",
+      "status": "source",
+      "root": ".v-btn",
+      "variants": [
+        "accent",
+        "secondary",
+        "ghost",
+        "outline",
+        "danger",
+        "block"
+      ],
+      "sizes": [
+        "sm",
+        "lg"
+      ],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active",
+        "disabled",
+        "busy"
+      ],
+      "dataStates": [],
+      "category": "buttons",
+      "motionOnByDefault": true,
+      "flowRoles": [
+        "press",
+        "paces"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/button/contract.md",
+      "demo": "entries/button/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-disabled.html",
+        "default-default-disabled-dark.html",
+        "default-default-busy.html",
+        "default-default-busy-dark.html",
+        "default-sm-rest.html",
+        "default-sm-rest-dark.html",
+        "default-sm-disabled.html",
+        "default-sm-disabled-dark.html",
+        "default-sm-busy.html",
+        "default-sm-busy-dark.html",
+        "default-lg-rest.html",
+        "default-lg-rest-dark.html",
+        "default-lg-disabled.html",
+        "default-lg-disabled-dark.html",
+        "default-lg-busy.html",
+        "default-lg-busy-dark.html",
+        "accent-default-rest.html",
+        "accent-default-rest-dark.html",
+        "accent-default-disabled.html",
+        "accent-default-disabled-dark.html",
+        "accent-default-busy.html",
+        "accent-default-busy-dark.html",
+        "accent-sm-rest.html",
+        "accent-sm-rest-dark.html",
+        "accent-sm-disabled.html",
+        "accent-sm-disabled-dark.html",
+        "accent-sm-busy.html",
+        "accent-sm-busy-dark.html",
+        "accent-lg-rest.html",
+        "accent-lg-rest-dark.html",
+        "accent-lg-disabled.html",
+        "accent-lg-disabled-dark.html",
+        "accent-lg-busy.html",
+        "accent-lg-busy-dark.html",
+        "secondary-default-rest.html",
+        "secondary-default-rest-dark.html",
+        "secondary-default-disabled.html",
+        "secondary-default-disabled-dark.html",
+        "secondary-default-busy.html",
+        "secondary-default-busy-dark.html",
+        "secondary-sm-rest.html",
+        "secondary-sm-rest-dark.html",
+        "secondary-sm-disabled.html",
+        "secondary-sm-disabled-dark.html",
+        "secondary-sm-busy.html",
+        "secondary-sm-busy-dark.html",
+        "secondary-lg-rest.html",
+        "secondary-lg-rest-dark.html",
+        "secondary-lg-disabled.html",
+        "secondary-lg-disabled-dark.html",
+        "secondary-lg-busy.html",
+        "secondary-lg-busy-dark.html",
+        "ghost-default-rest.html",
+        "ghost-default-rest-dark.html",
+        "ghost-default-disabled.html",
+        "ghost-default-disabled-dark.html",
+        "ghost-default-busy.html",
+        "ghost-default-busy-dark.html",
+        "ghost-sm-rest.html",
+        "ghost-sm-rest-dark.html",
+        "ghost-sm-disabled.html",
+        "ghost-sm-disabled-dark.html",
+        "ghost-sm-busy.html",
+        "ghost-sm-busy-dark.html",
+        "ghost-lg-rest.html",
+        "ghost-lg-rest-dark.html",
+        "ghost-lg-disabled.html",
+        "ghost-lg-disabled-dark.html",
+        "ghost-lg-busy.html",
+        "ghost-lg-busy-dark.html",
+        "outline-default-rest.html",
+        "outline-default-rest-dark.html",
+        "outline-default-disabled.html",
+        "outline-default-disabled-dark.html",
+        "outline-default-busy.html",
+        "outline-default-busy-dark.html",
+        "outline-sm-rest.html",
+        "outline-sm-rest-dark.html",
+        "outline-sm-disabled.html",
+        "outline-sm-disabled-dark.html",
+        "outline-sm-busy.html",
+        "outline-sm-busy-dark.html",
+        "outline-lg-rest.html",
+        "outline-lg-rest-dark.html",
+        "outline-lg-disabled.html",
+        "outline-lg-disabled-dark.html",
+        "outline-lg-busy.html",
+        "outline-lg-busy-dark.html",
+        "danger-default-rest.html",
+        "danger-default-rest-dark.html",
+        "danger-default-disabled.html",
+        "danger-default-disabled-dark.html",
+        "danger-default-busy.html",
+        "danger-default-busy-dark.html",
+        "danger-sm-rest.html",
+        "danger-sm-rest-dark.html",
+        "danger-sm-disabled.html",
+        "danger-sm-disabled-dark.html",
+        "danger-sm-busy.html",
+        "danger-sm-busy-dark.html",
+        "danger-lg-rest.html",
+        "danger-lg-rest-dark.html",
+        "danger-lg-disabled.html",
+        "danger-lg-disabled-dark.html",
+        "danger-lg-busy.html",
+        "danger-lg-busy-dark.html",
+        "block-default-rest.html",
+        "block-default-rest-dark.html",
+        "block-default-disabled.html",
+        "block-default-disabled-dark.html",
+        "block-default-busy.html",
+        "block-default-busy-dark.html",
+        "block-sm-rest.html",
+        "block-sm-rest-dark.html",
+        "block-sm-disabled.html",
+        "block-sm-disabled-dark.html",
+        "block-sm-busy.html",
+        "block-sm-busy-dark.html",
+        "block-lg-rest.html",
+        "block-lg-rest-dark.html",
+        "block-lg-disabled.html",
+        "block-lg-disabled-dark.html",
+        "block-lg-busy.html",
+        "block-lg-busy-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ButtonProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\" | \"accent\" | \"secondary\" | \"ghost\" | \"outline\" | \"block\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | \"lg\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "shape",
+            "type": "\"pill\" | \"card\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "fullWidth",
+            "type": "boolean | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "asChild",
+            "type": "boolean",
+            "required": false,
+            "description": "Use one native element (for example a link) as the interactive root."
+          },
+          {
+            "name": "ref",
+            "type": "React.Ref<HTMLButtonElement | HTMLAnchorElement>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "loading",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "loadingIndicator",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Actions",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

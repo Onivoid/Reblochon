@@ -1,0 +1,117 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "drawer",
+  "title": "Drawer",
+  "description": "Presents dialog content in a drawer surface while keeping the current page underneath.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-dialog"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/drawer.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-dialog\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nexport type DrawerProps = React.ComponentProps<typeof Primitive.Root>;\nexport function Drawer(props: DrawerProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type DrawerTriggerProps = React.ComponentProps<typeof Primitive.Trigger>;\nexport function DrawerTrigger(props: DrawerTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"drawer-trigger\"\n      data-part=\"trigger\"\n      data-drawer-open=\"\"\n      {...props}\n    />\n  );\n}\nexport type DrawerPortalProps = React.ComponentProps<typeof Primitive.Portal>;\nexport function DrawerPortal(props: DrawerPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type DrawerOverlayProps = React.ComponentProps<typeof Primitive.Overlay>;\nexport function DrawerOverlay({ className, ref, ...props }: DrawerOverlayProps) {\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, ref, \"fade\");\n  return (\n    <Primitive.Overlay\n      ref={flowRef}\n      data-slot=\"drawer-overlay\"\n      data-part=\"overlay\"\n      className={cn(\n        \"v-scrim fixed inset-0 bg-[var(--v-scrim)] z-[calc(var(--z-sheet)-1)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport const drawerContentVariants = cva(\n  \"v-drawer [position:fixed] [left:var(--s-4)] [right:var(--s-4)] [bottom:calc(var(--dock-h)_+_var(--s-4))] [background:var(--v-ink)] [color:var(--v-on-ink)] [border-radius:var(--r-sheet)] [padding:var(--s-6)_var(--s-5)_var(--s-12)] [z-index:var(--z-sheet)]\",\n);\nexport type DrawerContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & { showCloseButton?: boolean };\nexport function DrawerContent({\n  className,\n  ref,\n  children,\n  showCloseButton = false,\n  ...props\n}: DrawerContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, morphRef, \"slide-block\");\n  return (\n    <Primitive.Portal>\n      <DrawerOverlay />\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"drawer-content\"\n        data-part=\"content\"\n        className={cn(drawerContentVariants(), className)}\n        {...props}\n      >\n        {children}\n        {showCloseButton && (\n          <DrawerClose aria-label=\"Close\" className=\"absolute right-4 top-4\">\n            ×\n          </DrawerClose>\n        )}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\nexport type DrawerHeaderProps = React.ComponentProps<\"div\">;\nexport function DrawerHeader({ className, ...props }: DrawerHeaderProps) {\n  return (\n    <div\n      data-slot=\"drawer-header\"\n      data-part=\"header\"\n      className={cn(\n        \"v-dialog__head flex items-start justify-between gap-[var(--s-4)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DrawerFooterProps = React.ComponentProps<\"div\">;\nexport function DrawerFooter({ className, ...props }: DrawerFooterProps) {\n  return (\n    <div\n      data-slot=\"drawer-footer\"\n      data-part=\"footer\"\n      className={cn(\n        \"v-dialog__actions flex gap-[var(--s-3)] justify-end mt-[var(--s-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DrawerTitleProps = React.ComponentProps<typeof Primitive.Title>;\nexport function DrawerTitle({ className, ...props }: DrawerTitleProps) {\n  return (\n    <Primitive.Title\n      data-slot=\"drawer-title\"\n      data-part=\"title\"\n      className={cn(\n        \"v-dockpanel__title text-center text-[length:var(--fs-lead)] font-semibold mb-[var(--s-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DrawerDescriptionProps = React.ComponentProps<\n  typeof Primitive.Description\n>;\nexport function DrawerDescription({\n  className,\n  ...props\n}: DrawerDescriptionProps) {\n  return (\n    <Primitive.Description\n      data-slot=\"drawer-description\"\n      data-part=\"description\"\n      className={cn(\n        \"v-body-2 text-[length:var(--fs-body)] leading-[1.5] text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type DrawerCloseProps = React.ComponentProps<typeof Primitive.Close>;\nexport function DrawerClose(props: DrawerCloseProps) {\n  return (\n    <Primitive.Close\n      data-slot=\"drawer-close\"\n      data-part=\"close\"\n      data-close=\"\"\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/drawer.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-scrim:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) {\n  position: fixed;\n  inset: 0;\n  background: var(--v-scrim);\n  z-index: var(--z-sheet);\n}\n.v-dialog__head:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-4);\n}\n.v-dialog__actions:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) {\n  display: flex;\n  gap: var(--s-2);\n  justify-content: flex-end;\n}\n/* Scrim paint and retained close use the shared opacity-only Motion lane. */\n.v-dialog__head:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) {\n  align-items: start;\n}\n.v-dialog__head:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) .v-section {\n  font-size: var(--fs-section);\n  line-height: 1.15;\n  padding-top: var(--s-2);\n}\n.v-dialog__actions:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) {\n  margin-top: var(--s-2);\n  gap: var(--s-3);\n}\n@supports not selector(::-webkit-scrollbar) {\n  .v-drawer:where([data-slot=\"drawer\"], [data-slot^=\"drawer-\"]) {\n    scrollbar-color: rgba(251, 244, 230, 0.5) transparent;\n  }\n}\n.v-drawer:where(\n    [data-slot=\"drawer\"],\n    [data-slot^=\"drawer-\"]\n  )::-webkit-scrollbar-thumb {\n  background-color: rgba(251, 244, 230, 0.42);\n}\n@keyframes v-scrim-in {\n  from {\n    opacity: 0;\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"drawer\"],\n  [data-slot^=\"drawer-\"],\n  [data-slot=\"drawer\"]::before,\n  [data-slot=\"drawer\"]::after,\n  [data-slot^=\"drawer-\"]::before,\n  [data-slot^=\"drawer-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n\n[data-slot=\"drawer-content\"] { max-height:calc(100dvh - var(--dock-h) - 32px); overflow-y:auto; overscroll-behavior:contain; display:grid; gap:var(--s-4); grid-template-columns:minmax(0,1fr); }\n[data-slot=\"drawer-description\"] { color:var(--v-on-ink); opacity:.85; }\n[data-slot=\"drawer-title\"], [data-slot=\"drawer-description\"] { overflow-wrap:anywhere; }\n[data-slot=\"drawer-footer\"] { flex-wrap:wrap; }\n:root[data-mode=\"dark\"] .v-drawer[data-slot=\"drawer-content\"] [data-slot=\"drawer-description\"] { color:var(--v-on-ink); }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/drawer.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/drawer.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "drawer",
+      "name": "Drawer",
+      "tier": "base",
+      "evidence": "I07",
+      "status": "source",
+      "root": ".v-drawer",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "opens"
+      ],
+      "canvas": "480x480",
+      "contract": "entries/drawer/contract.md",
+      "demo": "entries/drawer/demo.html",
+      "isolation": [
+        "default-default-rest-480x480.html",
+        "default-default-rest-dark-480x480.html",
+        "default-default-open-480x480.html",
+        "default-default-open-dark-480x480.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "DrawerProps",
+        "props": []
+      },
+      {
+        "name": "DrawerTriggerProps",
+        "props": []
+      },
+      {
+        "name": "DrawerPortalProps",
+        "props": []
+      },
+      {
+        "name": "DrawerOverlayProps",
+        "props": []
+      },
+      {
+        "name": "DrawerContentProps",
+        "props": [
+          {
+            "name": "showCloseButton",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DrawerHeaderProps",
+        "props": []
+      },
+      {
+        "name": "DrawerFooterProps",
+        "props": []
+      },
+      {
+        "name": "DrawerTitleProps",
+        "props": []
+      },
+      {
+        "name": "DrawerDescriptionProps",
+        "props": []
+      },
+      {
+        "name": "DrawerCloseProps",
+        "props": []
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

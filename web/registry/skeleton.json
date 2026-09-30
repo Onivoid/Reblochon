@@ -1,0 +1,211 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "skeleton",
+  "title": "Skeleton",
+  "description": "Give unavailable content a useful outline: a reading page, a person or a board of ideas, with three quiet-safe paint effects.",
+  "dependencies": [
+    "class-variance-authority",
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/card.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/skeleton.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { cardVariants } from \"@/components/ui/card\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { AnimatePresence, motion } from \"motion/react\";\nimport {\n  motionTokens,\n  useChoreography,\n} from \"@/lib/cojeev-motion/choreography\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\n\nconst SkeletonVariants = cva(\n  \"v-skel [border-radius:var(--r-pill)] [background:var(--v-skel-face)] [background-size:200%_100%] [animation:v-shimmer_1.4s_linear_infinite] [box-shadow:none] [position:relative] [overflow:hidden]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        pill: \"-pill [border-radius:var(--r-pill)]\",\n        card: \"-card [border-radius:var(--r-card)]\",\n        disk: \"-disk [border-radius:50%]\",\n        line: \"-line [height:12px] [border-radius:var(--r-pill)]\",\n        \"skel-group\": \"-skel-group\",\n      },\n      size: { default: \"\" },\n    },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type SkeletonEffect = \"shimmer\" | \"pulse\" | \"ink\";\nexport type SkeletonProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof SkeletonVariants> & {\n    as?: React.ElementType;\n    effect?: SkeletonEffect;\n    paused?: boolean;\n  };\nexport function Skeleton({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ref,\n  children,\n  effect = \"shimmer\",\n  paused = false,\n  ...props\n}: SkeletonProps) {\n  const host = React.useRef<HTMLDivElement>(null);\n  const attach = React.useCallback(\n    (element: HTMLDivElement | null) => {\n      host.current = element;\n      const release = assignMotionRef(ref, element);\n      return () => {\n        host.current = null;\n        release();\n      };\n    },\n    [ref],\n  );\n  const ownedRef = useMorph<HTMLDivElement>(\"skeleton\", attach);\n  const { enabled, inView } = useMotionVisibility(host);\n  const active =\n    enabled &&\n    inView &&\n    !paused &&\n    !className?.split(/\\s+/).includes(\"-paused\");\n  const sweeping = effect === \"shimmer\";\n  return (\n    <Tag\n      ref={ownedRef}\n      data-slot=\"skeleton-item\"\n      data-part=\"item\"\n      data-effect={effect}\n      data-paused={paused || undefined}\n      data-motion={!active ? \"off\" : undefined}\n      data-morph={effect === \"ink\" ? \"stroke\" : undefined}\n      data-animated={active || undefined}\n      className={cn(SkeletonVariants({ variant, size }), className)}\n      {...props}\n    >\n      {children}\n      <motion.span\n        aria-hidden=\"true\"\n        className=\"v-skel__sheen\"\n        initial={false}\n        animate={{\n          x: active && sweeping ? [\"-100%\", \"100%\"] : \"0%\",\n          opacity: active ? (sweeping ? 1 : [0.12, 0.5, 0.12]) : 0.18,\n        }}\n        transition={\n          active\n            ? {\n                x: { duration: 2.4, repeat: Infinity, ease: [0.4, 0, 0.2, 1] },\n                opacity: sweeping\n                  ? { duration: 0 }\n                  : {\n                      duration: effect === \"ink\" ? 3.2 : 1.8,\n                      repeat: Infinity,\n                      ease: \"easeInOut\",\n                    },\n              }\n            : { duration: 0 }\n        }\n      />\n    </Tag>\n  );\n}\n\nconst SkeletonGroupVariants = cva(\"v-skel-group [gap:var(--s-2)] [display:grid]\", {\n  variants: { variant: { default: \"\" }, size: { default: \"\" } },\n  defaultVariants: { variant: \"default\", size: \"default\" },\n});\nexport type SkeletonGroupProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof SkeletonGroupVariants> & { as?: React.ElementType };\nexport function SkeletonGroup({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: SkeletonGroupProps) {\n  return (\n    <Tag\n      data-slot=\"skeleton\"\n      data-part=\"root\"\n      className={cn(\n        className?.split(/\\s+/).includes(\"v-card\") && cardVariants(),\n        SkeletonGroupVariants({ variant, size }),\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n\nconst AsyncContentVariants = cva(\n  \"v-async [display:grid] [gap:var(--s-3)] [padding:var(--s-5)] [border-radius:var(--r-card-sm)] [background:var(--v-beige)] [justify-items:start]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AsyncContentProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AsyncContentVariants> & {\n    as?: React.ElementType;\n    /** Caller-owned loading state. Omit to preserve the static composition. */\n    loading?: boolean;\n    fallback?: React.ReactNode;\n  };\nexport function AsyncContent({\n  loading,\n  fallback,\n  ...props\n}: AsyncContentProps) {\n  if (loading !== undefined)\n    return <LoadingContent {...props} loading={loading} fallback={fallback} />;\n  const { as: Tag = \"div\", className, variant, size, ...rest } = props;\n  return (\n    <Tag\n      data-slot=\"skeleton-async\"\n      data-part=\"async\"\n      className={cn(AsyncContentVariants({ variant, size }), className)}\n      {...rest}\n    />\n  );\n}\nfunction LoadingContent({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ref,\n  children,\n  loading,\n  fallback,\n  ...props\n}: AsyncContentProps & { loading: boolean }) {\n  const host = React.useRef<HTMLDivElement>(null);\n  const attach = React.useCallback(\n    (node: HTMLDivElement | null) => {\n      host.current = node;\n      const release = assignMotionRef(ref, node);\n      return () => {\n        host.current = null;\n        release();\n      };\n    },\n    [ref],\n  );\n  const { enabled, inView } = useMotionVisibility(host);\n  const { quiet } = useChoreography();\n  const still = quiet || !enabled || !inView;\n  const transition = {\n    duration: still ? 0 : motionTokens.duration.enter,\n    ease: [...motionTokens.ease.enter] as [number, number, number, number],\n  };\n  return (\n    <Tag\n      {...props}\n      ref={attach}\n      data-slot=\"skeleton-async\"\n      data-part=\"async\"\n      data-loading={loading}\n      aria-busy={loading}\n      className={cn(\n        AsyncContentVariants({ variant, size }),\n        \"v-async--controlled\",\n        className,\n      )}\n    >\n      <motion.div\n        data-slot=\"skeleton-async-content\"\n        className=\"v-async__content\"\n        inert={loading || undefined}\n        aria-hidden={loading || undefined}\n        initial={false}\n        animate={{ opacity: loading ? 0 : 1 }}\n        transition={transition}\n      >\n        {children}\n      </motion.div>\n      <AnimatePresence initial={false}>\n        {loading && (\n          <motion.div\n            key=\"placeholder\"\n            data-slot=\"skeleton-async-fallback\"\n            className=\"v-async__fallback\"\n            aria-hidden=\"true\"\n            inert\n            initial={{ opacity: 0 }}\n            animate={{ opacity: 1 }}\n            exit={{ opacity: 0 }}\n            transition={transition}\n          >\n            {fallback ?? (\n              <SkeletonGroup>\n                <Skeleton variant=\"line\" style={{ width: \"92%\" }} />\n                <Skeleton variant=\"line\" style={{ width: \"72%\" }} />\n                <Skeleton variant=\"line\" style={{ width: \"54%\" }} />\n              </SkeletonGroup>\n            )}\n          </motion.div>\n        )}\n      </AnimatePresence>\n    </Tag>\n  );\n}\n\nconst AsyncRowVariants = cva(\n  \"v-async__row [display:flex] [align-items:center] [gap:var(--s-3)] [font-size:var(--fs-control)] [color:var(--v-text-2)]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AsyncRowProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AsyncRowVariants> & { as?: React.ElementType };\nexport function AsyncRow({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: AsyncRowProps) {\n  return (\n    <Tag\n      data-slot=\"skeleton-async-row\"\n      data-part=\"async-row\"\n      className={cn(AsyncRowVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst QuietVariants = cva(\"v-quiet [color:var(--v-text-2)]\", {\n  variants: { variant: { default: \"\" }, size: { default: \"\" } },\n  defaultVariants: { variant: \"default\", size: \"default\" },\n});\nexport type QuietProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof QuietVariants> & { as?: React.ElementType };\nexport function Quiet({\n  as: Tag = \"span\",\n  className,\n  variant,\n  size,\n  ...props\n}: QuietProps) {\n  return (\n    <Tag\n      data-slot=\"skeleton-quiet\"\n      data-part=\"quiet\"\n      className={cn(QuietVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/skeleton.css",
+      "content": "@layer cojeev-states {\n.v-skel[data-slot] {\n  min-width: 0;\n  max-width: 100%;\n  animation: none;\n}\n.v-skel[data-slot].-pill {\n  border-radius: var(--r-pill);\n}\n.v-skel[data-slot].-card {\n  border-radius: var(--r-card);\n}\n.v-skel[data-slot].-disk {\n  border-radius: 50%;\n}\n.v-skel[data-slot].-line {\n  height: 12px;\n  border-radius: var(--r-pill);\n}\n.v-skel[data-slot].-line:nth-of-type(2n) {\n  width: 82%;\n}\n.v-skel[data-slot].-line:nth-of-type(3n) {\n  width: 64%;\n}\n.v-skel[data-slot]:has(> svg.v-morph) {\n  background: transparent;\n}\n.v-skel[data-slot] > svg.v-morph {\n  z-index: 0;\n}\n.v-skel-group[data-slot].v-card {\n  padding: var(--s-5);\n  background: var(--card);\n}\n.v-skel__sheen {\n  position: absolute;\n  inset: 0;\n  pointer-events: none;\n  z-index: 1;\n  background: linear-gradient(\n    100deg,\n    transparent 12%,\n    var(--v-skel-sheen) 46%,\n    transparent 78%\n  );\n}\n.v-skel[data-effect=\"pulse\"] > .v-skel__sheen {\n  background: var(--v-text-3);\n}\n.v-skel[data-effect=\"ink\"] {\n  --mstroke: var(--v-text-3);\n  background: transparent;\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n.v-skel[data-effect=\"ink\"]:has(> svg.v-morph) {\n  box-shadow: none;\n}\n.v-skel[data-effect=\"ink\"] > .v-skel__sheen {\n  background: repeating-linear-gradient(\n    -45deg,\n    transparent 0 6px,\n    var(--v-text-3) 6px 7px\n  );\n}\n\n.v-async--controlled[data-slot] {\n  justify-items: stretch;\n  isolation: isolate;\n}\n.v-async__content,\n.v-async__fallback {\n  grid-area: 1 / 1;\n  min-width: 0;\n}\n.v-async__content {\n  display: grid;\n  gap: inherit;\n  align-content: start;\n}\n.v-async__fallback {\n  z-index: 1;\n  display: grid;\n  align-content: center;\n  pointer-events: none;\n}\n.v-async__fallback > [data-slot=\"skeleton\"] {\n  width: 100%;\n  gap: var(--s-3);\n}\n\n/* Authored loading compositions are opt-in; primitive dimensions stay caller-owned. */\n.v-loading-example {\n  width: 100%;\n  min-width: 0;\n  display: grid;\n  gap: var(--s-5);\n}\n.v-loading-example__heading {\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  gap: var(--s-3);\n  flex-wrap: wrap;\n  font-size: var(--fs-small);\n}\n.v-loading-example__heading > span:first-child {\n  font-weight: var(--fw-semibold);\n}\n.v-loading-example__heading > span:last-child {\n  font-size: var(--fs-meta);\n  color: var(--v-text-2);\n}\n.v-loading-example__surface[data-slot] {\n  width: 100%;\n  padding: var(--s-6);\n  background: var(--v-paper);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-sm) var(--r-panel) var(--r-panel) var(--r-panel);\n}\n.v-loading-example__surface .v-async__fallback {\n  align-content: stretch;\n}\n.v-loading-template {\n  display: grid;\n  align-content: start;\n  gap: var(--s-5);\n  min-width: 0;\n}\n.v-loading-template p {\n  font-size: var(--fs-small);\n  line-height: 1.6;\n  color: var(--v-text-2);\n  margin: var(--s-2) 0 0;\n}\n.v-loading-template strong {\n  font-weight: var(--fw-semibold);\n  font-size: var(--fs-body);\n}\n.v-loading-template__article-head,\n.v-loading-template__board-head {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  min-height: 28px;\n  gap: var(--s-4);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.06em;\n  color: var(--v-text-2);\n}\n.v-loading-template__article-body {\n  display: grid;\n  grid-template-columns: 100px minmax(0, 1fr);\n  gap: var(--s-6);\n  align-items: center;\n  min-height: 110px;\n}\n.v-loading-template .v-loading-template__illustration {\n  width: 100px;\n  height: 100px;\n}\n.v-loading-template__field {\n  width: 100%;\n  height: 80px;\n}\n.v-loading-template__name {\n  width: 180px;\n  max-width: 100%;\n}\n.v-loading-template__short {\n  width: 100px;\n  max-width: 100%;\n}\n.v-loading-template__seal {\n  width: 28px;\n  height: 28px;\n}\n.v-loading-template__identity {\n  display: flex;\n  align-items: center;\n  gap: var(--s-4);\n  min-height: 72px;\n}\n.v-loading-template__portrait {\n  width: 64px;\n  height: 64px;\n  flex-shrink: 0;\n}\n.v-loading-template__monogram {\n  display: grid;\n  place-items: center;\n  border-radius: 50%;\n  background: var(--v-olive);\n  color: var(--v-on-accent);\n  font-weight: var(--fw-semibold);\n  font-size: var(--fs-title);\n}\n.v-loading-template__stats {\n  display: flex;\n  gap: var(--s-6);\n  border-top: 1px solid var(--v-border);\n  padding-top: var(--s-4);\n  color: var(--v-text-2);\n  font-size: var(--fs-meta);\n}\n.v-loading-template__stats strong {\n  color: var(--v-text);\n  margin-right: var(--s-1);\n}\n.v-loading-template__stat {\n  height: 24px;\n  width: 120px;\n}\n.v-loading-template__tiles {\n  display: grid;\n  grid-template-columns: repeat(3, minmax(0, 1fr));\n  gap: var(--s-3);\n}\n.v-loading-template__tile {\n  min-width: 0;\n  display: grid;\n  align-content: start;\n  justify-items: start;\n  gap: var(--s-2);\n  padding: var(--s-3);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-card-sm) var(--r-card-sm) var(--r-xs) var(--r-card-sm);\n}\n.v-loading-template .v-loading-template__tile-art {\n  width: 48px;\n  height: 48px;\n  margin-bottom: var(--s-2);\n}\n.v-loading-template__tile p {\n  margin: 0;\n  font-size: var(--fs-meta);\n}\n.v-loading-example__actions {\n  display: flex;\n  align-items: center;\n  gap: var(--s-2);\n  flex-wrap: wrap;\n}\n.v-loading-example__actions > [data-slot=\"button\"] {\n  width: auto;\n  min-height: 44px;\n}\n.v-loading-example__blocks {\n  display: grid;\n  gap: var(--s-3);\n  padding-top: var(--s-5);\n  border-top: 1px solid var(--v-border);\n  font-size: var(--fs-small);\n}\n.v-loading-example__blocks p {\n  margin: var(--s-1) 0 0;\n  color: var(--v-text-2);\n}\n.v-loading-example__block-grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));\n  gap: var(--s-2);\n}\n.v-loading-example__block-grid figure {\n  margin: 0;\n  display: grid;\n  justify-items: center;\n  align-content: center;\n  gap: var(--s-3);\n  min-height: 88px;\n  border-radius: var(--r-md);\n  background: var(--v-paper);\n  font-size: var(--fs-caps);\n  color: var(--v-text-2);\n}\n@media (max-width: 600px) {\n  .v-loading-example__surface[data-slot] {\n    padding: var(--s-5);\n  }\n  .v-loading-template__article-body {\n    grid-template-columns: 64px minmax(0, 1fr);\n    gap: var(--s-4);\n  }\n  .v-loading-template .v-loading-template__illustration {\n    width: 64px;\n    height: 80px;\n  }\n  .v-loading-template__tiles {\n    grid-template-columns: 1fr;\n  }\n  .v-loading-template__tile {\n    grid-template-columns: 42px minmax(0, 1fr);\n    align-items: center;\n    column-gap: var(--s-3);\n  }\n  .v-loading-template .v-loading-template__tile-art {\n    grid-row: span 2;\n    width: 36px;\n    height: 42px;\n    margin: 0;\n  }\n  .v-loading-template__tile p {\n    grid-column: 2;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/skeleton.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/skeleton.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "skeleton",
+      "name": "Skeleton",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": ".v-skel",
+      "variants": [
+        "article",
+        "profile",
+        "board"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [
+        "loading"
+      ],
+      "category": "skeleton",
+      "motionOnByDefault": true,
+      "flowRoles": [
+        "paces"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/skeleton/contract.md",
+      "demo": "entries/skeleton/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "SkeletonProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"line\" | \"default\" | \"pill\" | \"card\" | \"disk\" | \"skel-group\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "effect",
+            "type": "SkeletonEffect",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "paused",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "SkeletonGroupProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AsyncContentProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "loading",
+            "type": "boolean",
+            "required": false,
+            "description": "Caller-owned loading state. Omit to preserve the static composition."
+          },
+          {
+            "name": "fallback",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AsyncRowProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "QuietProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Feedback",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

@@ -1,0 +1,210 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "empty",
+  "title": "Empty",
+  "description": "Explains an empty collection or unavailable result and creates space for a useful next step.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/card.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/empty.tsx",
+      "content": "\"use client\"\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport * as React from \"react\"\nimport { cva, type VariantProps } from \"class-variance-authority\"\nimport { cn } from \"@/lib/utils\"\nimport { cardVariants } from \"@/components/ui/card\"\n\nconst EmptyVariants=cva(\"v-empty [display:grid] [justify-items:center] [text-align:center] [gap:var(--s-3)] [padding:var(--s-12)_var(--s-6)]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type EmptyProps=React.ComponentProps<\"div\"> & VariantProps<typeof EmptyVariants> & { as?:React.ElementType }\nexport function Empty({ref: externalMorphRef, as:Tag=\"div\",className,variant,size,...props}:EmptyProps){const ownedMorphRef = useMorph<HTMLDivElement>(\"cards\", externalMorphRef);\n  return <Tag ref={ownedMorphRef} data-slot=\"empty\" data-part=\"root\" className={cn(className?.split(/\\s+/).includes(\"v-card\")&&cardVariants(),EmptyVariants({variant,size}),className)} {...props}/>}\n\nconst EmptyTitleVariants=cva(\"v-empty__title [font-family:var(--font-display)] [font-size:var(--fs-section)] [font-weight:var(--fw-medium)]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type EmptyTitleProps=React.ComponentProps<\"h3\"> & VariantProps<typeof EmptyTitleVariants> & { as?:React.ElementType }\nexport function EmptyTitle({as:Tag=\"h3\",className,variant,size,...props}:EmptyTitleProps){return <Tag data-slot=\"empty-title\" data-part=\"title\" className={cn(EmptyTitleVariants({variant,size}),className)} {...props}/>}\n\nconst EmptyDescriptionVariants=cva(\"v-empty__text [color:var(--muted-foreground)] [max-width:36ch]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type EmptyDescriptionProps=React.ComponentProps<\"p\"> & VariantProps<typeof EmptyDescriptionVariants> & { as?:React.ElementType }\nexport function EmptyDescription({as:Tag=\"p\",className,variant,size,...props}:EmptyDescriptionProps){return <Tag data-slot=\"empty-description\" data-part=\"description\" className={cn(EmptyDescriptionVariants({variant,size}),className)} {...props}/>}\n\nconst EmptyStateVariants=cva(\"v-state [display:grid] [gap:var(--s-3)] [padding:var(--s-6)] [border-radius:var(--r-card)] [background:var(--card)] [align-content:center] [justify-items:start] [min-height:160px]\",{variants:{variant:{\"default\":\"\",\"partial\":\"-partial [--muted-foreground:var(--muted-foreground-tinted)] [background:var(--v-yellow-soft)]\",\"error\":\"-error [background:var(--status-danger-bg)]\",\"filtered\":\"-filtered [background:transparent] [border:1px_dashed_var(--v-border)]\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type EmptyStateProps=React.ComponentProps<\"div\"> & VariantProps<typeof EmptyStateVariants> & { as?:React.ElementType }\nexport function EmptyState({ref: externalMorphRef, as:Tag=\"div\",className,variant,size,...props}:EmptyStateProps){const ownedMorphRef = useMorph<HTMLDivElement>(\"cards\", externalMorphRef);\n  return <Tag ref={ownedMorphRef} data-slot=\"empty-state\" data-part=\"state\" className={cn(EmptyStateVariants({variant,size}),className)} {...props}/>}\n\nconst EmptyStateTitleVariants=cva(\"v-state__word [font-weight:var(--fw-semibold)] [display:flex] [align-items:center] [gap:var(--s-2)]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type EmptyStateTitleProps=React.ComponentProps<\"div\"> & VariantProps<typeof EmptyStateTitleVariants> & { as?:React.ElementType }\nexport function EmptyStateTitle({as:Tag=\"div\",className,variant,size,...props}:EmptyStateTitleProps){return <Tag data-slot=\"empty-state-title\" data-part=\"state-title\" className={cn(EmptyStateTitleVariants({variant,size}),className)} {...props}/>}\n\nconst EmptyStateDescriptionVariants=cva(\"v-state__why [color:var(--muted-foreground)] [font-size:var(--fs-control)] [max-width:44ch]\",{variants:{variant:{\"default\":\"\"},size:{\"default\":\"\"}},defaultVariants:{variant:\"default\",size:\"default\"}})\nexport type EmptyStateDescriptionProps=React.ComponentProps<\"p\"> & VariantProps<typeof EmptyStateDescriptionVariants> & { as?:React.ElementType }\nexport function EmptyStateDescription({as:Tag=\"p\",className,variant,size,...props}:EmptyStateDescriptionProps){return <Tag data-slot=\"empty-state-description\" data-part=\"state-description\" className={cn(EmptyStateDescriptionVariants({variant,size}),className)} {...props}/>}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/empty.css",
+      "content": "@layer cojeev-states {\n/* Orthogonal authored class modifiers remain composable with CVA axes. */\n.v-empty[data-slot].v-card{padding:var(--s-12) var(--s-6)}\n.v-state[data-slot].-partial{--muted-foreground:var(--muted-foreground-tinted);background:var(--v-yellow-soft)}\n.v-state[data-slot].-error{background:var(--status-danger-bg)}\n.v-state[data-slot].-filtered{background:transparent;border:1px dashed var(--v-border)}\n\n/* Authored contextual and pseudo-element rules, scoped to component-owned roots. */\n.v-state[data-slot][data-morph]{--mfill:var(--card)}\n.v-state[data-slot].-partial[data-morph]{--mfill:var(--v-yellow-soft)}\n.v-empty[data-slot] .v-shape{font-size:96px}\n.v-state[data-slot].-error .v-state__word{color:var(--status-danger-ink)}\n.v-state[data-slot].-partial .v-state__why{color:rgba(17,17,17,.68)}\n.v-state[data-slot].-error .v-state__why{color:rgba(17,17,17,.68)}\n:root[data-mode=\"dark\"] .v-state[data-slot] .v-state__why{color:var(--v-text-2)}\n.v-state[data-slot].-unavail .v-state__word{color:var(--v-text-2)}\n.v-state[data-slot].-error .v-state__word{color:var(--v-danger-ink)}\n.v-state[data-slot].-partial { color:var(--v-on-accent); }\n:root[data-mode=\"dark\"] .v-state[data-slot].-partial .v-state__why { color:var(--alert-ink); }\n:is(.v-empty,.v-state)[data-slot] { min-width:0; max-width:100%; overflow-wrap:anywhere; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/empty.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/empty.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "empty",
+      "name": "Empty",
+      "tier": "base",
+      "evidence": "I12",
+      "status": "source",
+      "root": ".v-empty",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [
+        "first-run",
+        "cleared",
+        "error",
+        "filtered-empty"
+      ],
+      "category": "cards",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "enters"
+      ],
+      "canvas": "960x360",
+      "contract": "entries/empty/contract.md",
+      "demo": "entries/empty/demo.html",
+      "isolation": [
+        "default-default-rest-960x360.html",
+        "default-default-rest-dark-960x360.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "EmptyProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "EmptyTitleProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "EmptyDescriptionProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "EmptyStateProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"partial\" | \"error\" | \"filtered\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "EmptyStateTitleProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "EmptyStateDescriptionProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Feedback",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

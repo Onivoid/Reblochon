@@ -1,0 +1,61 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pebbles-background",
+  "title": "Pebbles background",
+  "description": "Sparse, softly irregular pebble outlines distributed across the surface.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/pattern-background.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/pebbles-background.tsx",
+      "content": "import { PatternBackground, type PatternBackgroundProps } from \"@/components/ui/pattern-background\";\n\nexport type PebblesBackgroundProps = Omit<PatternBackgroundProps, \"variant\">;\n\nexport function PebblesBackground(props: PebblesBackgroundProps) {\n  return <PatternBackground {...props} variant=\"pebbles\" />;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Pebbles background",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest"
+      ]
+    },
+    "api": [
+      {
+        "name": "PebblesBackgroundProps",
+        "props": [
+          {
+            "name": "color",
+            "type": "string | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "opacity",
+            "type": "number",
+            "required": false,
+            "description": "Decorative ink strength, from 0 to 1."
+          },
+          {
+            "name": "spacing",
+            "type": "number",
+            "required": false,
+            "description": "Distance between marks, in pixels (8–80)."
+          }
+        ]
+      }
+    ],
+    "category": "Subtle backgrounds",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

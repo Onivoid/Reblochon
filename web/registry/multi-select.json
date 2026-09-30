@@ -1,0 +1,190 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "multi-select",
+  "title": "Multi-select",
+  "description": "Searchable multiple choices with removable selections, form values and clear validation.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json",
+    "https://000h.cojeev.com/r/badge.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/checkbox.json",
+    "https://000h.cojeev.com/r/item-adornment.json",
+    "https://000h.cojeev.com/r/animated-icon.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/input.json",
+    "https://000h.cojeev.com/r/label.json",
+    "https://000h.cojeev.com/r/popover.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/multi-select.tsx",
+      "content": "\"use client\";\nimport { ScrollAreaList } from \"@/components/ui/scroll-area\";\n\nimport * as React from \"react\";\nimport { cn } from \"@/lib/utils\";\nimport {\n  controlRadiusStyle,\n  type ControlAppearanceProps,\n} from \"@/lib/cojeev/control-appearance\";\nimport { Badge } from \"@/components/ui/badge\";\nimport { Button } from \"@/components/ui/button\";\nimport { Checkbox } from \"@/components/ui/checkbox\";\nimport {\n  ItemAdornment,\n  type ItemAdornmentValue,\n} from \"@/components/ui/item-adornment\";\nimport { StateChevron } from \"@/components/ui/animated-icon\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { Input } from \"@/components/ui/input\";\nimport { Label } from \"@/components/ui/label\";\nimport {\n  Popover,\n  PopoverAnchor,\n  PopoverContent,\n  PopoverTrigger,\n} from \"@/components/ui/popover\";\n\nexport type MultiSelectOption = {\n  /** Stable, unique value submitted with the form. */\n  value: string;\n  label: string;\n  /** A disabled option cannot be selected or removed. */\n  disabled?: boolean;\n  adornment?: ItemAdornmentValue;\n};\n\nexport type MultiSelectProps = ControlAppearanceProps & {\n  /** Tokens are individually removable; summary is compact; checklist stays open. */\n  presentation?: \"tokens\" | \"summary\" | \"checklist\";\n  /** Visible accessible label for the trigger and its choices. */\n  label: string;\n  options: readonly MultiSelectOption[];\n  /** Per-option adornments take precedence over this shared default. */\n  adornment?: ItemAdornmentValue;\n  /** Controlled selected values. Values absent from options remain removable. */\n  value?: readonly string[];\n  /** Initial selection when value is omitted. */\n  defaultValue?: readonly string[];\n  onValueChange?: (value: string[]) => void;\n  /** Submits one hidden form entry per selected value. */\n  name?: string;\n  id?: string;\n  disabled?: boolean;\n  description?: string;\n  /** Sets the trigger's invalid state and announces the error. */\n  error?: string;\n  placeholder?: string;\n  searchPlaceholder?: string;\n  emptyMessage?: string;\n  noResultsMessage?: string;\n  className?: string;\n};\n\nconst unique = (values: readonly string[]) => [...new Set(values)];\n\nexport function MultiSelect({\n  presentation = \"tokens\",\n  radius,\n  appearance,\n  label,\n  options,\n  adornment = \"auto\",\n  value,\n  defaultValue = [],\n  onValueChange,\n  name,\n  id,\n  disabled = false,\n  description,\n  error,\n  placeholder = \"Choose options\",\n  searchPlaceholder = \"Search options…\",\n  emptyMessage = \"No options available.\",\n  noResultsMessage = \"No matching options.\",\n  className,\n}: MultiSelectProps) {\n  const generatedId = React.useId();\n  const controlId = id ?? `multi-select-${generatedId}`;\n  const [internalValue, setInternalValue] = React.useState(() =>\n    unique(defaultValue),\n  );\n  const [popover, setPopover] = React.useState({\n    open: false,\n    disabled,\n    presentation,\n  });\n  const [query, setQuery] = React.useState(\"\");\n  const triggerRef = React.useRef<HTMLButtonElement>(null);\n  const searchRef = React.useRef<HTMLInputElement>(null);\n  const rootRef = React.useRef<HTMLDivElement>(null);\n  const choicesRef = React.useRef<HTMLDivElement>(null);\n  const resetting = React.useRef(false);\n  const selected = unique(value ?? internalValue);\n  const indexed = [\n    ...new Map(options.map((option) => [option.value, option])).values(),\n  ];\n  const selectedSet = new Set(selected);\n  const term = query.trim().toLocaleLowerCase();\n  const filtered = indexed.filter((option) =>\n    option.label.toLocaleLowerCase().includes(term),\n  );\n  // Disabling a field closes it; re-enabling must not reopen a stale popup.\n  if (popover.disabled !== disabled || popover.presentation !== presentation) {\n    setPopover({ open: false, disabled, presentation });\n    if (query) setQuery(\"\");\n  }\n  React.useEffect(() => {\n    const form = rootRef.current?.closest(\"form\");\n    if (!form) return;\n    let resetTimer: ReturnType<typeof setTimeout> | undefined;\n    // Child checkbox primitives also listen for reset. The collection owns\n    // reset atomically, after the caller has had a chance to prevent it.\n    const reset = (event: Event) => {\n      resetting.current = true;\n      clearTimeout(resetTimer);\n      // A microtask may run between native event listeners. Defer beyond the\n      // entire reset dispatch so a bubbling React handler can prevent it.\n      resetTimer = setTimeout(() => {\n        if (!event.defaultPrevented && value === undefined)\n          setInternalValue(unique(defaultValue));\n        resetting.current = false;\n      }, 0);\n    };\n    form.addEventListener(\"reset\", reset, true);\n    return () => {\n      form.removeEventListener(\"reset\", reset, true);\n      clearTimeout(resetTimer);\n      resetting.current = false;\n    };\n  }, [defaultValue, value]);\n  const descriptions = [\n    description && `${controlId}-description`,\n    error && `${controlId}-error`,\n    `${controlId}-status`,\n  ]\n    .filter(Boolean)\n    .join(\" \");\n\n  const change = (next: string[]) => {\n    if (disabled || resetting.current) return;\n    if (value === undefined) setInternalValue(next);\n    onValueChange?.(next);\n  };\n  const toggle = (option: MultiSelectOption, checked: boolean) => {\n    if (disabled || option.disabled) return;\n    if (checked === selectedSet.has(option.value)) return;\n    change(\n      selectedSet.has(option.value)\n        ? selected.filter((item) => item !== option.value)\n        : [...selected, option.value],\n    );\n  };\n  const changeOpen = (next: boolean) => {\n    setPopover({ open: next && !disabled, disabled, presentation });\n    if (!next) setQuery(\"\");\n  };\n  const focusChoice = (index: number) => {\n    const choices = choicesRef.current?.querySelectorAll<HTMLButtonElement>(\n      '[role=\"checkbox\"]:not(:disabled)',\n    );\n    if (choices?.length)\n      choices[(index + choices.length) % choices.length]?.focus();\n  };\n  const remove = (item: string) => {\n    const index = selected.indexOf(item);\n    change(selected.filter((value) => value !== item));\n    requestAnimationFrame(() => {\n      const buttons = rootRef.current?.querySelectorAll<HTMLButtonElement>(\n        '[data-slot=\"multi-select-remove\"]:not(:disabled)',\n      );\n      (\n        buttons?.[Math.min(index, buttons.length - 1)] ??\n        triggerRef.current ??\n        searchRef.current\n      )?.focus();\n    });\n  };\n\n  const choices = (\n    <>\n      <Input\n        ref={searchRef}\n        id={presentation === \"checklist\" ? controlId : `${controlId}-search`}\n        appearance={appearance}\n        radius={radius}\n        type=\"search\"\n        size=\"sm\"\n        disabled={disabled}\n        value={query}\n        onChange={(event) => setQuery(event.target.value)}\n        placeholder={searchPlaceholder}\n        aria-label={`Search ${label}`}\n        aria-describedby={descriptions}\n        aria-invalid={!!error || undefined}\n        autoComplete=\"off\"\n        onKeyDown={(event) => {\n          if (event.key === \"ArrowDown\" || event.key === \"ArrowUp\") {\n            event.preventDefault();\n            focusChoice(event.key === \"ArrowDown\" ? 0 : -1);\n          }\n          if (event.key === \"Enter\") event.preventDefault();\n        }}\n      />\n      <ScrollAreaList maxHeight=\"min(280px,40dvh)\">\n        <div\n          ref={choicesRef}\n          data-slot=\"multi-select-options\"\n          className=\"v-multi-select__options\"\n          role=\"group\"\n          aria-label={`${label} choices`}\n          onKeyDown={(event) => {\n            if (![\"ArrowDown\", \"ArrowUp\", \"Home\", \"End\"].includes(event.key))\n              return;\n            const choices = [\n              ...(choicesRef.current?.querySelectorAll<HTMLButtonElement>(\n                '[role=\"checkbox\"]:not(:disabled)',\n              ) ?? []),\n            ];\n            const current = choices.indexOf(event.target as HTMLButtonElement);\n            if (current < 0) return;\n            event.preventDefault();\n            focusChoice(\n              event.key === \"Home\"\n                ? 0\n                : event.key === \"End\"\n                  ? -1\n                  : current + (event.key === \"ArrowDown\" ? 1 : -1),\n            );\n          }}\n        >\n          {filtered.map((option) => {\n            const optionId = `${controlId}-option-${indexed.indexOf(option)}`;\n            return (\n              <div\n                key={option.value}\n                className=\"v-multi-select__option\"\n                data-disabled={option.disabled || undefined}\n                data-selected={selectedSet.has(option.value) || undefined}\n              >\n                <Checkbox\n                  id={optionId}\n                  checked={selectedSet.has(option.value)}\n                  disabled={disabled || option.disabled}\n                  onCheckedChange={(next) => toggle(option, next === true)}\n                />\n                <label htmlFor={optionId}>\n                  <ItemAdornment\n                    identity={option.value}\n                    value={option.adornment ?? adornment}\n                  />\n                  <span>{option.label}</span>\n                </label>\n              </div>\n            );\n          })}\n          {!filtered.length && (\n            <p className=\"v-multi-select__empty\" role=\"status\">\n              {indexed.length ? noResultsMessage : emptyMessage}\n            </p>\n          )}\n        </div>\n      </ScrollAreaList>\n      {presentation !== \"tokens\" &&\n        selected.some(\n          (item) => !indexed.some((option) => option.value === item),\n        ) && (\n          <div\n            className=\"v-multi-select__unavailable\"\n            role=\"group\"\n            aria-label=\"Unavailable selections\"\n          >\n            <p className=\"v-multi-select__hint\">\n              No longer in this list. Kept until you remove them.\n            </p>\n            {selected\n              .filter(\n                (item) => !indexed.some((option) => option.value === item),\n              )\n              .map((item) => (\n                <Button\n                  key={item}\n                  data-stable-hit\n                  data-slot=\"multi-select-remove\"\n                  variant=\"outline\"\n                  disabled={disabled}\n                  aria-label={`Remove ${item}`}\n                  onClick={() => remove(item)}\n                >\n                  {item}\n                  <Icon name=\"x\" size=\"sm\" />\n                </Button>\n              ))}\n          </div>\n        )}\n      <p className=\"v-multi-select__hint\">\n        {presentation === \"checklist\"\n          ? `${selected.length} selected · Search or use the arrow keys to find an option.`\n          : \"Choose any number. Escape closes the list.\"}\n      </p>\n    </>\n  );\n  const summary = selected.map(\n    (item) => indexed.find((option) => option.value === item)?.label ?? item,\n  );\n  return (\n    <div\n      ref={rootRef}\n      data-slot=\"multi-select\"\n      data-presentation={presentation}\n      data-appearance={appearance}\n      style={controlRadiusStyle(radius)}\n      data-disabled={disabled || undefined}\n      data-invalid={!!error || undefined}\n      className={cn(\"v-multi-select\", className)}\n    >\n      <Label id={`${controlId}-label`} htmlFor={controlId} size=\"sm\">\n        {label}\n      </Label>\n      {presentation === \"checklist\" ? (\n        <div className=\"v-multi-select__checklist\">{choices}</div>\n      ) : (\n        <Popover open={popover.open && !disabled} onOpenChange={changeOpen}>\n          <PopoverAnchor asChild>\n            <div>\n              <PopoverTrigger asChild>\n                <Button\n                  ref={triggerRef}\n                  id={controlId}\n                  data-stable-hit\n                  data-appearance={appearance}\n                  variant=\"outline\"\n                  disabled={disabled}\n                  aria-labelledby={`${controlId}-label`}\n                  aria-describedby={descriptions}\n                  aria-invalid={!!error || undefined}\n                  className=\"v-multi-select__trigger\"\n                >\n                  <span className=\"v-multi-select__value\">\n                    {selected.length ? (\n                      presentation === \"summary\" ? (\n                        <>\n                          <span>\n                            {summary.slice(0, 2).join(\", \")}\n                            {summary.length > 2\n                              ? ` +${summary.length - 2}`\n                              : \"\"}\n                          </span>\n                          <small>\n                            {selected.length} selected · Edit selection\n                          </small>\n                        </>\n                      ) : (\n                        `${selected.length} selected`\n                      )\n                    ) : (\n                      placeholder\n                    )}\n                  </span>\n                  <StateChevron open={popover.open && !disabled} />\n                </Button>\n              </PopoverTrigger>\n            </div>\n          </PopoverAnchor>\n          <PopoverContent\n            className=\"v-multi-select__popover\"\n            aria-labelledby={`${controlId}-label`}\n            onOpenAutoFocus={(event) => {\n              event.preventDefault();\n              searchRef.current?.focus();\n            }}\n          >\n            {choices}\n          </PopoverContent>\n        </Popover>\n      )}\n      {presentation === \"tokens\" && selected.length > 0 && (\n        <ul className=\"v-multi-select__tokens\" aria-label={`Selected ${label}`}>\n          {selected.map((item) => {\n            const option = indexed.find((option) => option.value === item);\n            const text = option?.label ?? item;\n            return (\n              <li key={item}>\n                <Badge size=\"sm\" className=\"v-multi-select__token\">\n                  <span className=\"v-multi-select__token-label\">{text}</span>\n                  <Button\n                    data-stable-hit\n                    data-slot=\"multi-select-remove\"\n                    variant=\"ghost\"\n                    size=\"sm\"\n                    className=\"v-multi-select__remove\"\n                    aria-label={`Remove ${text}`}\n                    disabled={disabled || option?.disabled}\n                    onClick={() => remove(item)}\n                  >\n                    <Icon name=\"x\" aria-hidden=\"true\" />\n                  </Button>\n                </Badge>\n              </li>\n            );\n          })}\n        </ul>\n      )}\n      {description && (\n        <p\n          id={`${controlId}-description`}\n          className=\"v-multi-select__description\"\n        >\n          {description}\n        </p>\n      )}\n      {error && (\n        <p\n          id={`${controlId}-error`}\n          className=\"v-multi-select__error\"\n          role=\"alert\"\n        >\n          {error}\n        </p>\n      )}\n      <span id={`${controlId}-status`} className=\"v-sr\" role=\"status\">\n        {selected.length} selected.\n      </span>\n      {name &&\n        selected.map((item) => (\n          <input\n            key={item}\n            type=\"hidden\"\n            name={name}\n            value={item}\n            disabled={disabled}\n          />\n        ))}\n    </div>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/multi-select.css",
+      "content": "@layer cojeev-states {\n.v-multi-select { display:grid; gap:var(--s-3); min-width:0; width:100%; }\n.v-multi-select .v-multi-select__trigger { width:100%; min-height:var(--ctl-lg); height:auto; padding:var(--s-3) var(--s-4); justify-content:space-between; gap:var(--s-3); text-align:start; }\n.v-multi-select__trigger > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n.v-multi-select__trigger > .v-icon { flex:none; width:18px; height:18px; }\n.v-multi-select[data-invalid] .v-multi-select__trigger { box-shadow:inset 0 0 0 1px var(--v-danger); }\n.v-multi-select[data-disabled] { opacity:.6; }\n.v-multi-select__popover.v-popover { width:var(--radix-popover-trigger-width); min-width:min(260px,calc(100vw - 32px)); max-width:calc(100vw - 32px); padding:var(--s-3); display:grid; gap:var(--s-3); }\n.v-multi-select__options { display:grid; gap:var(--s-1); min-width:0; overscroll-behavior:contain; }\n.v-multi-select__option { display:flex; align-items:center; gap:var(--s-3); min-height:var(--hit-min); padding:var(--s-1) var(--s-2); border-radius:var(--r-sm); }\n.v-multi-select__option:hover:not([data-disabled]) { background:var(--v-beige); }\n.v-multi-select__option > label { flex:1; min-width:0; padding-block:var(--s-2); font-size:var(--fs-control); line-height:1.4; cursor:pointer; overflow-wrap:anywhere; }\n.v-multi-select__option[data-disabled] { opacity:.5; }\n.v-multi-select__option[data-disabled] > label { cursor:not-allowed; }\n.v-multi-select__option:focus-within { outline:2px solid var(--ring); outline-offset:-2px; }\n.v-multi-select__tokens { list-style:none; display:flex; flex-wrap:wrap; gap:var(--s-2); margin:0; padding:0; min-width:0; }\n.v-multi-select__tokens > li { min-width:0; max-width:100%; }\n.v-multi-select .v-multi-select__token { min-height:32px; height:auto; max-width:100%; padding:3px var(--s-1) 3px var(--s-3); gap:var(--s-2); }\n.v-multi-select__token-label { min-width:0; overflow-wrap:anywhere; white-space:normal; line-height:1.3; }\n.v-multi-select .v-multi-select__remove { width:44px; min-width:44px; height:44px; padding:0; flex:none; }\n.v-multi-select__remove > .v-icon { width:14px; height:14px; }\n.v-multi-select__description, .v-multi-select__error, .v-multi-select__hint, .v-multi-select__empty { margin:0; font-size:var(--fs-meta); line-height:1.5; }\n.v-multi-select__description, .v-multi-select__hint, .v-multi-select__empty { color:var(--v-text-2); }\n.v-multi-select__error { color:var(--v-danger-ink); }\n.v-multi-select__empty { padding:var(--s-4) var(--s-2); text-align:center; }\n@media (prefers-reduced-motion:reduce) { .v-multi-select *, .v-multi-select__popover * { transition-duration:0s; animation-duration:0s; } }\n\n.v-multi-select__option > label { display:flex; flex:1; align-items:center; gap:var(--s-3); min-width:0; }\n.v-multi-select__option > label > span:not(.v-item-adornment) { min-width:0; overflow-wrap:anywhere; }\n.v-multi-select__option { min-height:46px; }\n.v-multi-select__option:active:not([data-disabled]) { background:var(--v-pink-soft); color:var(--v-text); }\n.v-multi-select__checklist { display:grid; gap:var(--s-3); min-width:0; padding:var(--s-4); border:1px solid var(--v-edge); border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); }\n.v-multi-select[data-appearance=\"inset\"] .v-multi-select__checklist { background:var(--v-beige); border-color:transparent; box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n.v-multi-select[data-appearance=\"editorial\"] .v-multi-select__checklist { border:0; border-radius:0; padding:0; background:transparent; }\n.v-multi-select__trigger > .v-multi-select__value { display:grid; gap:3px; min-width:0; white-space:normal; }\n.v-multi-select__value > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n.v-multi-select__value > small { font-size:var(--fs-meta); color:var(--v-text-2); line-height:1.4; }\n.v-multi-select[data-invalid] .v-multi-select__checklist { outline:2px solid var(--v-danger-ink); outline-offset:2px; }\n.v-multi-select__option[data-selected] { background:var(--v-pink-soft); }\n.v-multi-select__unavailable { display:flex; flex-wrap:wrap; gap:var(--s-2); min-width:0; }\n.v-multi-select__unavailable > p { flex-basis:100%; }\n.v-multi-select__unavailable > .v-btn { min-height:44px; max-width:100%; white-space:normal; overflow-wrap:anywhere; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/multi-select.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/multi-select.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Multi-select",
+      "variants": [
+        "tokens",
+        "summary",
+        "checklist"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "open",
+        "searching",
+        "selected",
+        "empty",
+        "invalid",
+        "disabled"
+      ]
+    },
+    "api": [
+      {
+        "name": "MultiSelectProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "presentation",
+            "type": "\"tokens\" | \"summary\" | \"checklist\"",
+            "required": false,
+            "description": "Tokens are individually removable; summary is compact; checklist stays open."
+          },
+          {
+            "name": "label",
+            "type": "string",
+            "required": true,
+            "description": "Visible accessible label for the trigger and its choices."
+          },
+          {
+            "name": "options",
+            "type": "readonly MultiSelectOption[]",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "adornment",
+            "type": "ItemAdornmentValue",
+            "required": false,
+            "description": "Per-option adornments take precedence over this shared default."
+          },
+          {
+            "name": "value",
+            "type": "readonly string[]",
+            "required": false,
+            "description": "Controlled selected values. Values absent from options remain removable."
+          },
+          {
+            "name": "defaultValue",
+            "type": "readonly string[]",
+            "required": false,
+            "description": "Initial selection when value is omitted."
+          },
+          {
+            "name": "onValueChange",
+            "type": "(value: string[]) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": false,
+            "description": "Submits one hidden form entry per selected value."
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "error",
+            "type": "string",
+            "required": false,
+            "description": "Sets the trigger's invalid state and announces the error."
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "searchPlaceholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "emptyMessage",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "noResultsMessage",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "className",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

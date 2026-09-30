@@ -1,0 +1,97 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "animated-number",
+  "title": "Animated number",
+  "description": "A smooth, interruptible number transition for totals, metrics and small moments of progress.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/animated-number.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { cn } from \"@/lib/utils\";\nimport { mixNumber, numberParts, rollingTarget } from \"@/lib/cojeev/number-motion\";\nimport { createMotionLane, motionTokens } from \"@/lib/cojeev-motion/choreography\";\nimport { getServerSettingsSnapshot, getSettingsSnapshot, subscribeSettings } from \"@/lib/cojeev-motion/settings\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\n\nexport type AnimatedNumberProps = Omit<React.ComponentProps<\"span\">, \"children\"> & {\n  value: number;\n  locale?: string;\n  format?: Intl.NumberFormatOptions;\n  /** Transition time in milliseconds, bounded to 0–2000 and scaled by Flow speed. */\n  duration?: number;\n  /** Count through values, roll each digit, or count in twelve drawn poses. */\n  treatment?: \"count\" | \"roll\" | \"steps\";\n  /** Optional starting value for the first visible entrance. SSR always shows the final value. */\n  from?: number;\n  /** Text for NaN or infinite values; never presents missing data as zero. */\n  fallback?: string;\n};\n\ntype Lane = ReturnType<typeof createMotionLane>;\ntype Wheel = { element: HTMLSpanElement; lane: Lane; reveal: Lane };\n\nfunction makeNumberPainter(element: HTMLSpanElement, initial: number | null) {\n  let current = initial, target = initial, signature = \"\", mode = \"\", formatter = new Intl.NumberFormat(\"en-US\");\n  const wheels = new Map<string, Wheel>();\n  const resetWheels = () => { wheels.forEach(wheel => { wheel.lane.dispose(); wheel.reveal.dispose(); }); wheels.clear(); };\n  let countLane: Lane | null = null;\n  const clear = () => { countLane?.dispose(); countLane = null; resetWheels(); element.replaceChildren(); };\n  return {\n    update(value: number | null, options: { formatter: Intl.NumberFormat; signature: string; treatment: string; duration: number; still: boolean; fallback: string; start?: number }) {\n      const changed = signature !== options.signature || mode !== options.treatment;\n      if (changed) { clear(); signature = options.signature; mode = options.treatment; }\n      formatter = options.formatter;\n      if (value === null) { clear(); current = target = null; element.textContent = options.fallback; return; }\n      if (options.start !== undefined) { current = options.start; target = options.start; resetWheels(); }\n      const start = current ?? value;\n      const previousTarget = target ?? start;\n      target = value;\n      const still = options.still || options.duration === 0;\n      const transition = { duration: options.duration / 1000, ease: motionTokens.ease.settle };\n      if (mode === \"roll\") {\n        countLane?.dispose(); countLane = null;\n        const parts = numberParts(formatter, value);\n        const previousParts = new Map(numberParts(formatter, start).map(part => [part.key, part]));\n        const keep = new Set(parts.map(part => part.key));\n        for (const [key, wheel] of wheels) if (!keep.has(key)) { wheel.lane.dispose(); wheel.reveal.dispose(); wheel.element.remove(); wheels.delete(key); }\n        const fragment = document.createDocumentFragment();\n        let run: HTMLElement | null = null;\n        for (const part of parts) {\n          const numeric = /^(integer|fraction|decimal|group):/.test(part.key);\n          if (numeric && !run) { run = document.createElement(\"bdi\"); run.dir = \"ltr\"; run.className = \"v-animated-number__run\"; fragment.append(run); }\n          if (!numeric) run = null;\n          const parent = run ?? fragment;\n          if (part.digit === undefined || !part.glyphs) { const literal = document.createElement(\"span\"); literal.textContent = part.text; parent.append(literal); continue; }\n          let wheel = wheels.get(part.key);\n          if (!wheel) {\n            const cell = document.createElement(\"span\"); cell.className = \"v-animated-number__digit\";\n            const track = document.createElement(\"span\"); track.className = \"v-animated-number__track\";\n            const first = document.createElement(\"span\"), second = document.createElement(\"span\"); track.append(first, second); cell.append(track);\n            const glyphs = part.glyphs;\n            const paint = (position: number) => { const integer = Math.floor(position), fraction = position - integer; first.textContent = glyphs[((integer % 10) + 10) % 10]; second.textContent = glyphs[(((integer + 1) % 10) + 10) % 10]; track.style.translate = `0 ${-fraction * 50}%`; };\n            const previous = previousParts.get(part.key)?.digit;\n            const origin = still ? part.digit : previous ?? 0;\n            const lane = createMotionLane(origin, paint); paint(origin);\n            const paintReveal = (amount: number) => { cell.style.opacity = String(amount); cell.style.translate = `0 ${(1 - amount) * .2}em`; };\n            const revealed = still || previous !== undefined ? 1 : 0;\n            const reveal = createMotionLane(revealed, paintReveal); paintReveal(revealed);\n            wheel = { element: cell, lane, reveal }; wheels.set(part.key, wheel);\n          }\n          parent.append(wheel.element);\n          if (still) { wheel.lane.jump(part.digit); wheel.reveal.jump(1); }\n          else {\n            const destination = rollingTarget(wheel.lane.get(), part.digit, Math.sign(value - previousTarget) || 1);\n            if (Math.abs(destination - wheel.lane.get()) > 1e-7) wheel.lane.to(destination, transition);\n            wheel.reveal.to(1, transition);\n          }\n        }\n        element.replaceChildren(fragment);\n        current = value;\n        return;\n      }\n      resetWheels();\n      countLane?.dispose();\n      if (still || start === value) { current = value; element.textContent = formatter.format(value); return; }\n      let pose = -1;\n      const paint = (progress: number) => {\n        const nextPose = Math.min(12, Math.floor(progress * 12));\n        if (mode === \"steps\" && nextPose === pose) return;\n        pose = nextPose;\n        const amount = mode === \"steps\" ? nextPose / 12 : progress;\n        current = mixNumber(start, value, amount);\n        const text = formatter.format(current);\n        if (mode !== \"steps\" || amount === 1) { element.textContent = text; return; }\n        const fragment = document.createDocumentFragment();\n        Array.from(text).forEach((character, index) => { const glyph = document.createElement(\"span\"); glyph.textContent = character; glyph.className = \"v-animated-number__pose\"; glyph.style.rotate = `${Math.sin((pose + 1) * 2.7 + index * 1.9) * 1.8}deg`; glyph.style.translate = `0 ${Math.cos(pose * 1.7 + index) * .025}em`; fragment.append(glyph); });\n        element.replaceChildren(fragment);\n      };\n      countLane = createMotionLane(0, paint); paint(0);\n      countLane.to(1, transition, () => { current = value; element.textContent = formatter.format(value); });\n    },\n    dispose() { clear(); },\n  };\n}\n\n/** Locale-aware numbers with a final accessible value and interruptible visual motion. */\nexport function AnimatedNumber({ value, locale = \"en-US\", format, duration = 500, treatment = \"count\", from, fallback = \"—\", className, ref, ...props }: AnimatedNumberProps) {\n  const host = React.useRef<HTMLSpanElement>(null), visual = React.useRef<HTMLSpanElement>(null);\n  const painter = React.useRef<ReturnType<typeof makeNumberPainter> | null>(null);\n  const entered = React.useRef(false);\n  const safeValue = Number.isFinite(value) ? value : null;\n  const formatKey = JSON.stringify(format ?? {});\n  const formatter = React.useMemo(() => new Intl.NumberFormat(locale, JSON.parse(formatKey)), [locale, formatKey]);\n  const formatted = safeValue === null ? fallback : formatter.format(safeValue);\n  const [initial] = React.useState(formatted);\n  const { enabled, inView } = useMotionVisibility(host);\n  const settings = React.useSyncExternalStore(subscribeSettings, getSettingsSnapshot, getServerSettingsSnapshot);\n  const [localQuiet, setLocalQuiet] = React.useState(false);\n  const still = !enabled || !inView || localQuiet;\n  const ownedRef = React.useCallback((node: HTMLSpanElement | null) => { host.current = node; if (typeof ref === \"function\") return ref(node); if (ref) ref.current = node; }, [ref]);\n  React.useLayoutEffect(() => {\n    const element = visual.current;\n    if (!element) return;\n    const instance = makeNumberPainter(element, safeValue); painter.current = instance;\n    return () => { instance.dispose(); painter.current = null; };\n  // The painter owns its visual DOM and receives all changing props below.\n  // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, []);\n  React.useEffect(() => {\n    const element = host.current; if (!element) return;\n    const update = () => setLocalQuiet(Boolean(element.closest('[data-flow=\"off\"],[data-no-glide]')));\n    const observer = new MutationObserver(update);\n    for (let ancestor: Element | null = element; ancestor; ancestor = ancestor.parentElement) observer.observe(ancestor, { attributes: true, attributeFilter: [\"data-flow\", \"data-no-glide\"] });\n    update(); return () => observer.disconnect();\n  }, []);\n  React.useLayoutEffect(() => {\n    const entrance = !entered.current && enabled && inView && !localQuiet;\n    if (inView && enabled) entered.current = true;\n    painter.current?.update(safeValue, { formatter, signature: `${locale}:${formatKey}`, treatment, duration: (Number.isFinite(duration) ? Math.min(2000, Math.max(0, duration)) : 500) / settings.flow.speed, still, fallback, start: entrance && Number.isFinite(from) ? from : undefined });\n  }, [safeValue, formatter, formatKey, locale, treatment, duration, still, fallback, from, enabled, inView, localQuiet, settings.flow.speed]);\n  return <span {...props} ref={ownedRef} data-slot=\"animated-number\" data-treatment={treatment} data-quiet={still} className={cn(\"v-animated-number\", className)}>\n    <span className=\"v-animated-number__accessible\">{formatted}</span>\n    <span ref={visual} className=\"v-animated-number__visual\" aria-hidden=\"true\">{initial}</span>\n  </span>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/animated-number.css",
+      "content": "@layer cojeev-states {\n.v-animated-number{display:inline-block;max-inline-size:100%;font-variant-numeric:tabular-nums;vertical-align:baseline;unicode-bidi:isolate}\n.v-animated-number__visual{white-space:pre-wrap;overflow-wrap:anywhere}\n.v-animated-number__accessible{position:absolute;inline-size:1px;block-size:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}\n.v-animated-number__digit{display:inline-block;position:relative;inline-size:1ch;block-size:1.15em;overflow:hidden;vertical-align:-.15em;text-align:center;line-height:1.15}\n.v-animated-number__track{display:flex;flex-direction:column;block-size:2.3em;will-change:translate}\n.v-animated-number__track>span{display:block;flex:none;block-size:1.15em;line-height:1.15}\n.v-animated-number__pose{display:inline-block;white-space:pre}\n.v-animated-number[data-quiet=\"true\"] .v-animated-number__track{will-change:auto}\n.v-animated-number__run{display:inline-flex;direction:ltr;unicode-bidi:isolate;flex-wrap:wrap;max-inline-size:100%;align-items:baseline;vertical-align:-.15em}\n.v-animated-number__run .v-animated-number__digit{flex:none;vertical-align:baseline}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/animated-number.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/animated-number.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Animated number",
+      "variants": [
+        "default",
+        "roll",
+        "steps"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "updating",
+        "reduced motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "AnimatedNumberProps",
+        "props": [
+          {
+            "name": "value",
+            "type": "number",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "locale",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "format",
+            "type": "Intl.NumberFormatOptions",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "duration",
+            "type": "number",
+            "required": false,
+            "description": "Transition time in milliseconds, bounded to 0–2000 and scaled by Flow speed."
+          },
+          {
+            "name": "treatment",
+            "type": "\"count\" | \"roll\" | \"steps\"",
+            "required": false,
+            "description": "Count through values, roll each digit, or count in twelve drawn poses."
+          },
+          {
+            "name": "from",
+            "type": "number",
+            "required": false,
+            "description": "Optional starting value for the first visible entrance. SSR always shows the final value."
+          },
+          {
+            "name": "fallback",
+            "type": "string",
+            "required": false,
+            "description": "Text for NaN or infinite values; never presents missing data as zero."
+          }
+        ]
+      }
+    ],
+    "category": "Typography",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

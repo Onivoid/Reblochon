@@ -1,0 +1,183 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "input",
+  "title": "Input",
+  "description": "Collects a single-line value through a native input with optional composed affixes and clearing controls.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/input.tsx",
+      "content": "\"use client\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport * as React from \"react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n  controlRadiusStyle,\n  type ControlAppearanceProps,\n} from \"@/lib/cojeev/control-appearance\";\n\nconst inputVariants = cva(\n  \"v-input flex w-full items-center gap-[var(--s-3)] h-[var(--ctl-lg)] px-[var(--s-5)] py-0 rounded-[var(--r-pill)] [border:0] bg-[var(--input)] text-[color:var(--v-text)] text-[length:var(--fs-body)] [box-shadow:inset_0_0_0_1px_var(--v-edge)] outline-none\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        cream:\n          \"-cream bg-[var(--v-canvas)] [box-shadow:inset_0_0_0_1px_var(--v-border)]\",\n      },\n      size: {\n        default: \"\",\n        sm: \"-sm h-[40px] px-[var(--s-4)] text-[length:var(--fs-control)]\",\n      },\n    },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type InputProps = Omit<React.ComponentProps<\"input\">, \"size\"> &\n  VariantProps<typeof inputVariants> &\n  ControlAppearanceProps & { nativeSize?: number };\nexport function Input({\n  className,\n  variant,\n  size,\n  nativeSize,\n  radius,\n  appearance,\n  style,\n  ...props\n}: InputProps) {\n  return (\n    <input\n      data-slot=\"input\"\n      data-appearance={appearance}\n      style={{ ...style, ...controlRadiusStyle(radius) }}\n      data-part=\"root\"\n      data-state={\n        props.disabled\n          ? \"disabled\"\n          : props[\"aria-invalid\"] === true || props[\"aria-invalid\"] === \"true\"\n            ? \"error\"\n            : \"rest\"\n      }\n      className={cn(inputVariants({ variant, size }), className)}\n      size={nativeSize}\n      {...props}\n    />\n  );\n}\nexport type InputWrapperProps = React.HTMLAttributes<HTMLElement> &\n  VariantProps<typeof inputVariants> &\n  ControlAppearanceProps & {\n    ref?: React.Ref<HTMLElement>;\n    as?: \"div\" | \"label\";\n  };\nexport function InputWrapper({\n  ref: externalMorphRef,\n  radius,\n  appearance,\n  style,\n  className,\n  variant,\n  size,\n  ...props\n}: InputWrapperProps): React.ReactElement {\n  const ownedMorphRef = useMorph<HTMLElement>(\"inputs\", externalMorphRef);\n  const { as = \"div\", ...rest } = props;\n  return React.createElement(as, {\n    ref: ownedMorphRef,\n    \"data-slot\": \"input\",\n    \"data-stable-hit\": \"\",\n    \"data-appearance\": appearance,\n    \"data-motion\": appearance === \"editorial\" ? \"off\" : undefined,\n    style: { ...style, ...controlRadiusStyle(radius) },\n    \"data-part\": \"root\",\n    className: cn(inputVariants({ variant, size }), className),\n    ...rest,\n  });\n}\nexport type InputControlProps = React.ComponentProps<\"input\">;\nexport function InputControl({ className, ...props }: InputControlProps) {\n  return (\n    <input\n      data-slot=\"input-control\"\n      data-part=\"input\"\n      className={cn(\n        \"min-w-0 flex-1 h-full [border:0] bg-transparent [outline:0] [padding:1px_2px] placeholder:text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type InputAddonProps = React.ComponentProps<\"span\">;\nexport function InputAddon({ className, ...props }: InputAddonProps) {\n  return (\n    <span\n      data-slot=\"input-addon\"\n      data-part=\"addon\"\n      className={cn(\n        \"v-disk grid shrink-0 place-items-center size-[32px] bg-[var(--disk-bg,var(--v-beige))] text-[color:var(--v-text)] [border-radius:46%_54%_50%_50%/50%_46%_54%_50%]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type InputAffixProps = React.ComponentProps<\"span\">;\nexport function InputAffix({ className, ...props }: InputAffixProps) {\n  return (\n    <span\n      data-slot=\"input-affix\"\n      className={cn(\n        \"v-affix shrink-0 whitespace-nowrap text-[length:var(--fs-small)] text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type InputClearProps = React.ComponentProps<\"button\"> & {\n  onClear?: () => void;\n};\nexport function InputClear({\n  className,\n  onClear,\n  onClick,\n  children,\n  ...props\n}: InputClearProps) {\n  return (\n    <Button\n      data-slot=\"input-clear\"\n      data-part=\"clear\"\n      type=\"button\"\n      variant=\"ghost\"\n      data-stable-hit=\"\"\n      aria-label=\"Clear input\"\n      className={cn(\n        \"v-clear grid shrink-0 place-items-center text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      onClick={(event) => {\n        onClick?.(event);\n        if (!event.defaultPrevented) onClear?.();\n      }}\n      {...props}\n    >\n      {children ?? <Icon name=\"x\" />}\n    </Button>\n  );\n}\nexport { inputVariants };\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/input.css",
+      "content": "@layer cojeev-states {\n/* Focus and cross-part precedence follow the authored cascade. */\n[data-slot=\"input\"] {\n  transition:\n    background var(--t-micro),\n    box-shadow var(--t-micro);\n}\n[data-slot=\"input\"]::placeholder {\n  color: var(--v-text-2);\n}\n[data-slot=\"input\"]:hover:not(:focus-within) {\n  background: color-mix(in oklab, var(--input) 92%, var(--v-canvas));\n}\n[data-slot=\"input\"]:is(:focus, :focus-within) {\n  outline: none;\n  background: var(--v-pink-soft);\n  box-shadow: inset 0 0 0 2px var(--v-brand);\n}\n[data-slot=\"input\"].-cream:focus-within {\n  background: var(--v-canvas);\n}\n[data-slot=\"input\"].-lg {\n  height: var(--ctl-xl);\n  padding: 0 var(--s-5);\n  font-size: var(--fs-reading);\n}\n[data-slot=\"input\"].-ink {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  box-shadow: inset 0 0 0 1px rgba(251, 244, 230, 0.22);\n}\n[data-slot=\"input\"].-ink::placeholder,\n[data-slot=\"input\"].-ink input::placeholder {\n  color: rgba(251, 244, 230, 0.55);\n}\n[data-slot=\"input\"].-ink:focus-within {\n  background: var(--v-ink-soft);\n  box-shadow: inset 0 0 0 2px var(--v-pink);\n}\n[data-slot=\"input\"]:has(> .v-disk) {\n  padding-left: var(--s-2);\n}\n[data-slot=\"input\"] > .v-icon {\n  width: 18px;\n  height: 18px;\n  color: var(--v-text-2);\n  flex: none;\n}\n[data-slot=\"input\"]:focus-within > .v-icon {\n  color: var(--v-text);\n}\n[data-slot=\"input-addon\"] {\n  transition:\n    background var(--t-element) var(--enter),\n    color var(--t-element);\n}\n[data-slot=\"input-addon\"] .v-icon {\n  width: 16px;\n  height: 16px;\n  stroke-width: 2;\n}\n[data-slot=\"input\"]:focus-within > [data-slot=\"input-addon\"] {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n}\n[data-slot=\"input\"].-ink > [data-slot=\"input-addon\"] {\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n}\n[data-slot=\"input\"].-ink:focus-within > [data-slot=\"input-addon\"] {\n  background: var(--v-paper);\n}\n[data-slot=\"input-clear\"] .v-icon {\n  width: 14px;\n  height: 14px;\n}\n[data-slot=\"input-affix\"].-pill {\n  height: 26px;\n  padding: 0 var(--s-3);\n  border-radius: var(--r-pill);\n  background: var(--v-canvas);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n  color: var(--v-text);\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-medium);\n  display: inline-flex;\n  align-items: center;\n  margin-right: -8px;\n}\n[data-slot=\"input-affix\"].-pill.-pink {\n  background: var(--v-pink);\n  box-shadow: none;\n  color: var(--v-on-accent);\n}\n[data-slot=\"input-affix\"].-pill.-olive {\n  background: var(--v-olive);\n  box-shadow: none;\n  color: var(--v-on-accent);\n}\n[data-slot=\"input-affix\"].-pill.-yellow {\n  background: var(--v-yellow);\n  box-shadow: none;\n  color: var(--v-on-accent);\n}\n[data-slot=\"input\"]:has(input:read-only:not([type=\"time\"])) {\n  background: var(--v-canvas);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n[data-slot=\"input\"]:is([type=\"date\"], [type=\"time\"], [type=\"number\"]) {\n  font-variant-numeric: tabular-nums;\n}\n[data-slot=\"input\"][type=\"date\"]::-webkit-calendar-picker-indicator {\n  opacity: 0.6;\n  cursor: pointer;\n  filter: none;\n}\n[data-slot=\"input\"][type=\"number\"]::-webkit-inner-spin-button {\n  opacity: 1;\n}\n[data-slot=\"input\"][type=\"search\"]::-webkit-search-cancel-button {\n  -webkit-appearance: none;\n  width: 14px;\n  height: 14px;\n  background: var(--v-text-2);\n  mask: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E\")\n    center/contain no-repeat;\n  cursor: pointer;\n}\n:root[data-mode=\"dark\"] [data-slot=\"input\"] {\n  background: var(--v-beige);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input\"]:is(:focus, :focus-within) {\n  background: color-mix(in oklab, var(--v-pink) 14%, var(--v-canvas));\n  box-shadow: inset 0 0 0 2px var(--v-pink);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input\"].-cream {\n  background: var(--v-canvas);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input\"].-ink {\n  background: var(--v-beige-2);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input-addon\"]:not([class*=\" -\"]) {\n  background: var(--v-beige-2);\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"]\n  [data-slot=\"input\"]:focus-within\n  > [data-slot=\"input-addon\"] {\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input-affix\"].-pill {\n  background: var(--v-beige-2);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n[data-slot=\"input\"]:is(:disabled, [aria-disabled=\"true\"]) {\n  opacity: 1;\n}\n[data-slot=\"input\"]:is(:disabled, :has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n[data-slot=\"input\"]:disabled::placeholder {\n  color: var(--v-disabled-ink);\n}\n[data-slot=\"input\"].v-input:is(.-error, [aria-invalid=\"true\"]),\n:root[data-mode] [data-slot=\"input\"].v-input:is(.-error, [aria-invalid=\"true\"]) {\n  box-shadow: inset 0 0 0 1.5px var(--v-danger-fill);\n  background: var(--v-danger-soft);\n}\n[data-slot=\"input\"].v-input:is(.-error, [aria-invalid=\"true\"]):focus-within,\n:root[data-mode] [data-slot=\"input\"].v-input:is(.-error, [aria-invalid=\"true\"]):focus-within {\n  box-shadow: inset 0 0 0 2px var(--v-danger-fill);\n}\n\n[data-slot=\"input\"].-cream { border-color: var(--v-border); }\n[data-slot=\"input\"]:is(:focus, :focus-within) { border-color: transparent; }\n[data-slot=\"input\"].-ink > .v-icon { color: rgba(251,244,230,.7); }\n\n[data-slot=\"input-control\"][type=\"time\"] { padding: 0 0 0 1px; }\n\n/* Clear is a real shared button; the tiny icon is not its hit rectangle. */\n.v-input:has([data-slot=\"input-clear\"]) { min-height:44px; padding-inline-end:var(--s-1); }\n.v-input [data-slot=\"input-clear\"].v-btn { width:44px; height:44px; min-width:44px; padding:0; margin:0; border-radius:50%; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/input.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/input.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "input",
+      "name": "Input",
+      "tier": "base",
+      "evidence": "I07 I15",
+      "status": "source",
+      "root": ".v-input",
+      "variants": [
+        "contour",
+        "editorial",
+        "inset"
+      ],
+      "sizes": [
+        "sm"
+      ],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active",
+        "disabled",
+        "error"
+      ],
+      "dataStates": [],
+      "category": "inputs",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x240",
+      "contract": "entries/input/contract.md",
+      "demo": "entries/input/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-disabled.html",
+        "default-default-disabled-dark.html",
+        "default-default-error.html",
+        "default-default-error-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "InputProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"cream\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "nativeSize",
+            "type": "number",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "InputWrapperProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"cream\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "ref",
+            "type": "React.Ref<HTMLElement>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "\"div\" | \"label\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "InputControlProps",
+        "props": []
+      },
+      {
+        "name": "InputAddonProps",
+        "props": []
+      },
+      {
+        "name": "InputAffixProps",
+        "props": []
+      },
+      {
+        "name": "InputClearProps",
+        "props": [
+          {
+            "name": "onClear",
+            "type": "() => void",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

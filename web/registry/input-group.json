@@ -1,0 +1,142 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "input-group",
+  "title": "Input Group",
+  "description": "Combines a text control with adjacent prefixes, suffixes, or actions in one input surface.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/input.json",
+    "https://000h.cojeev.com/r/textarea.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/input-group.tsx",
+      "content": "\"use client\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport * as React from \"react\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { controlRadiusStyle, type ControlAppearanceProps } from \"@/lib/cojeev/control-appearance\";\nimport { Button, type ButtonProps } from \"@/components/ui/button\";\nimport {\n  InputControl,\n  type InputControlProps,\n} from \"@/components/ui/input\";\nimport { Textarea, type TextareaProps } from \"@/components/ui/textarea\";\nexport const inputGroupVariants = cva(\n  \"v-igroup flex items-center h-[var(--ctl-lg)] gap-[var(--s-3)] py-0 pl-[var(--s-5)] pr-[var(--s-2)] rounded-[var(--r-pill)] [border:0] bg-[var(--input)] [box-shadow:inset_0_0_0_1px_var(--v-edge)]\",\n);\nexport type InputGroupProps = React.ComponentProps<\"div\"> & ControlAppearanceProps;\nexport function InputGroup({ref: externalMorphRef, radius, appearance, style, className, ...props }: InputGroupProps) {\n  const ownedMorphRef = useMorph<HTMLDivElement>(\"inputs\", externalMorphRef);\n  return (\n    <div ref={ownedMorphRef}\n      data-slot=\"input-group\"\n      data-stable-hit=\"\"\n      data-appearance={appearance}\n      data-motion={appearance === \"editorial\" ? \"off\" : undefined}\n      style={{ ...style, ...controlRadiusStyle(radius) }}\n      data-part=\"root\"\n      className={cn(inputGroupVariants(), className)}\n      {...props}\n    />\n  );\n}\nexport type InputGroupAddonProps = React.ComponentProps<\"div\">;\nexport function InputGroupAddon({ className, ...props }: InputGroupAddonProps) {\n  return (\n    <div\n      data-slot=\"input-group-addon\"\n      data-part=\"addon\"\n      className={cn(\n        \"v-addon shrink-0 whitespace-nowrap text-[length:var(--fs-small)] font-medium text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type InputGroupInputProps = InputControlProps;\nexport function InputGroupInput({ className, ...props }: InputGroupInputProps) {\n  return (\n    <InputControl\n      data-slot=\"input-group-input\"\n      className={cn(\n        \"text-[length:var(--fs-body)] text-[color:var(--v-text)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type InputGroupTextareaProps = TextareaProps;\nexport function InputGroupTextarea(props: InputGroupTextareaProps) {\n  return <Textarea data-slot=\"input-group-textarea\" {...props} />;\n}\nexport type InputGroupButtonProps = ButtonProps;\nexport function InputGroupButton({\n  className,\n  ...props\n}: InputGroupButtonProps) {\n  return (\n    <Button\n      data-slot=\"input-group-button\"\n      className={cn(\"h-[40px] px-[var(--s-4)] shrink-0\", className)}\n      {...props}\n    />\n  );\n}\nexport type InputGroupTextProps = React.ComponentProps<\"span\">;\nexport function InputGroupText({ className, ...props }: InputGroupTextProps) {\n  return (\n    <span\n      data-slot=\"input-group-text\"\n      className={cn(\"text-[length:var(--fs-small)] text-[color:var(--v-text-2)]\", className)}\n      {...props}\n    />\n  );\n}\nexport type InputSearchProps = React.ComponentProps<\"div\">;\nexport function InputSearch({ className, ...props }: InputSearchProps) {\n  return (\n    <div\n      data-slot=\"input-search\"\n      className={cn(\"v-search flex items-center gap-[var(--s-3)]\", className)}\n      {...props}\n    />\n  );\n}\nexport type InputSearchScopeProps = React.ComponentProps<\"div\">;\nexport function InputSearchScope({\n  className,\n  ...props\n}: InputSearchScopeProps) {\n  return (\n    <div\n      data-slot=\"input-search-scope\"\n      className={cn(\n        \"v-scope flex shrink-0 items-center gap-[var(--s-2)] text-[length:var(--fs-meta)] text-[color:var(--v-text-2)] whitespace-nowrap\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n\nexport type InputSearchDiskProps=React.ComponentProps<\"span\">;\nexport function InputSearchDisk({ref,className,...props}:InputSearchDiskProps){\n  const ownedRef=useMorph<HTMLSpanElement>(\"icons\",ref);\n  return <span ref={ownedRef} data-slot=\"input-search-disk\" data-part=\"icon\" className={cn(\"v-search__disk grid place-items-center shrink-0 size-[36px] [border-radius:50%] bg-[var(--v-pink)] text-[color:var(--v-on-accent)]\",className)} {...props}/>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/input-group.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"input-group\"] {\n  transition:\n    background var(--t-micro),\n    box-shadow var(--t-micro);\n}\n[data-slot=\"input-group\"]:focus-within {\n  background: var(--v-pink-soft);\n  box-shadow: inset 0 0 0 2px var(--v-brand);\n}\n[data-slot=\"input-group\"] > .v-icon {\n  width: 18px;\n  height: 18px;\n  color: var(--v-text-2);\n  flex: none;\n}\n[data-slot=\"input-group\"] .v-badge {\n  height: 26px;\n  background: var(--v-canvas);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n  color: var(--v-text);\n  flex: none;\n}\n[data-slot=\"input-group\"] .v-badge.-ink {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  box-shadow: none;\n}\n[data-slot=\"input-group\"] .v-badge.-dashed {\n  background: transparent;\n}\n[data-slot=\"input-group\"] .v-btn {\n  height: 40px;\n  padding: 0 var(--s-4);\n  flex: none;\n}\n[data-slot=\"input-group\"] .v-ibtn[data-slot] {\n  width: 40px;\n  height: 40px;\n  flex: none;\n}\n[data-slot=\"input-group\"] .v-sep.-v[data-slot] {\n  height: 24px;\n  margin: 0 2px;\n  background: var(--v-edge);\n  opacity: 0.5;\n}\n[data-slot=\"input-search\"] .v-input {\n  height: 36px;\n  font-size: var(--fs-control);\n  min-width: 0;\n  border-color: var(--v-border);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n  background: var(--v-canvas);\n}\n[data-slot=\"input-search\"] .v-input:focus-within {\n  box-shadow: inset 0 0 0 2px var(--v-brand);\n  background: var(--v-canvas);\n}\n[data-slot=\"input-search\"] .v-search__disk {\n  width: 36px;\n  height: 36px;\n  flex: none;\n}\n[data-slot=\"input-search-scope\"] .v-badge {\n  height: 24px;\n  font-size: var(--fs-caps);\n  padding: 0 var(--s-2);\n}\n[data-slot=\"input-search\"] [data-slot=\"input-search-scope\"] .v-badge.-dashed {\n  height: 26px;\n  background: transparent;\n  border-color: var(--v-border);\n  color: var(--v-text-2);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input-group\"] {\n  background: var(--v-beige);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input-group\"]:focus-within {\n  background: color-mix(in oklab, var(--v-pink) 14%, var(--v-canvas));\n  box-shadow: inset 0 0 0 2px var(--v-pink);\n}\n:root[data-mode=\"dark\"] [data-slot=\"input-group\"] .v-badge {\n  background: var(--v-beige-2);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n\n[data-slot=\"input-search\"] { flex: 1; min-width: 0; }\n[data-slot=\"input-search-scope\"] { font-size: var(--fs-small); color: var(--v-text); min-width: 0; flex-wrap: wrap; }\n[data-slot=\"input-search\"] .v-input input { flex: 1 1 60px; min-width: 0; }\n@media (max-width: 640px) { [data-slot=\"input-search\"] [data-slot=\"input-search-scope\"] { display: none; } }\n[data-slot=\"input-group\"] { min-width:0; min-height:var(--ctl-lg); height:auto; padding-block:2px; }\n[data-slot=\"input-group\"] [data-slot=\"input-group-input\"] { min-height:40px; width:0; flex:1 1 80px; }\n[data-slot=\"input-group-addon\"] { min-width:0; max-width:45%; white-space:normal; overflow-wrap:anywhere; }\n[data-slot=\"input-group-text\"] { min-width:0; max-width:100%; overflow-wrap:anywhere; }\n[data-slot=\"input-group\"]:has(textarea) { align-items:flex-end; flex-wrap:wrap; border-radius:var(--r-card); padding:var(--s-3); }\n[data-slot=\"input-group\"] [data-slot=\"input-group-textarea\"] { min-width:0; width:100%; min-height:96px; max-height:320px; flex:1 0 100%; padding:var(--s-2); background:transparent; box-shadow:none; border-radius:var(--r-sm); }\n[data-slot=\"input-group\"]:has(textarea) > [data-slot=\"input-group-button\"] { margin-inline-start:auto; }\n[data-slot=\"input-group\"] [data-slot=\"input-group-textarea\"]:focus { box-shadow:none; }\n@media (max-width: 640px) {\n  [data-slot=\"input-group\"] { flex-wrap:wrap; }\n  [data-slot=\"input-group\"] [data-slot=\"input-group-input\"] { flex-basis:100px; }\n}\n\n[data-slot=\"input-search-disk\"] .v-icon { width: 20px; height: 20px; stroke-width: 2; }\n\n[data-slot=\"input-group\"] [data-slot=\"input-group-button\"].v-btn { min-height:44px; height:44px; }\n[data-slot=\"input-group\"]:has(textarea) { border-radius:min(var(--v-control-radius,20px),20px); }\n[data-slot=\"input-group\"] [data-slot=\"input-group-textarea\"] { resize:vertical; }\n[data-slot=\"input-group\"] > [data-slot=\"textarea-scroll-area\"] { flex:1 0 100%; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/input-group.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/input-group.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "input-group",
+      "name": "Input Group",
+      "tier": "base",
+      "evidence": "I15",
+      "status": "source",
+      "root": ".v-igroup",
+      "variants": [
+        "address",
+        "quantity",
+        "composer"
+      ],
+      "sizes": [],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "inputs",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "enters"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/input-group/contract.md",
+      "demo": "entries/input-group/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "InputGroupProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "InputGroupAddonProps",
+        "props": []
+      },
+      {
+        "name": "InputGroupInputProps",
+        "props": []
+      },
+      {
+        "name": "InputGroupTextareaProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "InputGroupButtonProps",
+        "props": []
+      },
+      {
+        "name": "InputGroupTextProps",
+        "props": []
+      },
+      {
+        "name": "InputSearchProps",
+        "props": []
+      },
+      {
+        "name": "InputSearchScopeProps",
+        "props": []
+      },
+      {
+        "name": "InputSearchDiskProps",
+        "props": []
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

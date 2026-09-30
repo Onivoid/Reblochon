@@ -1,0 +1,39 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "profile-card",
+  "title": "Profile card",
+  "description": "A reusable profile card composed from Cojeev base components.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/organism-composition.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/profile-card.tsx",
+      "content": "\"use client\";\nexport { ProfileCard, type OrganismProps as ProfileCardProps } from \"@/components/ui/organism-composition\";\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Profile card",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "interactive",
+        "reduced-motion"
+      ]
+    },
+    "api": [],
+    "category": "Composition",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

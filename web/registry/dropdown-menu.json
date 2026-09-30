@@ -1,0 +1,157 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dropdown-menu",
+  "title": "Dropdown Menu",
+  "description": "Opens a compact menu of actions or stateful choices from a visible trigger.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-dropdown-menu"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json",
+    "https://000h.cojeev.com/r/item-adornment.json",
+    "https://000h.cojeev.com/r/animated-icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/dropdown-menu.tsx",
+      "content": "\"use client\";\nimport { scrollAreaListChildren } from \"@/components/ui/scroll-area\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-dropdown-menu\";\nimport {\n  useFlowAppearance,\n  useFlowGroup,\n} from \"@/lib/cojeev-motion/use-flow\";\n\nimport { adornItem, adornMenuItem, itemText, type ItemAdornmentItemProps } from \"@/components/ui/item-adornment\";\nimport { StateChevron, AnimatedIcon } from \"@/components/ui/animated-icon\";\n\nexport type DropdownMenuProps = React.ComponentProps<typeof Primitive.Root>;\nexport function DropdownMenu(props: DropdownMenuProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type DropdownMenuPortalProps = React.ComponentProps<\n  typeof Primitive.Portal\n>;\nexport function DropdownMenuPortal(props: DropdownMenuPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type DropdownMenuGroupProps = React.ComponentProps<\n  typeof Primitive.Group\n>;\nexport function DropdownMenuGroup(props: DropdownMenuGroupProps) {\n  return <Primitive.Group data-slot=\"dropdown-menu-group\" {...props} />;\n}\nexport type DropdownMenuRadioGroupProps = React.ComponentProps<\n  typeof Primitive.RadioGroup\n>;\nexport function DropdownMenuRadioGroup(props: DropdownMenuRadioGroupProps) {\n  return (\n    <Primitive.RadioGroup data-slot=\"dropdown-menu-radiogroup\" {...props} />\n  );\n}\nexport type DropdownMenuSubProps = React.ComponentProps<typeof Primitive.Sub>;\nexport function DropdownMenuSub(props: DropdownMenuSubProps) {\n  return <Primitive.Sub {...props} />;\n}\nexport type DropdownMenuTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n> & { chevron?: boolean };\nexport function DropdownMenuTrigger({\n  className,\n  children,\n  chevron = false,\n  ref,\n  ...props\n}: DropdownMenuTriggerProps) {\n  return (\n    <Primitive.Trigger\n      ref={ref}\n      data-slot=\"dropdown-menu-trigger\"\n      data-part=\"trigger\"\n      data-menu=\"\"\n      className={cn(\"\", className)}\n      {...props}\n    >{adornItem(children, false, \"\", props.asChild, chevron ? <StateChevron /> : null)}</Primitive.Trigger>\n  );\n}\nexport const dropdownmenuContentVariants = cva(\n  \"v-menu [background:var(--popover)] [border-radius:var(--r-card-sm)] [padding:var(--s-2)] [min-width:200px] [box-shadow:var(--shadow-float)] [border:1px_solid_var(--v-border)] [display:grid] [gap:2px]\",\n);\nexport type DropdownMenuContentProps = React.ComponentProps<\n  typeof Primitive.Content\n>;\nexport function DropdownMenuContent({\n  className,\n  ref,\n  children,\n  sideOffset = 6,\n  ...props\n}: DropdownMenuContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const groupRef = useFlowGroup<HTMLDivElement>(morphRef, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[data-highlighted]\",\n  });\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, groupRef, \"grow\");\n  return (\n    <Primitive.Portal>\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"dropdown-menu-content\"\n        data-part=\"content\"\n        sideOffset={sideOffset}\n        className={cn(dropdownmenuContentVariants(), className)}\n        {...props}\n      >\n        {scrollAreaListChildren(children, props.asChild)}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\nexport type DropdownMenuSubContentProps = React.ComponentProps<\n  typeof Primitive.SubContent\n>;\nexport function DropdownMenuSubContent({\n  className,\n  children,\n  ref,\n  ...props\n}: DropdownMenuSubContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const groupRef = useFlowGroup<HTMLDivElement>(morphRef, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[data-highlighted]\",\n  });\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, groupRef, \"grow\");\n  return (\n    <Primitive.Portal>\n      <Primitive.SubContent\n        ref={flowRef}\n        data-slot=\"dropdown-menu-sub-content\"\n        data-part=\"content\"\n        className={cn(dropdownmenuContentVariants(), className)}\n        {...props}\n      >{scrollAreaListChildren(children, props.asChild)}</Primitive.SubContent>\n    </Primitive.Portal>\n  );\n}\nexport type DropdownMenuItemProps = React.ComponentProps<\n  typeof Primitive.Item\n> & { variant?: \"default\" | \"danger\"; inset?: boolean } & ItemAdornmentItemProps;\nexport function DropdownMenuItem({\n  className,\n  children,\n  adornment,\n  adornmentId,\n  variant,\n  inset,\n  ref,\n  ...props\n}: DropdownMenuItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.Item\n      ref={morphRef}\n      data-slot=\"dropdown-menu-item\"\n      data-part=\"item\"\n      data-inset={inset || undefined}\n      className={cn(\n        \"v-menu__item flex items-center gap-[var(--s-3)] min-h-10 px-[var(--s-3)] rounded-[var(--r-md)] text-[length:var(--fs-control)] w-full text-left whitespace-nowrap outline-none\",\n        variant === \"danger\" && \"-danger\",\n        className,\n      )}\n      {...props}\n    >{adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild)}</Primitive.Item>\n  );\n}\nexport type DropdownMenuSubTriggerProps = React.ComponentProps<\n  typeof Primitive.SubTrigger\n> & { inset?: boolean } & ItemAdornmentItemProps;\nexport function DropdownMenuSubTrigger({\n  className,\n  adornment,\n  adornmentId,\n  inset,\n  children,\n  ref,\n  ...props\n}: DropdownMenuSubTriggerProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.SubTrigger\n      ref={morphRef}\n      data-slot=\"dropdown-menu-sub-trigger\"\n      data-part=\"item\"\n      data-inset={inset || undefined}\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <StateChevron direction=\"right\" />)}\n    </Primitive.SubTrigger>\n  );\n}\nexport type DropdownMenuCheckboxItemProps = React.ComponentProps<\n  typeof Primitive.CheckboxItem\n> & ItemAdornmentItemProps;\nexport function DropdownMenuCheckboxItem({\n  className,\n  adornment,\n  adornmentId,\n  children,\n  ref,\n  ...props\n}: DropdownMenuCheckboxItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.CheckboxItem\n      ref={morphRef}\n      data-slot=\"dropdown-menu-checkbox-item\"\n      data-part=\"item\"\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <span className=\"v-menu__check\" aria-hidden=\"true\"><Primitive.ItemIndicator data-slot=\"dropdown-menu-item-indicator\" data-part=\"indicator\"><AnimatedIcon name=\"check\" preset=\"validation\" /></Primitive.ItemIndicator></span>)}\n    </Primitive.CheckboxItem>\n  );\n}\nexport type DropdownMenuRadioItemProps = React.ComponentProps<\n  typeof Primitive.RadioItem\n> & ItemAdornmentItemProps;\nexport function DropdownMenuRadioItem({\n  className,\n  adornment,\n  adornmentId,\n  children,\n  ref,\n  ...props\n}: DropdownMenuRadioItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.RadioItem\n      ref={morphRef}\n      data-slot=\"dropdown-menu-radio-item\"\n      data-part=\"item\"\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <span className=\"v-menu__check\" aria-hidden=\"true\"><Primitive.ItemIndicator data-slot=\"dropdown-menu-item-indicator\" data-part=\"indicator\"><AnimatedIcon name=\"dot\" preset=\"validation\" /></Primitive.ItemIndicator></span>)}\n    </Primitive.RadioItem>\n  );\n}\nexport type DropdownMenuLabelProps = React.ComponentProps<\n  typeof Primitive.Label\n>;\nexport function DropdownMenuLabel({\n  className,\n  ...props\n}: DropdownMenuLabelProps) {\n  return (\n    <Primitive.Label\n      data-slot=\"dropdown-menu-label\"\n      data-part=\"group\"\n      className={cn(\"v-menu__group\", className)}\n      {...props}\n    />\n  );\n}\nexport type DropdownMenuSeparatorProps = React.ComponentProps<\n  typeof Primitive.Separator\n>;\nexport function DropdownMenuSeparator({\n  className,\n  ...props\n}: DropdownMenuSeparatorProps) {\n  return (\n    <Primitive.Separator\n      data-slot=\"dropdown-menu-separator\"\n      data-part=\"separator\"\n      className={cn(\"v-menu__sep\", className)}\n      {...props}\n    />\n  );\n}\nexport type DropdownMenuShortcutProps = React.ComponentProps<\"span\">;\nexport function DropdownMenuShortcut({\n  className,\n  ...props\n}: DropdownMenuShortcutProps) {\n  return (\n    <span\n      data-slot=\"dropdown-menu-shortcut\"\n      className={cn(\n        \"ml-auto text-[length:var(--fs-caps)] text-[color:var(--muted-foreground)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/dropdown-menu.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-menu__item:where(\n  [data-slot=\"dropdown-menu\"],\n  [data-slot^=\"dropdown-menu-\"]\n) {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-height: 40px;\n  padding: 0 var(--s-3);\n  border-radius: var(--r-md);\n  font-size: var(--fs-control);\n  width: 100%;\n  text-align: left;\n  white-space: nowrap;\n}\n.v-menu__item:where(\n    [data-slot=\"dropdown-menu\"],\n    [data-slot^=\"dropdown-menu-\"]\n  ):hover,\n.v-menu__item:where(\n    [data-slot=\"dropdown-menu\"],\n    [data-slot^=\"dropdown-menu-\"]\n  )[data-highlighted] {\n  background: var(--v-beige);\n}\n.v-menu__item:where(\n    [data-slot=\"dropdown-menu\"],\n    [data-slot^=\"dropdown-menu-\"]\n  ).-danger {\n  color: var(--v-danger-ink);\n}\n.v-menu__sep:where([data-slot=\"dropdown-menu\"], [data-slot^=\"dropdown-menu-\"]) {\n  height: 1px;\n  background: var(--v-border);\n  margin: var(--s-1) 0;\n}\n.v-menu__group:where(\n  [data-slot=\"dropdown-menu\"],\n  [data-slot^=\"dropdown-menu-\"]\n) {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.06em;\n  text-transform: uppercase;\n  color: var(--muted-foreground);\n  padding: var(--s-2) var(--s-3) var(--s-1);\n}\n.v-menu:where([data-slot=\"dropdown-menu\"], [data-slot^=\"dropdown-menu-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-menu:where(\n    [data-slot=\"dropdown-menu\"],\n    [data-slot^=\"dropdown-menu-\"]\n  )::-webkit-scrollbar {\n  width: 12px;\n  height: 12px;\n}\n.v-menu:where(\n    [data-slot=\"dropdown-menu\"],\n    [data-slot^=\"dropdown-menu-\"]\n  )::-webkit-scrollbar-track {\n  background: transparent;\n  border-radius: var(--r-pill);\n}\n.v-menu:where(\n    [data-slot=\"dropdown-menu\"],\n    [data-slot^=\"dropdown-menu-\"]\n  )::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-ink) 34%, transparent);\n  border-radius: var(--r-pill);\n  border: 4px solid transparent;\n  background-clip: content-box;\n  min-height: 36px;\n}\n.v-menu:where([data-slot=\"dropdown-menu\"], [data-slot^=\"dropdown-menu-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-menu:where([data-slot=\"dropdown-menu\"], [data-slot^=\"dropdown-menu-\"]) {\n  scrollbar-gutter: stable;\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"dropdown-menu\"],\n  [data-slot^=\"dropdown-menu-\"],\n  [data-slot=\"dropdown-menu\"]::before,\n  [data-slot=\"dropdown-menu\"]::after,\n  [data-slot^=\"dropdown-menu-\"]::before,\n  [data-slot^=\"dropdown-menu-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot^=\"dropdown-menu-\"][data-inset] {\n  padding-left: var(--s-8);\n}\n[data-slot^=\"dropdown-menu-\"][data-disabled] {\n  color: var(--v-disabled-ink);\n  cursor: not-allowed;\n}\n[data-slot^=\"dropdown-menu-\"][data-highlighted] {\n  outline: none;\n  background: var(--v-beige);\n}\n\n[data-slot=\"dropdown-menu-content\"], [data-slot=\"dropdown-menu-sub-content\"] {\n min-width:min(200px,calc(100vw - 24px)); max-width:calc(100vw - 24px);\n max-height:min(480px,var(--radix-dropdown-menu-content-available-height,calc(100dvh - 32px)));\n overflow:visible; overscroll-behavior:contain; overflow-wrap:anywhere;\n}\n[data-slot=\"dropdown-menu-item\"] { min-width:0; height:auto; min-height:36px; white-space:normal; }\n[data-slot=\"dropdown-menu-content\"], [data-slot=\"dropdown-menu-sub-content\"] { z-index:var(--z-popover); }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"] { min-width:0; white-space:normal; overflow-wrap:anywhere; padding-block:var(--s-2); }\n\n/* Compact by default; --menu-width or inline width can deliberately match a large trigger. */\n[data-slot=\"dropdown-menu-content\"], [data-slot=\"dropdown-menu-sub-content\"] { width:var(--menu-width,260px); min-width:min(200px,calc(100vw - 24px)); max-width:calc(100vw - 24px); color:var(--popover-foreground); }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"] { min-width:0; min-height:44px; padding-block:var(--s-2); gap:var(--s-3); white-space:normal; overflow-wrap:anywhere; text-align:start; }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"]:is(:hover,[data-highlighted],[data-state=\"checked\"]) { background:var(--v-beige); color:var(--v-text); }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"][data-state=\"checked\"] { background:var(--v-pink-soft); }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"]:active { background:var(--v-pink-soft); color:var(--v-text); }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"].-danger { color:var(--v-danger-ink); }\n[data-slot^=\"dropdown-menu-\"][data-part=\"item\"][data-disabled] { background:transparent; color:var(--v-disabled-ink); }\n[data-slot^=\"dropdown-menu-\"] .v-menu__check { display:inline-grid; place-items:center; width:18px; min-width:18px; margin-inline-start:auto; color:inherit; }\n[data-slot^=\"dropdown-menu-\"] .v-menu__check .v-icon { width:16px; height:16px; }\n\n/* A native flyout may share a narrow viewport with its parent. Use Popper's\n   measured free width so its labels wrap instead of leaving the screen. */\n[data-slot=\"dropdown-menu-sub-content\"] { min-width:min(200px,var(--radix-dropdown-menu-content-available-width,200px)); max-width:min(calc(100vw - 24px),var(--radix-dropdown-menu-content-available-width,260px)); }\n\n/* The shared ScrollArea owns menu overflow and its custom thumb. */\n:is([data-slot=\"dropdown-menu-content\"],[data-slot=\"dropdown-menu-sub-content\"]) .v-list-scroll { --list-scroll-max-height:min(320px, calc(var(--radix-popper-available-height, 60dvh) - 20px)); }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/dropdown-menu.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/dropdown-menu.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "dropdown-menu",
+      "name": "Dropdown Menu",
+      "tier": "base",
+      "evidence": "I18",
+      "status": "source",
+      "root": "[data-menu]",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "none",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x360",
+      "contract": "entries/dropdown-menu/contract.md",
+      "demo": "entries/dropdown-menu/demo.html",
+      "isolation": [
+        "default-default-rest-480x360.html",
+        "default-default-rest-dark-480x360.html",
+        "default-default-open-480x360.html",
+        "default-default-open-dark-480x360.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "DropdownMenuProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuPortalProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuGroupProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuRadioGroupProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuSubProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuTriggerProps",
+        "props": [
+          {
+            "name": "chevron",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DropdownMenuContentProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuSubContentProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuItemProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "inset",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DropdownMenuSubTriggerProps",
+        "props": [
+          {
+            "name": "inset",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DropdownMenuCheckboxItemProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuRadioItemProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuLabelProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuSeparatorProps",
+        "props": []
+      },
+      {
+        "name": "DropdownMenuShortcutProps",
+        "props": []
+      }
+    ],
+    "category": "Actions",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

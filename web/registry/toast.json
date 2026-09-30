@@ -1,0 +1,120 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "toast",
+  "title": "Toast",
+  "description": "Reports a brief outcome in a notification area without moving the user away from the current task.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-toast"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/toast.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Button } from \"@/components/ui/button\";\nimport { Icon } from \"@/components/ui/icon\";\nimport * as Primitive from \"@radix-ui/react-toast\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nexport const toastVariants = cva(\n  \"v-toast [display:flex] [align-items:center] [gap:var(--s-3)] [padding:var(--s-3)_var(--s-4)] [border-radius:var(--r-card-sm)] [background:var(--v-ink)] [color:var(--v-on-ink)] [font-size:var(--fs-control)]\",\n  {\n    variants: { variant: { default: \"\", cream: \"-cream\", danger: \"-danger\" } },\n    defaultVariants: { variant: \"default\" },\n  },\n);\nexport type ToastProviderProps = React.ComponentProps<\n  typeof Primitive.Provider\n>;\nexport function ToastProvider(props: ToastProviderProps) {\n  return <Primitive.Provider duration={5000} {...props} />;\n}\nexport type ToastViewportProps = React.ComponentProps<\n  typeof Primitive.Viewport\n>;\nexport function ToastViewport({ className, ...props }: ToastViewportProps) {\n  return (\n    <Primitive.Viewport\n      data-slot=\"toast-viewport\"\n      data-part=\"viewport\"\n      className={cn(\n        \"v-toaster fixed right-[var(--s-6)] bottom-[var(--s-6)] grid gap-[var(--s-2)] z-[var(--z-toast)] w-[min(380px,calc(100%-48px))]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type ToastProps = React.ComponentProps<typeof Primitive.Root> &\n  VariantProps<typeof toastVariants> & {\n    durable?: boolean;\n    appearance?: \"compact\" | \"actionable\" | \"receipt\";\n  };\nexport function Toast({\n  className,\n  variant,\n  appearance,\n  durable,\n  duration,\n  ref,\n  ...props\n}: ToastProps) {\n  const morphRef = useMorph<HTMLLIElement>(\"surfaces\", ref);\n  const flowRef = useFlowAppearance<HTMLLIElement>(\n    props.open ?? true,\n    morphRef,\n    \"enter\",\n  );\n  return (\n    <Primitive.Root\n      ref={flowRef}\n      data-slot=\"toast\"\n      data-part=\"root\"\n      data-appearance={appearance}\n      duration={durable ? Infinity : duration}\n      className={cn(toastVariants({ variant }), className)}\n      {...props}\n    />\n  );\n}\nexport type ToastTitleProps = React.ComponentProps<typeof Primitive.Title>;\nexport function ToastTitle({ className, ...props }: ToastTitleProps) {\n  return (\n    <Primitive.Title\n      data-slot=\"toast-title\"\n      data-part=\"title\"\n      className={cn(\"font-medium\", className)}\n      {...props}\n    />\n  );\n}\nexport type ToastDescriptionProps = React.ComponentProps<\n  typeof Primitive.Description\n>;\nexport function ToastDescription({\n  className,\n  ...props\n}: ToastDescriptionProps) {\n  return (\n    <Primitive.Description\n      data-slot=\"toast-description\"\n      data-part=\"description\"\n      className={cn(\"flex-1\", className)}\n      {...props}\n    />\n  );\n}\nexport type ToastActionProps = React.ComponentProps<typeof Primitive.Action>;\nexport function ToastAction({\n  className,\n  asChild,\n  children,\n  ...props\n}: ToastActionProps) {\n  return (\n    <Primitive.Action\n      data-slot=\"toast-action\"\n      data-part=\"action\"\n      className={className}\n      asChild\n      {...props}\n    >\n      {asChild ? (\n        children\n      ) : (\n        <Button size=\"sm\" variant=\"outline\">\n          {children}\n        </Button>\n      )}\n    </Primitive.Action>\n  );\n}\n\nexport type ToastCloseProps = React.ComponentProps<typeof Primitive.Close>;\nexport function ToastClose({\n  className,\n  children,\n  asChild,\n  ...props\n}: ToastCloseProps) {\n  return (\n    <Primitive.Close\n      data-slot=\"toast-close\"\n      data-part=\"close\"\n      aria-label=\"Dismiss\"\n      className={className}\n      asChild\n      {...props}\n    >\n      {asChild ? (\n        children\n      ) : (\n        <Button\n          variant=\"ghost\"\n          style={{ minWidth: 44, minHeight: 44, padding: 0 }}\n        >\n          {children ?? <Icon name=\"x\" size=\"sm\" aria-hidden=\"true\" />}\n        </Button>\n      )}\n    </Primitive.Close>\n  );\n}\n\nexport function ToastIndicator({\n  className,\n  ...props\n}: React.ComponentProps<\"span\">) {\n  return (\n    <span\n      data-slot=\"toast-indicator\"\n      aria-hidden=\"true\"\n      className={cn(\"v-toast__indicator\", className)}\n      {...props}\n    >\n      <Icon name=\"check\" size=\"sm\" />\n    </span>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/toast.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]).-danger {\n  color: var(--destructive-foreground);\n}\n.v-toaster:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]) {\n  position: fixed;\n  right: var(--s-6);\n  bottom: var(--s-6);\n  display: grid;\n  gap: var(--s-2);\n  z-index: var(--z-toast);\n  width: min(380px, calc(100% - 48px));\n}\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]) {\n  animation: v-toast-in var(--t-max) var(--enter);\n}\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]).-cream {\n  background: var(--v-canvas);\n  color: var(--v-text);\n  border: 1px solid var(--v-border);\n}\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]).-danger {\n  background: var(--v-danger-fill);\n  color: var(--destructive-foreground);\n}\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]) .v-btn {\n  height: 30px;\n  padding: 0 var(--s-3);\n  font-size: var(--fs-meta);\n  margin-left: auto;\n  background: rgba(251, 244, 230, 0.14);\n  color: inherit;\n}\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]).-cream .v-btn {\n  background: var(--v-beige);\n}\n.v-toast:where([data-slot=\"toast\"], [data-slot^=\"toast-\"]).-out {\n  animation: v-toast-out var(--t-element) var(--exit) forwards;\n}\n@keyframes v-toast-in {\n  from {\n    opacity: 0;\n    transform: translateY(8px);\n  }\n}\n@keyframes v-toast-out {\n  to {\n    opacity: 0;\n    transform: translateY(8px);\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"toast\"],\n  [data-slot^=\"toast-\"],\n  [data-slot=\"toast\"]::before,\n  [data-slot=\"toast\"]::after,\n  [data-slot^=\"toast-\"]::before,\n  [data-slot^=\"toast-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"toast\"][data-state=\"closed\"] {\n  animation: v-toast-out var(--t-element) var(--exit) forwards;\n}\n[data-slot=\"toast\"][data-swipe=\"move\"] {\n  transform: translateX(var(--radix-toast-swipe-move-x));\n}\n[data-slot=\"toast\"][data-swipe=\"end\"] {\n  transform: translateX(var(--radix-toast-swipe-end-x));\n  opacity: 0;\n}\n[data-slot=\"toast\"] {\n  min-width: 0;\n  flex-wrap: wrap;\n  overflow-wrap: anywhere;\n}\n[data-slot=\"toast-title\"],\n[data-slot=\"toast-description\"] {\n  min-width: 0;\n}\n[data-slot=\"toast-action\"],\n[data-slot=\"toast-close\"] {\n  flex-shrink: 0;\n}\n\n/* Explicit hierarchy; title and description no longer compete in one flex row. */\n.v-toast[data-appearance] {\n  display: grid;\n  grid-template-columns: 36px minmax(0, 1fr) 44px;\n  grid-template-areas: \"icon title close\" \"icon description close\" \". action .\";\n  align-items: center;\n  column-gap: var(--s-3);\n  row-gap: var(--s-2);\n  width: 100%;\n  padding: var(--s-4);\n  border-radius: var(--r-card);\n  background: var(--card);\n  color: var(--v-text);\n  border: 1px solid var(--v-border);\n}\n.v-toast[data-appearance] [data-slot=\"toast-title\"] {\n  grid-area: title;\n  font-size: var(--fs-body);\n  font-weight: var(--fw-semibold);\n  line-height: 1.35;\n}\n.v-toast[data-appearance] [data-slot=\"toast-description\"] {\n  grid-area: description;\n  font-size: var(--fs-small);\n  color: var(--toast-secondary, var(--v-text-2));\n  line-height: 1.6;\n}\n.v-toast[data-appearance] [data-slot=\"toast-indicator\"] {\n  grid-area: icon;\n  align-self: start;\n  display: grid;\n  place-items: center;\n  width: 36px;\n  height: 36px;\n  border-radius: 42% 58% 52% 48%;\n  background: var(--v-olive);\n  color: var(--v-on-accent);\n}\n:root .v-toast[data-appearance] .v-btn[data-slot=\"toast-action\"] {\n  grid-area: action;\n  justify-self: start;\n  margin: var(--s-2) 0 0;\n  min-height: 44px;\n  background: var(--v-blue);\n  color: var(--v-on-accent);\n  padding-inline: var(--s-5);\n  font-size: var(--fs-small);\n}\n:root .v-toast[data-appearance] .v-btn[data-slot=\"toast-close\"] {\n  grid-area: close;\n  align-self: start;\n  margin: 0;\n  width: 44px;\n  height: 44px;\n  background: transparent;\n  color: inherit;\n}\n.v-toast[data-appearance]:not(.-cream):not(.-danger) {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  --toast-primary: var(--v-on-ink);\n  --toast-secondary: var(--v-on-ink);\n}\n.v-toast[data-appearance].-danger {\n  background: var(--v-danger-fill);\n  color: var(--destructive-foreground);\n  --toast-primary: var(--destructive-foreground);\n  --toast-secondary: var(--destructive-foreground);\n}\n.v-toast[data-appearance=\"compact\"] {\n  grid-template-areas: \"icon title close\";\n  padding: var(--s-3) var(--s-3);\n  border-radius: var(--r-pill);\n}\n.v-toast[data-appearance=\"compact\"] [data-slot=\"toast-indicator\"] {\n  align-self: center;\n}\n.v-toast[data-appearance=\"receipt\"] {\n  grid-template-areas: \"icon title close\" \"icon description close\" \"receipt receipt receipt\";\n  padding: var(--s-5);\n  border-radius: var(--r-card) var(--r-card) var(--r-sm) var(--r-sm);\n}\n.v-toast__receipt {\n  grid-area: receipt;\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  gap: var(--s-4);\n  padding-top: var(--s-4);\n  margin-top: var(--s-3);\n  border-top: 1px dashed var(--v-border);\n  font-size: var(--fs-caps);\n  color: var(--toast-secondary, var(--v-text-2));\n}\n.v-toast__receipt > span {\n  display: grid;\n  gap: var(--s-2);\n}\n.v-toast__receipt strong {\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-medium);\n  color: var(--toast-primary, var(--v-text));\n}\n.v-toast-demo {\n  width: 100%;\n  display: grid;\n  justify-items: start;\n  gap: var(--s-4);\n}\n.v-toast-demo__status {\n  font-size: var(--fs-small);\n  color: var(--v-text-2);\n}\n.v-toast-demo .v-toast-demo__viewport {\n  position: static;\n  width: min(100%, 440px);\n  margin: 0;\n  padding: 0;\n  justify-self: end;\n  list-style: none;\n  outline: none;\n}\n.v-toast-demo .v-toast-demo__viewport:empty {\n  display: none;\n}\n.v-toast[data-flow-presence][data-state=\"open\"] {\n  animation: none;\n}\n.v-toast[data-flow-presence][data-state=\"closed\"] {\n  animation: v-toast-retain var(--flow-exit-duration, 0.22s) linear;\n}\n@keyframes v-toast-retain {\n  from {\n    visibility: visible;\n  }\n  to {\n    visibility: visible;\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  .v-toast[data-flow-presence][data-state=\"closed\"] {\n    animation: none;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/toast.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/toast.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "toast",
+      "name": "Toast",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": "[data-toast]",
+      "variants": [
+        "compact",
+        "actionable",
+        "receipt"
+      ],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "none",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x240",
+      "contract": "entries/toast/contract.md",
+      "demo": "entries/toast/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-open.html",
+        "default-default-open-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ToastProviderProps",
+        "props": []
+      },
+      {
+        "name": "ToastViewportProps",
+        "props": []
+      },
+      {
+        "name": "ToastProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\" | \"cream\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "durable",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"compact\" | \"actionable\" | \"receipt\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ToastTitleProps",
+        "props": []
+      },
+      {
+        "name": "ToastDescriptionProps",
+        "props": []
+      },
+      {
+        "name": "ToastActionProps",
+        "props": []
+      },
+      {
+        "name": "ToastCloseProps",
+        "props": []
+      }
+    ],
+    "category": "Feedback",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

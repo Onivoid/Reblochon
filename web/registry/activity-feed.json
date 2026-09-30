@@ -1,0 +1,105 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "activity-feed",
+  "title": "Activity feed",
+  "description": "An ordered, date-grouped history with a quiet connecting margin, readable actors and timestamps, and updates that keep your place.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/animated-icon.json",
+    "https://000h.cojeev.com/r/avatar.json",
+    "https://000h.cojeev.com/r/badge.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/empty.json",
+    "https://000h.cojeev.com/r/item.json",
+    "https://000h.cojeev.com/r/presence.json",
+    "https://000h.cojeev.com/r/typography.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/activity-feed.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { cn } from \"@/lib/utils\";\nimport { AnimatedIcon } from \"@/components/ui/animated-icon\";\nimport { Avatar, AvatarFallback, AvatarImage } from \"@/components/ui/avatar\";\nimport { Badge, type BadgeProps } from \"@/components/ui/badge\";\nimport { Button } from \"@/components/ui/button\";\nimport { Empty, EmptyDescription, EmptyTitle } from \"@/components/ui/empty\";\nimport { ItemContent, ItemDescription, ItemTitle } from \"@/components/ui/item\";\nimport { MotionPresence, MotionSurface } from \"@/components/ui/presence\";\nimport { BodySecondary, Meta, Title } from \"@/components/ui/typography\";\n\nexport type ActivityEntry = {\n  id: string;\n  title: React.ReactNode;\n  description?: React.ReactNode;\n  actor?: { name: string; initials?: string; avatarSrc?: string };\n  timestamp?: React.ReactNode;\n  /** Machine-readable time matching the caller's timestamp label. */\n  dateTime?: string;\n  /** Optional visible group heading; shown where a consecutive group begins. */\n  group?: string;\n  badge?: { label: React.ReactNode; variant?: BadgeProps[\"variant\"] };\n  /** Additional supplied details or native actions, kept in document flow. */\n  content?: React.ReactNode;\n};\nexport type ActivityFeedProps = Omit<\n  React.ComponentProps<\"section\">,\n  \"children\" | \"title\"\n> & {\n  /** Caller supplies the chronological order; the feed never reorders entries. */\n  entries: readonly ActivityEntry[];\n  title?: React.ReactNode;\n  description?: React.ReactNode;\n  empty?: React.ReactNode;\n  /** Omit to show every supplied entry, including later appends. */\n  initialVisible?: number;\n  pageSize?: number;\n  showMoreLabel?: React.ReactNode;\n};\n\nfunction count(value: number | undefined, fallback: number) {\n  return value !== undefined && Number.isFinite(value)\n    ? Math.max(1, Math.floor(value))\n    : fallback;\n}\n\nexport function ActivityFeed({\n  entries,\n  title,\n  description,\n  empty,\n  initialVisible,\n  pageSize = 3,\n  showMoreLabel,\n  className,\n  \"aria-label\": ariaLabel,\n  \"aria-labelledby\": labelledBy,\n  ...props\n}: ActivityFeedProps) {\n  const titleId = React.useId();\n  const listId = React.useId();\n  const list = React.useRef<HTMLOListElement>(null);\n  const focusIndex = React.useRef<number | null>(null);\n  const [windowState, setWindowState] = React.useState(() => ({\n    ids: entries.map((entry) => entry.id),\n    limit: count(initialVisible, Infinity),\n  }));\n  const ids = entries.map((entry) => entry.id);\n  let limit = windowState.limit;\n  if (\n    ids.length !== windowState.ids.length ||\n    ids.some((id, index) => id !== windowState.ids[index])\n  ) {\n    const oldFirst = windowState.ids[0],\n      firstIndex = ids.indexOf(oldFirst),\n      previous = new Set(windowState.ids);\n    const prepended =\n      firstIndex > 0\n        ? ids.slice(0, firstIndex).filter((id) => !previous.has(id)).length\n        : 0;\n    limit += prepended;\n    // Reconcile before committing the new list: existing entries never unmount\n    // for a frame merely because a new update was prepended.\n    setWindowState({ ids, limit });\n  }\n  const [announcement, setAnnouncement] = React.useState(\"\");\n  const visible = entries.slice(0, limit);\n  const remaining = entries.length - visible.length;\n  const nextPage = Math.min(remaining, count(pageSize, 3));\n  React.useLayoutEffect(() => {\n    if (focusIndex.current === null) return;\n    list.current\n      ?.querySelectorAll<HTMLElement>(\"[data-activity-entry]\")\n      [focusIndex.current]?.focus();\n    focusIndex.current = null;\n  }, [visible.length]);\n  const reveal = () => {\n    focusIndex.current = visible.length;\n    const nextCount = visible.length + nextPage;\n    setWindowState((value) => ({ ...value, limit: nextCount }));\n    setAnnouncement(`${nextCount} of ${entries.length} activities shown.`);\n  };\n  return (\n    <section\n      {...props}\n      data-slot=\"activity-feed\"\n      aria-label={ariaLabel ?? (!title && !labelledBy ? \"Activity\" : undefined)}\n      aria-labelledby={labelledBy ?? (title ? titleId : undefined)}\n      className={cn(\"v-activity-feed\", className)}\n    >\n      {(title || description) && (\n        <header className=\"v-activity-feed__header\">\n          {title && (\n            <div className=\"v-activity-feed__heading\">\n              <Title id={titleId}>{title}</Title>\n              <Badge\n                variant=\"count\"\n                aria-label={`${entries.length} activities`}\n              >\n                {entries.length}\n              </Badge>\n            </div>\n          )}\n          {description && <BodySecondary as=\"div\">{description}</BodySecondary>}\n        </header>\n      )}\n      {entries.length === 0 ? (\n        (empty ?? (\n          <Empty>\n            <EmptyTitle>No activity yet</EmptyTitle>\n            <EmptyDescription>\n              Updates appear here as they are added.\n            </EmptyDescription>\n          </Empty>\n        ))\n      ) : (\n        <>\n          <ol\n            ref={list}\n            id={listId}\n            className=\"v-activity-feed__list\"\n            role=\"list\"\n          >\n            <MotionPresence>\n              {visible.map((entry, index) => (\n                <MotionSurface key={entry.id} asChild preset=\"rise\">\n                  <li\n                    tabIndex={-1}\n                    data-activity-entry={entry.id}\n                    className=\"v-activity-feed__entry\"\n                  >\n                    {entry.group &&\n                      entry.group !== visible[index - 1]?.group && (\n                        <div className=\"v-activity-feed__group\">\n                          {entry.group}\n                        </div>\n                      )}\n                    <div\n                      className=\"v-activity-feed__portrait\"\n                      aria-hidden=\"true\"\n                    >\n                      {entry.actor ? (\n                        <Avatar variant=\"sm\">\n                          {entry.actor.avatarSrc && (\n                            <AvatarImage src={entry.actor.avatarSrc} alt=\"\" />\n                          )}\n                          <AvatarFallback>\n                            {entry.actor.initials ??\n                              entry.actor.name\n                                .trim()\n                                .split(/\\s+/)\n                                .slice(0, 2)\n                                .map((part) => Array.from(part)[0])\n                                .join(\"\")}\n                          </AvatarFallback>\n                        </Avatar>\n                      ) : (\n                        <span className=\"v-activity-feed__marker\">\n                          <AnimatedIcon\n                            name=\"sparkles\"\n                            size=\"sm\"\n                            preset=\"draw\"\n                          />\n                        </span>\n                      )}\n                    </div>\n                    <ItemContent className=\"v-activity-feed__content\">\n                      <div className=\"v-activity-feed__entry-heading\">\n                        <ItemTitle className=\"v-activity-feed__title\">\n                          {entry.title}\n                        </ItemTitle>\n                        {entry.badge && (\n                          <Badge\n                            size=\"sm\"\n                            variant={entry.badge.variant ?? \"cream\"}\n                            className=\"v-activity-feed__badge\"\n                          >\n                            {entry.badge.label}\n                          </Badge>\n                        )}\n                      </div>\n                      {entry.description && (\n                        <ItemDescription className=\"v-activity-feed__description\">\n                          {entry.description}\n                        </ItemDescription>\n                      )}\n                      {(entry.actor || entry.timestamp) && (\n                        <div className=\"v-activity-feed__meta\">\n                          {entry.actor && <Meta>{entry.actor.name}</Meta>}\n                          {entry.actor && entry.timestamp && (\n                            <span aria-hidden=\"true\">·</span>\n                          )}\n                          {entry.timestamp && (\n                            <time dateTime={entry.dateTime}>\n                              <Meta>{entry.timestamp}</Meta>\n                            </time>\n                          )}\n                        </div>\n                      )}\n                      {entry.content && (\n                        <div className=\"v-activity-feed__details\">\n                          {entry.content}\n                        </div>\n                      )}\n                    </ItemContent>\n                  </li>\n                </MotionSurface>\n              ))}\n            </MotionPresence>\n          </ol>\n          {remaining > 0 && (\n            <footer className=\"v-activity-feed__footer\">\n              <Button\n                variant=\"secondary\"\n                size=\"sm\"\n                aria-controls={listId}\n                onClick={reveal}\n              >\n                <AnimatedIcon name=\"chevron-down\" size=\"sm\" preset=\"bounce\" />\n                {showMoreLabel ?? `Show ${nextPage} more`}\n              </Button>\n              <Meta>\n                {visible.length} of {entries.length}\n              </Meta>\n            </footer>\n          )}\n        </>\n      )}\n      <span role=\"status\" aria-live=\"polite\" className=\"sr-only\">\n        {announcement}\n      </span>\n    </section>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/activity-feed.css",
+      "content": "@layer cojeev-states {\n.v-activity-feed[data-slot] {\n  min-width: 0;\n  width: 100%;\n  color: var(--v-text);\n  background: var(--v-paper);\n  padding: var(--s-7);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-panel) var(--r-panel) var(--r-sm) var(--r-panel);\n}\n.v-activity-feed__header {\n  display: grid;\n  gap: var(--s-2);\n  margin-block-end: var(--s-5);\n}\n.v-activity-feed__header :is(h3, p) {\n  margin: 0;\n}\n.v-activity-feed__heading {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n}\n.v-activity-feed__list {\n  display: grid;\n  list-style: none;\n  margin: 0;\n  padding: 0;\n}\n.v-activity-feed__entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 32px minmax(0, 1fr);\n  gap: var(--s-4);\n  min-width: 0;\n  padding-block: var(--s-5);\n  outline-offset: 5px;\n}\n.v-activity-feed__entry::marker {\n  content: none;\n}\n.v-activity-feed__entry + .v-activity-feed__entry {\n  border-block-start: 0;\n}\n.v-activity-feed__entry:focus-visible {\n  outline: 2px solid var(--v-blue);\n}\n.v-activity-feed__portrait {\n  position: relative;\n  display: flex;\n  justify-content: center;\n  padding-block-start: 2px;\n}\n.v-activity-feed__portrait::after {\n  content: \"\";\n  position: absolute;\n  pointer-events: none;\n  width: 1px;\n  background: var(--v-border);\n  top: 42px;\n  bottom: -24px;\n  left: 50%;\n}\n.v-activity-feed__entry:last-child .v-activity-feed__portrait::after {\n  display: none;\n}\n.v-activity-feed__portrait > [data-slot] {\n  position: relative;\n  z-index: 1;\n}\n.v-activity-feed__group {\n  grid-column: 1/-1;\n  color: var(--v-text-2);\n  font-size: var(--fs-caps);\n  font-weight: var(--fw-semibold);\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  background: var(--v-paper);\n  position: relative;\n  z-index: 1;\n  padding: 0 0 var(--s-3);\n}\n.v-activity-feed__header\n  .v-activity-feed__heading\n  [data-slot=\"typography-title\"] {\n  font-size: var(--fs-title);\n  letter-spacing: -0.035em;\n}\n.v-activity-feed__marker {\n  display: grid;\n  place-items: center;\n  inline-size: 28px;\n  block-size: 28px;\n  border-radius: 43% 57% 50% 50% / 55% 44% 56% 45%;\n  background: var(--v-beige);\n  color: var(--v-text);\n}\n.v-activity-feed__content[data-slot] {\n  gap: var(--s-2);\n  min-width: 0;\n}\n.v-activity-feed__entry-heading {\n  display: flex;\n  align-items: baseline;\n  flex-wrap: wrap;\n  gap: var(--s-2) var(--s-3);\n  min-width: 0;\n}\n.v-activity-feed__title[data-slot] {\n  display: block;\n  overflow: visible;\n  -webkit-line-clamp: unset;\n  font-size: var(--fs-body);\n  line-height: 1.5;\n  overflow-wrap: anywhere;\n}\n.v-activity-feed__badge[data-slot] {\n  flex-shrink: 0;\n  max-width: 100%;\n  min-height: 20px;\n  height: auto;\n  padding-block: 3px;\n  white-space: normal;\n  line-height: 1.2;\n}\n.v-activity-feed__description[data-slot] {\n  font-size: var(--fs-control);\n  line-height: 1.55;\n  max-width: 68ch;\n  overflow-wrap: anywhere;\n}\n.v-activity-feed__description :first-child {\n  margin-block-start: 0;\n}\n.v-activity-feed__description :last-child {\n  margin-block-end: 0;\n}\n.v-activity-feed__meta {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-2);\n  color: var(--v-text-2);\n  min-width: 0;\n}\n.v-activity-feed__meta :is(time, span) {\n  overflow-wrap: anywhere;\n}\n.v-activity-feed__details {\n  display: grid;\n  gap: var(--s-2);\n  margin-block-start: var(--s-1);\n  min-width: 0;\n  overflow-wrap: anywhere;\n}\n.v-activity-feed__footer {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n  padding-block-start: var(--s-4);\n  border-block-start: 1px solid var(--v-edge);\n}\n.v-activity-feed__footer > [data-slot=\"button\"] {\n  min-height: 44px;\n  width: auto;\n}\n@media (max-width: 480px) {\n  .v-activity-feed__entry {\n    column-gap: var(--s-3);\n    padding-block: var(--s-5);\n  }\n  .v-activity-feed__footer {\n    justify-content: flex-start;\n    gap: var(--s-3) var(--s-5);\n  }\n}\n@media (max-width: 600px) {\n  .v-activity-feed[data-slot] {\n    padding: var(--s-5);\n  }\n}\n.v-activity-example {\n  width: 100%;\n  min-width: 0;\n  display: grid;\n  gap: var(--s-6);\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/activity-feed.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/activity-feed.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Activity feed",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "appended",
+        "expanded",
+        "empty",
+        "reduced-motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "ActivityFeedProps",
+        "props": [
+          {
+            "name": "entries",
+            "type": "readonly ActivityEntry[]",
+            "required": true,
+            "description": "Caller supplies the chronological order; the feed never reorders entries."
+          },
+          {
+            "name": "title",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "description",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "empty",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "initialVisible",
+            "type": "number",
+            "required": false,
+            "description": "Omit to show every supplied entry, including later appends."
+          },
+          {
+            "name": "pageSize",
+            "type": "number",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "showMoreLabel",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

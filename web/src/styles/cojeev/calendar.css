@@ -1,0 +1,72 @@
+@layer cojeev-states {
+/* An open date grid: type carries the hierarchy; colour carries the date state. */
+[data-slot="calendar"] { min-width:0; max-width:100%; color:var(--v-text); }
+[data-slot="calendar"] .v-cal__months { display:flex; flex-wrap:wrap; gap:var(--s-7); min-width:0; max-width:100%; }
+[data-slot="calendar"] .v-cal__month-wrap { display:grid; gap:var(--s-5); flex:0 1 360px; width:100%; min-width:0; max-width:360px; }
+[data-slot="calendar-header"] { display:flex; align-items:center; justify-content:space-between; gap:var(--s-4); min-height:44px; }
+[data-slot="calendar-caption"] { display:grid; gap:1px; font-family:var(--font-display); background:transparent; color:var(--v-text); }
+[data-slot="calendar-caption"] b { font-size:var(--fs-section); font-weight:var(--fw-semibold); line-height:1.1; letter-spacing:-.025em; }
+[data-slot="calendar-caption"] > span { font-family:var(--font-text); font-size:var(--fs-small); font-weight:var(--fw-medium); line-height:1.5; color:var(--v-text-2); }
+[data-slot="calendar-nav"] { display:inline-flex; gap:var(--s-2); }
+[data-slot="calendar-nav"] .v-ibtn { width:36px; height:36px; color:var(--v-text); background:var(--v-beige); box-shadow:none; }
+[data-slot="calendar-nav"] .v-ibtn:not(:disabled):hover { background:var(--v-blue); color:var(--v-on-accent); }
+[data-slot="calendar-nav"] .v-icon { width:17px; height:17px; }
+[data-slot="calendar-grid"] { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:center; justify-items:center; gap:var(--s-1) 2px; width:100%; border-collapse:collapse; }
+[data-slot="calendar-grid"]:has(.v-cal__wk) { grid-template-columns:24px repeat(7,minmax(0,1fr)); }
+[data-slot="calendar-grid"] :is(thead,tbody,tr) { display:contents; }
+[data-slot="calendar-grid"] td { display:grid; place-items:center; position:relative; width:100%; min-width:0; height:42px; padding:0; }
+[data-slot="calendar-weekday"], [data-slot="calendar-week-number-header"] { display:grid; place-items:center; width:100%; height:28px; padding:0; font-size:var(--fs-caps); font-weight:var(--fw-semibold); color:var(--v-text-2); background:transparent; text-align:center; }
+[data-slot="calendar-week-number-header"] { font-size:var(--fs-caps); letter-spacing:.02em; }
+[data-slot="calendar-week-number"] { display:grid; place-items:center; width:20px; height:26px; font-size:var(--fs-caps); font-weight:var(--fw-regular); color:var(--v-text-2); padding:0; background:transparent; }
+[data-slot="calendar-week-number"].-on { color:var(--v-text); font-weight:var(--fw-semibold); }
+[data-slot="calendar-day"] { position:relative; isolation:isolate; display:grid; place-items:center; width:40px; max-width:100%; height:40px; margin:0; padding:0; border:0; border-radius:43% 57% 48% 52% / 55% 44% 56% 45%; background:transparent; color:var(--v-text); font-size:var(--fs-control); font-weight:var(--fw-medium); font-variant-numeric:tabular-nums; cursor:pointer; }
+[data-slot="calendar-day"] > span { position:relative; z-index:1; }
+[data-slot="calendar-day"]:not(:disabled):not([aria-pressed="true"]):hover { background:var(--v-beige); }
+[data-slot="calendar-day"][aria-pressed="true"] { background:transparent; color:var(--v-on-accent); font-weight:var(--fw-bold); }
+[data-slot="calendar-day"][data-today]:not([aria-pressed="true"]) { box-shadow:inset 0 0 0 1.5px var(--v-blue); font-weight:var(--fw-bold); }
+[data-slot="calendar-day"][data-today]::after { content:""; position:absolute; width:3px; height:3px; bottom:4px; border-radius:50%; background:currentColor; }
+[data-slot="calendar-day"][data-range-middle] { border-radius:0; color:var(--v-text); }
+[data-slot="calendar-day"]:is([data-range-start],[data-range-end]) { color:var(--v-on-accent); }
+[data-slot="calendar-day"] > [data-slot="calendar-selection"] { position:absolute; inset:0; z-index:0; pointer-events:none; border-radius:43% 57% 48% 52% / 55% 44% 56% 45%; background:var(--v-pink); }
+[data-selection-mode="range"] [data-slot="calendar-grid"] td:has([data-range-middle],[data-range-start],[data-range-end])::before { content:""; position:absolute; inset:3px -1px; background:color-mix(in oklab,var(--v-pink) 23%,var(--v-canvas)); pointer-events:none; }
+[data-selection-mode="range"] [data-slot="calendar-grid"] td:has([data-range-start])::before { inset-inline-start:50%; }
+[data-selection-mode="range"] [data-slot="calendar-grid"] td:has([data-range-end])::before { inset-inline-end:50%; }
+[data-selection-mode="range"] [data-slot="calendar-grid"] td:has([data-range-start][data-range-end])::before { display:none; }
+[data-slot="calendar-day"]:disabled { color:var(--v-disabled-ink); cursor:not-allowed; }
+[data-slot="calendar-day"]:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }
+[data-slot="calendar-mark"] { position:absolute; bottom:4px; width:4px; height:4px; border-radius:50%; background:var(--v-pink-deep); z-index:1; }
+[data-slot="calendar-mark"].-blue { background:var(--v-blue-deep); }
+[data-slot="calendar-mark"].-olive { background:var(--v-olive); }
+[data-slot="calendar-mark"].-yellow { background:var(--v-yellow-deep); }
+[data-slot="calendar-mark"].-ink { background:var(--v-text); }
+[data-slot="calendar-day"][aria-pressed="true"] [data-slot="calendar-mark"] { background:var(--v-on-accent); }
+@media(max-width:420px) { [data-slot="calendar-day"] { width:36px; height:38px; font-size:var(--fs-small); } [data-slot="calendar-grid"] td { height:40px; } [data-slot="calendar"] .v-cal__month-wrap { gap:var(--s-4); } }
+@media(prefers-reduced-motion:reduce) { [data-slot="calendar"] *, [data-slot="calendar"] *::before, [data-slot="calendar"] *::after { animation-duration:0s; transition-duration:0s; } }
+
+/* DayPicker owns retained month snapshots; shared timing keeps both sides finite. */
+.v-cal [data-animated-weeks] { display:grid; grid-column:1 / -1; grid-template-columns:inherit; gap:inherit; align-items:inherit; justify-items:inherit; }
+.v-cal .v-cal__caption-enter { animation:v-cal-caption-in var(--v-calendar-duration) var(--v-calendar-ease) both; }
+.v-cal .v-cal__caption-exit { animation:v-cal-caption-out var(--v-calendar-duration) var(--v-calendar-ease) both; }
+.v-cal .v-cal__weeks-after-enter,
+.v-cal:dir(rtl) .v-cal__weeks-before-enter { animation:v-cal-month-in-right var(--v-calendar-duration) var(--v-calendar-ease) both; }
+.v-cal .v-cal__weeks-before-enter,
+.v-cal:dir(rtl) .v-cal__weeks-after-enter { animation:v-cal-month-in-left var(--v-calendar-duration) var(--v-calendar-ease) both; }
+.v-cal .v-cal__weeks-before-exit,
+.v-cal:dir(rtl) .v-cal__weeks-after-exit { animation:v-cal-month-out-left var(--v-calendar-duration) var(--v-calendar-ease) both; }
+.v-cal .v-cal__weeks-after-exit,
+.v-cal:dir(rtl) .v-cal__weeks-before-exit { animation:v-cal-month-out-right var(--v-calendar-duration) var(--v-calendar-ease) both; }
+.v-cal [data-animated-month][aria-hidden="true"] { width:100%; inset:0 auto auto 0; }
+@keyframes v-cal-caption-in { from { opacity:0; } to { opacity:1; } }
+@keyframes v-cal-caption-out { from { opacity:1; } to { opacity:0; } }
+@keyframes v-cal-month-in-right { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
+@keyframes v-cal-month-in-left { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+@keyframes v-cal-month-out-left { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(-12px); } }
+@keyframes v-cal-month-out-right { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(12px); } }
+.v-calendar-example { width:100%; max-width:360px; margin-inline:auto; display:grid; gap:var(--s-5); }
+.v-calendar-example__intro { display:grid; gap:var(--s-2); }
+.v-calendar-example__intro h3 { margin:0; font-size:var(--fs-title); font-weight:var(--fw-medium); color:var(--v-text); }
+.v-calendar-example__intro p { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }
+.v-calendar-example__summary { display:grid; gap:var(--s-2); padding-top:var(--s-4); border-top:1px solid var(--v-border); color:var(--v-text); }
+.v-calendar-example__summary p { margin:0; font-size:var(--fs-small); line-height:1.5; }
+
+}

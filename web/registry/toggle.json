@@ -1,0 +1,130 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "toggle",
+  "title": "Toggle",
+  "description": "A small action with a lasting state: a toolbar tool, a paper bookmark or a descriptive preference. Native targets stay put while the painted surface responds.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-toggle"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/toggle.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-toggle\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { useFlowPress } from \"@/lib/cojeev-motion/flow-press\";\nimport {\n  controlRadiusStyle,\n  type ControlRadius,\n} from \"@/lib/cojeev/control-appearance\";\nexport const toggleVariants = cva(\n  \"v-toggle [place-items:center] [border-radius:var(--r-pill)] [font-size:var(--fs-control)] [display:inline-flex] [align-items:center] [justify-content:center] [height:40px] [min-width:40px] [padding:0_var(--s-4)] [gap:var(--s-2)] [background:var(--v-canvas)] [color:var(--v-text-2)] [font-weight:var(--fw-medium)] [box-shadow:inset_0_0_0_1px_var(--v-edge)] [cursor:pointer]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        pressed: \"-pressed\",\n        pink: \"-pink\",\n        circle: \"-circle w-10 px-0 rounded-full text-[length:var(--fs-meta)] font-semibold\",\n      },\n    },\n    defaultVariants: { variant: \"default\" },\n  },\n);\nexport type ToggleProps = React.ComponentProps<typeof Primitive.Root> &\n  VariantProps<typeof toggleVariants> & {\n    appearance?: \"tool\" | \"bookmark\" | \"preference\";\n    radius?: ControlRadius;\n  };\nexport function Toggle({\n  ref,\n  className,\n  variant,\n  appearance,\n  radius,\n  style,\n  ...props\n}: ToggleProps) {\n  const morphRef = useMorph<HTMLButtonElement>(\"buttons\", ref);\n  const flowRef = useFlowPress(morphRef);\n  return (\n    <Primitive.Root\n      ref={flowRef}\n      data-slot=\"toggle\"\n      data-part=\"root\"\n      data-toggle=\"\"\n      data-appearance={appearance}\n      data-morph={appearance ? \"both\" : undefined}\n      data-r={appearance ? \"css\" : undefined}\n      className={cn(toggleVariants({ variant }), className)}\n      style={{ ...controlRadiusStyle(radius), ...style }}\n      {...props}\n    />\n  );\n}\nexport type ToggleWellProps = React.ComponentProps<\"div\">;\nexport function ToggleWell({ className, ...props }: ToggleWellProps) {\n  return (\n    <div\n      data-slot=\"toggle-well\"\n      className={cn(\"v-togglewell\", className)}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/toggle.css",
+      "content": "@layer cojeev-states {\n/* State has one paint owner. Native targets never scale or move. */\n.v-toggle[data-slot=\"toggle\"] {\n  --toggle-face: var(--v-canvas);\n  --toggle-ink: var(--v-text);\n  --mfill: var(--toggle-face);\n  --mstroke: var(--v-edge);\n  background: var(--toggle-face);\n  color: var(--toggle-ink);\n  transition:\n    color var(--t-micro),\n    background var(--t-micro);\n  transform: none;\n}\n.v-toggle[data-slot=\"toggle\"][aria-pressed=\"true\"] {\n  --toggle-face: var(--v-ink);\n  --toggle-ink: var(--v-on-ink);\n  --mstroke: var(--toggle-face);\n  box-shadow: none;\n}\n.v-toggle[data-slot=\"toggle\"].-pink[aria-pressed=\"true\"] {\n  --toggle-face: var(--v-pink);\n  --toggle-ink: var(--v-on-accent);\n}\n.v-toggle[data-slot=\"toggle\"].-blue[aria-pressed=\"true\"] {\n  --toggle-face: var(--v-blue);\n  --toggle-ink: var(--v-on-accent);\n}\n.v-toggle[data-slot=\"toggle\"].-yellow[aria-pressed=\"true\"] {\n  --toggle-face: var(--v-yellow);\n  --toggle-ink: var(--v-on-accent);\n}\n.v-toggle[data-slot=\"toggle\"].-olive[aria-pressed=\"true\"] {\n  --toggle-face: var(--v-olive);\n  --toggle-ink: var(--v-on-accent);\n}\n.v-toggle[data-slot=\"toggle\"]:hover:not(:disabled):not([aria-pressed=\"true\"]) {\n  --toggle-face: var(--v-beige);\n}\n.v-toggle[data-slot=\"toggle\"]:active {\n  transform: none;\n}\n.v-toggle[data-slot=\"toggle\"]:disabled {\n  --toggle-face: var(--v-disabled-face);\n  --toggle-ink: var(--v-disabled-ink);\n  --mstroke: var(--v-disabled-edge);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n  opacity: 1;\n}\n.v-toggle[data-slot=\"toggle\"]:not(:disabled) {\n  cursor: pointer;\n}\n.v-toggle[data-slot=\"toggle\"].-circle {\n  width: 40px;\n  min-width: 40px;\n  padding: 0;\n  border-radius: 50%;\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-semibold);\n}\n.v-toggle[data-slot=\"toggle\"]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 3px;\n}\n.v-toggle[data-slot=\"toggle\"] .v-icon {\n  width: 18px;\n  height: 18px;\n  flex: none;\n}\n.v-toggle[data-slot=\"toggle\"]:has(> svg.v-morph) {\n  background: transparent;\n  box-shadow: none;\n}\n.v-togglewell[data-slot] {\n  display: inline-flex;\n  flex-wrap: wrap;\n  gap: var(--s-1);\n  padding: var(--s-1);\n  border-radius: var(--r-pill);\n  background: var(--card);\n}\n.v-togglewell[data-slot] .v-toggle {\n  box-shadow: none;\n}\n.v-toggle[data-slot=\"toggle\"][data-appearance] {\n  height: auto;\n  min-height: 44px;\n  min-width: 44px;\n  border-radius: var(--v-control-radius, 14px);\n  padding: var(--s-3) var(--s-4);\n  gap: var(--s-3);\n  text-align: left;\n  font-size: var(--fs-control);\n  line-height: 1.4;\n  max-width: 100%;\n}\n.v-toggle[data-slot=\"toggle\"][data-appearance=\"bookmark\"] {\n  --toggle-face: var(--v-yellow-soft);\n  border-radius: var(--v-control-radius, 12px);\n  padding: var(--s-5) var(--s-4) var(--s-4);\n  width: 154px;\n  display: grid;\n  justify-items: center;\n  text-align: center;\n}\n.v-toggle[data-appearance=\"bookmark\"][aria-pressed=\"true\"] {\n  --toggle-face: var(--v-yellow);\n  --toggle-ink: var(--v-on-accent);\n}\n.v-toggle[data-slot=\"toggle\"][data-appearance=\"preference\"] {\n  --toggle-face: var(--v-paper);\n  display: grid;\n  grid-template-columns: 40px minmax(0, 1fr) auto;\n  justify-content: start;\n  justify-items: stretch;\n  padding: var(--s-5);\n  width: 100%;\n  border-radius: var(--v-control-radius, 20px);\n}\n.v-toggle[data-appearance=\"preference\"][aria-pressed=\"true\"] {\n  --toggle-face: var(--v-blue-soft);\n  --toggle-ink: var(--v-text);\n  --mstroke: var(--v-blue);\n}\n.v-toggle-example {\n  padding-inline: var(--s-3);\n  width: 100%;\n  max-width: 600px;\n  margin-inline: auto;\n  display: grid;\n  gap: var(--s-6);\n  color: var(--v-text);\n}\n.v-toggle-example header {\n  display: grid;\n  gap: var(--s-3);\n}\n.v-toggle-example__eyebrow {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.08em;\n  color: var(--v-text-3);\n  text-transform: uppercase;\n}\n.v-toggle-example h3 {\n  font: var(--fw-medium) var(--fs-section)/1.2 var(--font-display);\n  margin: 0;\n}\n.v-toggle-example p {\n  margin: 0;\n  font-size: var(--fs-small);\n  line-height: 1.7;\n  color: var(--v-text-2);\n}\n.v-toggle-example__scene {\n  display: grid;\n  gap: var(--s-6);\n  justify-items: start;\n  padding: var(--s-6);\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-panel);\n  background: var(--v-paper);\n  position: relative;\n}\n.v-toggle-example__scene article {\n  display: grid;\n  gap: var(--s-3);\n  padding: 0 0 var(--s-1);\n}\n.v-toggle-example article > span {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.08em;\n  color: var(--v-text-3);\n}\n.v-toggle-example h4 {\n  font: var(--fw-medium) var(--fs-section)/1.3 var(--font-display);\n  margin: 0;\n}\n.v-toggle-example__rule {\n  height: 12px;\n  width: 64px;\n  border-bottom: 2px solid var(--v-pink);\n  transform: rotate(-3deg);\n}\n.v-toggle-example__stamp {\n  display: grid;\n  place-items: center;\n  flex: none;\n}\n.v-toggle-example__word {\n  min-width: 0;\n  display: grid;\n  gap: var(--s-1);\n}\n.v-toggle-example__word strong {\n  font-weight: var(--fw-medium);\n}\n.v-toggle-example__word > span {\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-regular);\n  opacity: 0.85;\n}\n.v-toggle-example__state {\n  font-size: var(--fs-caps);\n  white-space: nowrap;\n  opacity: 0.8;\n}\n.v-toggle-example [data-appearance=\"tool\"] .v-toggle-example__state {\n  border-inline-start: 1px solid currentColor;\n  padding-inline-start: var(--s-3);\n}\n.v-toggle-example [data-appearance=\"bookmark\"] .v-toggle-example__stamp {\n  height: 26px;\n}\n.v-toggle-example[data-appearance=\"bookmark\"] .v-toggle-example__scene {\n  grid-template-columns: minmax(0, 1fr) 154px;\n  align-items: start;\n  padding-top: 0;\n  gap: var(--s-5);\n}\n.v-toggle-example[data-appearance=\"bookmark\"] article {\n  grid-column: 1;\n  grid-row: 1;\n  padding-top: var(--s-8);\n}\n.v-toggle-example [data-appearance=\"bookmark\"] {\n  grid-column: 2;\n  grid-row: 1;\n}\n.v-toggle-example[data-appearance=\"preference\"] .v-toggle-example__scene {\n  background: transparent;\n  padding: 0;\n  border: 0;\n}\n.v-toggle-example[data-appearance=\"preference\"] article {\n  padding: var(--s-2) var(--s-6);\n  border-inline-start: 2px solid var(--v-blue);\n}\n.v-toggle-example [data-appearance=\"preference\"] .v-toggle-example__stamp {\n  width: 40px;\n  height: 40px;\n  border: 1px solid currentColor;\n  border-radius: 50%;\n}\n.v-toggle-example__legacy {\n  border-top: 1px solid var(--v-edge);\n  padding-top: var(--s-4);\n  font-size: var(--fs-meta);\n}\n.v-toggle-example__legacy summary {\n  min-height: 44px;\n  cursor: pointer;\n  display: list-item;\n}\n.v-toggle-example__legacy[open] > *:not(summary) {\n  margin-bottom: var(--s-3);\n}\n@media (max-width: 540px) {\n  .v-toggle-example__scene {\n    padding: var(--s-5);\n  }\n  .v-toggle-example[data-appearance=\"bookmark\"] .v-toggle-example__scene {\n    grid-template-columns: minmax(0, 1fr) 114px;\n    gap: var(--s-4);\n  }\n  .v-toggle-example [data-appearance=\"bookmark\"] {\n    width: 114px;\n    padding-inline: var(--s-2);\n  }\n  .v-toggle-example[data-appearance=\"bookmark\"] h4 {\n    font-size: var(--fs-title);\n  }\n  .v-toggle[data-appearance=\"preference\"] {\n    padding: var(--s-4);\n    gap: var(--s-3);\n    grid-template-columns: 32px minmax(0, 1fr);\n  }\n  .v-toggle-example [data-appearance=\"preference\"] .v-toggle-example__stamp {\n    width: 32px;\n    height: 32px;\n  }\n  .v-toggle-example [data-appearance=\"preference\"] .v-toggle-example__state {\n    grid-column: 2;\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  .v-toggle[data-slot=\"toggle\"] {\n    transition: none;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/toggle.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/toggle.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "toggle",
+      "name": "Toggle",
+      "tier": "base",
+      "evidence": "I07 I18",
+      "status": "source",
+      "root": ".v-toggle",
+      "variants": [
+        "tool",
+        "bookmark",
+        "preference"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "on",
+        "rest",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "dataStates": [],
+      "category": "buttons",
+      "motionOnByDefault": true,
+      "flowRoles": [
+        "press"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/toggle/contract.md",
+      "demo": "entries/toggle/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-disabled.html",
+        "default-default-disabled-dark.html",
+        "default-default-on.html",
+        "default-default-on-dark.html",
+        "pressed-default-rest.html",
+        "pressed-default-rest-dark.html",
+        "pressed-default-disabled.html",
+        "pressed-default-disabled-dark.html",
+        "pressed-default-on.html",
+        "pressed-default-on-dark.html",
+        "pink-default-rest.html",
+        "pink-default-rest-dark.html",
+        "pink-default-disabled.html",
+        "pink-default-disabled-dark.html",
+        "pink-default-on.html",
+        "pink-default-on-dark.html",
+        "circle-default-rest.html",
+        "circle-default-rest-dark.html",
+        "circle-default-disabled.html",
+        "circle-default-disabled-dark.html",
+        "circle-default-on.html",
+        "circle-default-on-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ToggleProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"circle\" | \"default\" | \"pink\" | \"pressed\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"tool\" | \"bookmark\" | \"preference\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ToggleWellProps",
+        "props": []
+      }
+    ],
+    "category": "Actions",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

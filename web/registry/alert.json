@@ -1,0 +1,271 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "alert",
+  "title": "Alert",
+  "description": "An authored note, attached-action banner or folded dispatch that makes the message and its next step clear.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/alert.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { Button } from \"@/components/ui/button\";\n\nconst AlertVariants = cva(\n  \"v-alert [display:grid] [gap:0_var(--s-4)] [align-items:start] [padding:var(--s-4)_var(--s-5)_var(--s-4)_var(--s-4)] [border-radius:var(--r-card)] [background:var(--v-beige)] [grid-template-columns:40px_minmax(0,1fr)] [position:relative] [overflow:hidden] [isolation:isolate]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        info: \"-info [background:var(--status-info-bg)] [--muted-foreground:var(--muted-foreground-tinted)] [color:var(--v-on-accent)] [--hue-ink:var(--status-info-ink)]\",\n        ok: \"-ok [background:var(--status-ok-bg)] [--muted-foreground:var(--muted-foreground-tinted)] [color:var(--v-on-accent)] [--hue-ink:var(--status-ok-ink)]\",\n        warn: \"-warn [background:var(--status-warn-bg)] [--muted-foreground:var(--muted-foreground-tinted)] [color:var(--v-on-accent)] [--hue-ink:var(--status-warn-ink)]\",\n        danger:\n          \"-danger [background:var(--status-danger-bg)] [--muted-foreground:var(--muted-foreground-tinted)] [--hue-ink:var(--status-danger-ink)]\",\n        pink: \"-pink [background:var(--v-pink)] [--muted-foreground:var(--muted-foreground-ink)] [color:var(--v-on-accent)] [--hue:var(--v-paper)] [--hue-deep:var(--v-pink-deep)]\",\n      },\n      size: { default: \"\" },\n    },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AlertPresentation = \"note\" | \"banner\" | \"dispatch\";\nexport type AlertProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AlertVariants> & {\n    as?: React.ElementType;\n    presentation?: AlertPresentation;\n  };\nexport function Alert({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ref,\n  presentation,\n  ...props\n}: AlertProps) {\n  const ownedRef = useMorph<HTMLDivElement>(\"cards\", ref);\n  return (\n    <Tag\n      ref={ownedRef}\n      data-slot=\"alert\"\n      data-part=\"root\"\n      data-presentation={presentation}\n      data-tone={variant ?? \"default\"}\n      data-morph={presentation ? \"none\" : undefined}\n      role=\"alert\"\n      className={cn(AlertVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertBodyVariants = cva(\n  \"v-alert__body [display:grid] [gap:3px] [flex:1] [padding-top:var(--s-2)] [min-width:0] [position:relative] [z-index:1]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AlertBodyProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AlertBodyVariants> & { as?: React.ElementType };\nexport function AlertBody({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: AlertBodyProps) {\n  return (\n    <Tag\n      data-slot=\"alert-body\"\n      data-part=\"body\"\n      className={cn(AlertBodyVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertTitleVariants = cva(\n  \"v-alert__title [font-weight:var(--fw-semibold)] [font-size:var(--fs-body)] [line-height:1.3] [letter-spacing:-.005em]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AlertTitleProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AlertTitleVariants> & { as?: React.ElementType };\nexport function AlertTitle({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: AlertTitleProps) {\n  return (\n    <Tag\n      data-slot=\"alert-title\"\n      data-part=\"title\"\n      className={cn(AlertTitleVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertDescriptionVariants = cva(\n  \"v-alert__text [font-size:var(--fs-small)] [color:var(--muted-foreground)] [line-height:1.45]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AlertDescriptionProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AlertDescriptionVariants> & { as?: React.ElementType };\nexport function AlertDescription({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: AlertDescriptionProps) {\n  return (\n    <Tag\n      data-slot=\"alert-description\"\n      data-part=\"description\"\n      className={cn(AlertDescriptionVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertKickerVariants = cva(\n  \"v-alert__kicker [font-size:var(--fs-caps)] [font-weight:var(--fw-semibold)] [letter-spacing:.08em] [text-transform:uppercase] [color:var(--hue-ink,var(--alert-ink))] [margin-bottom:2px]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AlertKickerProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AlertKickerVariants> & { as?: React.ElementType };\nexport function AlertKicker({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: AlertKickerProps) {\n  return (\n    <Tag\n      data-slot=\"alert-kicker\"\n      data-part=\"kicker\"\n      className={cn(AlertKickerVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertIconVariants = cva(\"v-alert__blob \", {\n  variants: { variant: { default: \"\" }, size: { default: \"\" } },\n  defaultVariants: { variant: \"default\", size: \"default\" },\n});\nexport type AlertIconProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AlertIconVariants> & { as?: React.ElementType };\nexport function AlertIcon({\n  as: Tag = \"span\",\n  className,\n  variant,\n  size,\n  ref,\n  ...props\n}: AlertIconProps) {\n  const ownedRef = useMorph<HTMLSpanElement>(\"icons\", ref);\n  return (\n    <Tag\n      ref={ownedRef}\n      data-slot=\"alert-icon\"\n      data-part=\"icon\"\n      data-morph=\"fill\"\n      data-shape=\"pebble\"\n      data-tier=\"blob\"\n      className={cn(AlertIconVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertActionsVariants = cva(\n  \"v-alert__actions [display:flex] [gap:var(--s-2)] [margin-top:var(--s-3)] [flex-wrap:wrap]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AlertActionsProps = React.ComponentProps<\"div\"> &\n  VariantProps<typeof AlertActionsVariants> & { as?: React.ElementType };\nexport function AlertActions({\n  as: Tag = \"div\",\n  className,\n  variant,\n  size,\n  ...props\n}: AlertActionsProps) {\n  return (\n    <Tag\n      data-slot=\"alert-footer\"\n      data-part=\"footer\"\n      className={cn(AlertActionsVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AlertCloseVariants = cva(\"v-alert__close \", {\n  variants: { variant: { default: \"\" }, size: { default: \"\" } },\n  defaultVariants: { variant: \"default\", size: \"default\" },\n});\nexport type AlertCloseProps = React.ComponentProps<\"button\"> &\n  VariantProps<typeof AlertCloseVariants> & { as?: React.ElementType };\nexport function AlertClose({\n  as: Tag = \"button\",\n  className,\n  variant,\n  size,\n  ...props\n}: AlertCloseProps) {\n  return (\n    <Button\n      asChild\n      variant=\"ghost\"\n      data-morph=\"none\"\n      data-flow=\"off\"\n      data-stable-hit=\"\"\n    >\n      <Tag\n        type=\"button\"\n        aria-label=\"Dismiss alert\"\n        data-slot=\"alert-close\"\n        data-part=\"close\"\n        className={cn(AlertCloseVariants({ variant, size }), className)}\n        {...props}\n      />\n    </Button>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/alert.css",
+      "content": "@layer cojeev-states {\n/* Orthogonal authored class modifiers remain composable with CVA axes. */\n.v-alert[data-slot].-info {\n  background: var(--status-info-bg);\n  --muted-foreground: var(--muted-foreground-tinted);\n  color: var(--v-on-accent);\n  --hue-ink: var(--status-info-ink);\n}\n.v-alert[data-slot].-ok {\n  background: var(--status-ok-bg);\n  --muted-foreground: var(--muted-foreground-tinted);\n  color: var(--v-on-accent);\n  --hue-ink: var(--status-ok-ink);\n}\n.v-alert[data-slot].-warn {\n  background: var(--status-warn-bg);\n  --muted-foreground: var(--muted-foreground-tinted);\n  color: var(--v-on-accent);\n  --hue-ink: var(--status-warn-ink);\n}\n.v-alert[data-slot].-danger {\n  background: var(--status-danger-bg);\n  --muted-foreground: var(--muted-foreground-tinted);\n  --hue-ink: var(--status-danger-ink);\n}\n.v-alert[data-slot].-pink {\n  background: var(--v-pink);\n  --muted-foreground: var(--muted-foreground-ink);\n  color: var(--v-on-accent);\n  --hue: var(--v-paper);\n  --hue-deep: var(--v-pink-deep);\n}\n\n/* Authored contextual and pseudo-element rules, scoped to component-owned roots. */\n.v-alert[data-slot][data-morph] {\n  --mfill: var(--v-beige);\n}\n.v-alert[data-slot].-info[data-morph] {\n  --mfill: var(--v-blue-soft);\n}\n.v-alert[data-slot].-ok[data-morph] {\n  --mfill: var(--v-olive-soft);\n}\n.v-alert[data-slot].-warn[data-morph] {\n  --mfill: var(--v-yellow-soft);\n}\n.v-alert[data-slot].-danger[data-morph] {\n  --mfill: var(--v-danger-soft);\n}\n.v-alert[data-slot].-pink[data-morph] {\n  --mfill: var(--v-pink);\n}\n.v-alert[data-slot].-danger .v-alert__title {\n  color: var(--v-danger-ink);\n}\n.v-alert[data-slot].-ok .v-alert__title {\n  color: var(--status-ok-ink);\n}\n.v-alert[data-slot].-warn .v-alert__title {\n  color: var(--status-warn-ink);\n}\n.v-alert[data-slot].-danger .v-alert__title {\n  color: var(--status-danger-ink);\n}\n.v-alert[data-slot].-info .v-alert__title {\n  color: var(--status-info-ink);\n}\n.v-alert[data-slot].-ok .v-alert__text {\n  color: rgba(17, 17, 17, 0.68);\n}\n.v-alert[data-slot].-warn .v-alert__text {\n  color: rgba(17, 17, 17, 0.68);\n}\n.v-alert[data-slot].-danger .v-alert__text {\n  color: rgba(17, 17, 17, 0.68);\n}\n.v-alert[data-slot].-info .v-alert__text {\n  color: rgba(17, 17, 17, 0.68);\n}\n.v-alert[data-slot] > .v-icon:first-child {\n  width: 32px;\n  height: 32px;\n  padding: var(--s-2);\n  border-radius: 50%;\n  background: var(--v-canvas);\n  color: var(--v-on-accent);\n  stroke-width: 1.8;\n}\n.v-alert__text[data-slot] a {\n  color: inherit;\n  font-weight: var(--fw-medium);\n  text-decoration: underline;\n  text-underline-offset: 3px;\n}\n.v-alert[data-slot].-info > .v-icon:first-child {\n  background: var(--v-blue);\n}\n.v-alert[data-slot].-ok > .v-icon:first-child {\n  background: var(--v-olive);\n}\n.v-alert[data-slot].-warn > .v-icon:first-child {\n  background: var(--v-yellow);\n}\n.v-alert[data-slot].-danger > .v-icon:first-child {\n  background: var(--v-danger-fill);\n  color: var(--destructive-foreground);\n}\n.v-alert[data-slot].-pink > .v-icon:first-child {\n  background: var(--v-canvas);\n}\n.v-alert[data-slot].-ok .v-alert__text {\n  color: var(--alert-ink);\n}\n.v-alert[data-slot].-warn .v-alert__text {\n  color: var(--alert-ink);\n}\n.v-alert[data-slot].-danger .v-alert__text {\n  color: var(--alert-ink);\n}\n.v-alert[data-slot].-info .v-alert__text {\n  color: var(--alert-ink);\n}\n.v-alert[data-slot] .v-alert__text {\n  color: var(--alert-ink);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot] .v-alert__text {\n  color: var(--v-text-2);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-info {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-ok {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-warn {\n  color: var(--v-text);\n}\n.v-alert[data-slot] > .v-icon:first-child {\n  position: relative;\n  z-index: 1;\n  width: 40px;\n  height: 40px;\n  padding: var(--s-3);\n  border-radius: 46% 54% 50% 50%/50% 46% 54% 50%;\n  color: var(--v-on-accent);\n  background: var(--hue, var(--v-beige));\n  stroke-width: 1.9;\n  display: grid;\n  place-items: center;\n}\n.v-alert[data-slot] > .v-alert__blob {\n  position: relative;\n  z-index: 1;\n  width: 40px;\n  height: 40px;\n  padding: var(--s-3);\n  border-radius: 46% 54% 50% 50%/50% 46% 54% 50%;\n  color: var(--v-on-accent);\n  background: var(--hue, var(--v-beige));\n  stroke-width: 1.9;\n  display: grid;\n  place-items: center;\n}\n.v-alert[data-slot] > .v-alert__blob > .v-icon {\n  width: 20px;\n  height: 20px;\n}\n.v-alert[data-slot] > .v-alert__blob:has(> svg.v-morph) {\n  background: transparent;\n}\n.v-alert[data-slot] > .v-alert__blob > svg.v-morph {\n  z-index: 0;\n}\n.v-alert[data-slot]::after {\n  content: \"\";\n  position: absolute;\n  right: -6%;\n  top: -40%;\n  width: 34%;\n  aspect-ratio: 1;\n  background: var(--hue-deep, var(--v-beige-2));\n  -webkit-mask: var(--wm-m) center/contain no-repeat;\n  mask: var(--wm-m) center/contain no-repeat;\n  opacity: 0.55;\n  pointer-events: none;\n  z-index: 0;\n}\n.v-alert[data-slot].-info {\n  --hue: var(--v-blue);\n  --hue-deep: var(--v-blue-deep);\n  background: color-mix(in oklab, var(--v-blue) 30%, var(--v-canvas));\n  --wm-m: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='24' r='20'/%3E%3Ccircle cx='76' cy='50' r='20'/%3E%3Ccircle cx='50' cy='76' r='20'/%3E%3Ccircle cx='24' cy='50' r='20'/%3E%3Ccircle cx='50' cy='50' r='22'/%3E%3C/svg%3E\");\n}\n.v-alert[data-slot].-ok {\n  --hue: var(--v-olive);\n  --hue-deep: var(--v-olive-deep);\n  background: color-mix(in oklab, var(--v-olive) 26%, var(--v-canvas));\n  --wm-m: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90C22 68 6 52 6 33A20 20 0 0 1 50 21A20 20 0 0 1 94 33C94 52 78 68 50 90Z'/%3E%3C/svg%3E\");\n}\n.v-alert[data-slot].-warn {\n  --hue: var(--v-yellow);\n  --hue-deep: var(--v-yellow-deep);\n  background: color-mix(in oklab, var(--v-yellow) 34%, var(--v-canvas));\n  --wm-m: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 2l12 30 30 12-30 12-12 30-12-30-30-12 30-12z'/%3E%3C/svg%3E\");\n}\n.v-alert[data-slot].-danger {\n  --hue: var(--v-danger-fill);\n  --hue-deep: var(--danger-deep);\n  background: color-mix(in oklab, var(--v-danger) 13%, var(--v-canvas));\n  --wm-m: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M60 5A45 45 0 1 0 60 95A50 50 0 0 1 60 5Z'/%3E%3C/svg%3E\");\n}\n.v-alert[data-slot].-danger > .v-icon:first-child {\n  color: var(--destructive-foreground);\n}\n.v-alert[data-slot].-danger > .v-alert__blob {\n  color: var(--destructive-foreground);\n}\n.v-alert[data-slot]:not([class*=\" -\"]) {\n  background: var(--v-beige);\n}\n.v-alert[data-slot]:not([class*=\" -\"]) > .v-icon:first-child {\n  background: var(--v-beige-2);\n}\n.v-alert[data-slot]:not([class*=\" -\"]) > .v-alert__blob {\n  background: var(--v-beige-2);\n}\n.v-alert[data-slot]:not([class*=\" -\"])::after {\n  background: var(--v-beige-2);\n}\n.v-alert[data-slot].-ok .v-alert__title {\n  color: var(--v-on-accent);\n}\n.v-alert[data-slot].-warn .v-alert__title {\n  color: var(--v-on-accent);\n}\n.v-alert[data-slot].-info .v-alert__title {\n  color: var(--v-on-accent);\n}\n.v-alert__actions[data-slot] .v-btn {\n  height: 32px;\n  padding: 0 var(--s-4);\n  font-size: var(--fs-small);\n}\n.v-alert[data-slot] > .v-alert__close {\n  position: absolute;\n  top: 8px;\n  right: 8px;\n  width: 44px;\n  height: 44px;\n  min-width: 44px;\n  padding: 0;\n  z-index: 2;\n  background: rgba(251, 244, 230, 0.6);\n  box-shadow: none;\n}\n.v-alert[data-slot] > .v-alert__close:hover {\n  background: var(--v-canvas);\n}\n.v-alert[data-slot]::after {\n  width: 26%;\n  top: -24%;\n  right: -3%;\n  opacity: 0.55;\n}\n.v-alert[data-slot]:has(.v-alert__close) .v-alert__body {\n  padding-right: var(--s-8);\n}\n.v-alert[data-slot] > .v-alert__close {\n  cursor: pointer;\n  transition:\n    background var(--t-micro),\n    transform var(--t-micro) var(--enter);\n}\n.v-alert[data-slot] > .v-alert__close:hover {\n  transform: none;\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-info {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-ok {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-warn {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-danger {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-info .v-alert__title {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-ok .v-alert__title {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-warn .v-alert__title {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-danger .v-alert__title {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot] .v-alert__text {\n  color: var(--v-text-2);\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-info {\n  background: color-mix(in oklab, var(--v-blue) 18%, var(--v-canvas));\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-ok {\n  background: color-mix(in oklab, var(--v-olive) 18%, var(--v-canvas));\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-warn {\n  background: color-mix(in oklab, var(--v-yellow) 16%, var(--v-canvas));\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot].-danger {\n  background: color-mix(in oklab, var(--v-danger) 16%, var(--v-canvas));\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot]::after {\n  opacity: 0.25;\n}\n:root[data-mode=\"dark\"] .v-alert[data-slot] > .v-alert__close {\n  background: rgba(246, 239, 226, 0.1);\n  color: var(--v-text);\n}\n\n/* The authored icon body is transparent; keep the glyph legible on the alert surface. */\n.v-alert[data-slot] > .v-alert__blob > .v-icon {\n  color: var(--v-text);\n}\n.v-alert[data-slot].-danger > .v-alert__blob > .v-icon {\n  color: var(--v-danger-ink);\n}\n.v-alert[data-slot].-pink > .v-alert__blob > .v-icon {\n  color: var(--v-on-accent);\n}\n\n/* Pink stays light in either theme, including secondary copy and ghost actions. */\n:root[data-mode=\"dark\"] .v-alert[data-slot].-pink .v-alert__text {\n  color: var(--alert-ink);\n}\n.v-alert[data-slot].-pink\n  .v-btn.-ghost:not(:disabled):not([aria-disabled=\"true\"]) {\n  color: var(--v-on-accent);\n}\n.v-alert[data-slot].-pink\n  .v-btn.-ghost:not(:disabled):not([aria-disabled=\"true\"]):hover {\n  background: color-mix(in oklab, var(--v-pink) 88%, var(--ink-fixed));\n}\n.v-alert__body[data-slot] {\n  grid-template-columns: minmax(0, 1fr);\n}\n.v-alert[data-slot] :is(.v-alert__title, .v-alert__text) {\n  min-width: 0;\n  overflow-wrap: anywhere;\n}\n\n/* New compositions retain semantic colours, with one stamp and one quiet face. */\n.v-alert[data-slot][data-presentation] {\n  container-type: inline-size;\n  --alert-accent: var(--hue, var(--v-pink));\n  padding: var(--s-6);\n  gap: var(--s-4);\n  background: var(--v-canvas);\n  color: var(--v-text);\n  border: 1px solid var(--v-border);\n  border-radius: min(var(--v-control-radius, 20px), 28px);\n}\n.v-alert[data-slot][data-presentation]::after {\n  display: none;\n}\n.v-alert[data-slot][data-presentation] .v-alert__title {\n  color: var(--v-text);\n  font-size: var(--fs-title);\n  line-height: 1.3;\n  font-family: var(--font-display);\n}\n.v-alert[data-slot][data-presentation] .v-alert__text {\n  color: var(--v-text-2);\n  font-size: var(--fs-small);\n  line-height: 1.6;\n}\n.v-alert[data-slot][data-presentation] .v-alert__body {\n  padding-top: 0;\n  gap: var(--s-2);\n}\n.v-alert[data-slot][data-presentation] .v-alert__kicker {\n  color: var(--v-text-2);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.04em;\n}\n.v-alert[data-slot][data-presentation] .v-alert__actions {\n  margin-top: var(--s-2);\n  gap: var(--s-2);\n}\n.v-alert[data-slot] .v-alert__actions .v-btn {\n  min-height: 44px;\n  height: auto;\n  padding: var(--s-2) var(--s-4);\n}\n.v-alert[data-slot][data-presentation] > .v-alert__blob {\n  --mfill: var(--alert-accent);\n  background: var(--alert-accent);\n  color: var(--v-on-accent);\n}\n.v-alert[data-slot][data-presentation] > .v-alert__blob > .v-icon {\n  color: var(--v-on-accent);\n}\n.v-alert[data-slot][data-presentation] > .v-alert__blob:has(> svg.v-morph) {\n  background: transparent;\n}\n.v-alert[data-slot][data-presentation] > .v-alert__close {\n  background: transparent;\n  color: var(--v-text-2);\n}\n.v-alert[data-slot][data-presentation]:has(.v-alert__close) .v-alert__body {\n  padding-inline-end: var(--s-8);\n}\n.v-alert[data-slot][data-presentation=\"note\"] {\n  border-inline-start: 4px solid var(--alert-accent);\n  border-radius: var(--r-xs) min(var(--v-control-radius, 20px), 28px)\n    min(var(--v-control-radius, 20px), 28px) var(--r-xs);\n}\n.v-alert[data-slot][data-presentation=\"banner\"] {\n  border-radius: var(--r-md);\n  background: color-mix(in srgb, var(--alert-accent) 10%, var(--v-canvas));\n  grid-template-columns: 40px minmax(0, 1fr);\n  align-items: center;\n  padding: var(--s-4) var(--s-5);\n}\n.v-alert[data-slot][data-presentation=\"banner\"] .v-alert__body {\n  grid-template-columns: minmax(0, 1fr) auto;\n  column-gap: var(--s-4);\n  align-items: center;\n}\n.v-alert[data-slot][data-presentation=\"banner\"] .v-alert__title {\n  font-size: var(--fs-reading);\n}\n.v-alert[data-slot][data-presentation=\"banner\"] .v-alert__kicker {\n  display: none;\n}\n.v-alert[data-slot][data-presentation=\"banner\"] .v-alert__title,\n.v-alert[data-slot][data-presentation=\"banner\"] .v-alert__text {\n  grid-column: 1;\n}\n.v-alert[data-slot][data-presentation=\"banner\"] .v-alert__actions {\n  grid-column: 2;\n  grid-row: 1/3;\n  margin: 0;\n}\n.v-alert[data-slot][data-presentation=\"dispatch\"] {\n  grid-template-columns: minmax(0, 1fr);\n  padding: var(--s-6) var(--s-7);\n  border-radius: var(--r-xs) var(--r-panel) var(--r-panel) var(--r-panel);\n  background: linear-gradient(\n    135deg,\n    color-mix(in srgb, var(--alert-accent) 10%, var(--v-canvas)),\n    var(--v-canvas) 70%\n  );\n}\n.v-alert[data-slot][data-presentation=\"dispatch\"] > .v-alert__blob {\n  width: 48px;\n  height: 48px;\n}\n.v-alert[data-slot][data-presentation=\"dispatch\"] .v-alert__title {\n  font-size: var(--fs-section);\n  max-width: 26ch;\n}\n.v-alert[data-slot][data-presentation=\"dispatch\"] .v-alert__actions {\n  border-top: 1px dashed var(--v-border);\n  padding-top: var(--s-4);\n  margin-top: var(--s-3);\n}\n.v-alert[data-slot][data-presentation=\"dispatch\"] .v-alert__body {\n  padding-inline-end: 0;\n}\n.v-alert[data-slot][data-presentation=\"dispatch\"]::before {\n  content: \"\";\n  position: absolute;\n  inset: auto 0 0 auto;\n  width: 24px;\n  height: 24px;\n  pointer-events: none;\n  background: linear-gradient(\n    135deg,\n    transparent 48%,\n    var(--v-border) 50%,\n    color-mix(in srgb, var(--alert-accent) 25%, var(--v-canvas)) 54%\n  );\n}\n@container (max-width:460px) {\n  .v-alert[data-slot][data-presentation=\"banner\"] > .v-alert__blob {\n    align-self: start;\n  }\n  .v-alert[data-slot][data-presentation=\"banner\"] .v-alert__body {\n    grid-template-columns: minmax(0, 1fr);\n  }\n  .v-alert[data-slot][data-presentation=\"banner\"] .v-alert__actions {\n    grid-column: 1;\n    grid-row: auto;\n    margin-top: var(--s-2);\n  }\n}\n.v-message-example {\n  width: 100%;\n  min-width: 0;\n  display: grid;\n  gap: var(--s-4);\n}\n.v-message-example__hint {\n  margin: 0;\n  color: var(--v-text-2);\n  font-size: var(--fs-caps);\n  line-height: 1.6;\n}\n.v-message-example__restored {\n  display: flex;\n  align-items: center;\n  gap: var(--s-4);\n  justify-content: space-between;\n  flex-wrap: wrap;\n  min-height: 100px;\n  padding: var(--s-5);\n  border: 1px dashed var(--v-border);\n  border-radius: var(--r-card-sm);\n}\n.v-message-example__restored p {\n  margin: 0;\n  font-size: var(--fs-small);\n  color: var(--v-text-2);\n}\n.v-message-example__notes {\n  border-inline-start: 2px solid var(--v-blue);\n  padding: var(--s-1) 0 var(--s-1) var(--s-5);\n}\n.v-message-example__notes h4 {\n  font-size: var(--fs-body);\n  font-weight: var(--fw-title);\n  margin: 0 0 var(--s-2);\n}\n.v-message-example__notes ul {\n  padding: 0;\n  margin: 0;\n  list-style: none;\n  display: grid;\n  gap: var(--s-2);\n}\n.v-message-example__notes li {\n  display: flex;\n  gap: var(--s-3);\n  align-items: baseline;\n  font-size: var(--fs-small);\n  color: var(--v-text-2);\n}\n.v-message-example__notes li span {\n  font-family: var(--font-mono);\n  font-size: var(--fs-caps);\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/alert.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/alert.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "alert",
+      "name": "Alert",
+      "tier": "base",
+      "evidence": "I12 I16",
+      "status": "source",
+      "root": ".v-alert",
+      "variants": [
+        "note",
+        "banner",
+        "dispatch"
+      ],
+      "sizes": [],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "cards",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "enters"
+      ],
+      "canvas": "720x240",
+      "contract": "entries/alert/contract.md",
+      "demo": "entries/alert/demo.html",
+      "isolation": [
+        "default-default-rest-720x240.html",
+        "default-default-rest-dark-720x240.html",
+        "info-default-rest-720x240.html",
+        "info-default-rest-dark-720x240.html",
+        "ok-default-rest-720x240.html",
+        "ok-default-rest-dark-720x240.html",
+        "warn-default-rest-720x240.html",
+        "warn-default-rest-dark-720x240.html",
+        "danger-default-rest-720x240.html",
+        "danger-default-rest-dark-720x240.html",
+        "pink-default-rest-720x240.html",
+        "pink-default-rest-dark-720x240.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "AlertProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"info\" | \"ok\" | \"warn\" | \"danger\" | \"pink\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "presentation",
+            "type": "AlertPresentation",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertBodyProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertTitleProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertDescriptionProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertKickerProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertIconProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertActionsProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertCloseProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "as",
+            "type": "React.ElementType",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Feedback",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

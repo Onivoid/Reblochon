@@ -1,0 +1,61 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sunwash-background",
+  "title": "Sunwash background",
+  "description": "Broad, soft pools of color that leave the content in focus.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/pattern-background.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/sunwash-background.tsx",
+      "content": "import { PatternBackground, type PatternBackgroundProps } from \"@/components/ui/pattern-background\";\n\nexport type SunwashBackgroundProps = Omit<PatternBackgroundProps, \"variant\">;\n\nexport function SunwashBackground(props: SunwashBackgroundProps) {\n  return <PatternBackground {...props} variant=\"sunwash\" />;\n}\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Sunwash background",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest"
+      ]
+    },
+    "api": [
+      {
+        "name": "SunwashBackgroundProps",
+        "props": [
+          {
+            "name": "color",
+            "type": "string | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "opacity",
+            "type": "number",
+            "required": false,
+            "description": "Decorative ink strength, from 0 to 1."
+          },
+          {
+            "name": "spacing",
+            "type": "number",
+            "required": false,
+            "description": "Distance between marks, in pixels (8–80)."
+          }
+        ]
+      }
+    ],
+    "category": "Subtle backgrounds",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

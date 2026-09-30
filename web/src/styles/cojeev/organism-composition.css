@@ -1,0 +1,152 @@
+@layer cojeev-states {
+.v-organism {position:relative;width:100%;min-width:0;max-width:680px;margin-inline:auto;isolation:isolate;color:var(--v-text);}
+.v-organism [data-assembly-part] {z-index:2;}
+.v-organism .v-organism__surface {z-index:0;pointer-events:none;}
+.v-organism .v-organism__cover {z-index:1;padding:0;pointer-events:none;}
+.v-organism > .v-assembly-particles {position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;}
+.v-organism__cover-art {height:100%;display:flex;align-items:center;justify-content:center;gap:3%;overflow:hidden;}
+.v-organism__cover-art [data-slot="shape"] {width:36%;height:128%;flex:none;}
+.v-organism__cover-art [data-slot="shape"]:nth-child(1) {--c:var(--v-yellow);rotate:-18deg;translate:-2% 8%;}
+.v-organism__cover-art [data-slot="shape"]:nth-child(2) {--c:var(--v-pink);rotate:18deg;translate:0 -12%;}
+.v-organism__cover-art [data-slot="shape"]:nth-child(3) {--c:var(--v-olive);rotate:-8deg;translate:0 12%;}
+.v-organism__avatar {font-size:var(--fs-title);font-weight:var(--fw-semibold);}
+.v-organism__identity {align-items:start;}
+.v-organism__identity > [data-slot="card-content"] {width:100%;gap:var(--s-2);}
+.v-organism__identity [data-slot="card-title"] {font-size:var(--fs-title);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.v-organism__identity [data-slot="card-description"] {font-size:var(--fs-small);line-height:1.4;color:var(--v-text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.v-organism__identity--chat > [data-slot="card-content"] {gap:var(--s-1);}
+.v-organism__identity--chat [data-slot="card-title"] {font-size:var(--fs-reading);}
+.v-organism__identity--chat .v-meta {font-size:var(--fs-caps);color:var(--v-text-2);}
+.v-organism__stats {display:flex;justify-content:space-between;align-items:start;gap:var(--s-2);}
+.v-organism__stats > span {display:grid;gap:var(--s-1);}
+.v-organism__stats b {font-size:var(--fs-lead);line-height:1;letter-spacing:-.03em;font-weight:var(--fw-medium);}
+.v-organism__stats .v-meta {display:block;font-size:var(--fs-caps);color:var(--v-text-2);}
+.v-organism__stats .v-icon {width:18px;height:18px;}
+.v-organism__button-label {display:inline-flex;align-items:center;justify-content:center;gap:var(--s-2);}
+.v-organism__button-label .v-icon {flex:none;}
+.v-organism__composer[data-slot="input-group"] {flex-wrap:nowrap;}
+.v-organism__composer [data-slot="input-group-input"] {flex-basis:0;}
+.v-organism__thread {display:block;}
+.v-organism__thread-content {height:100%;display:block;}
+.v-organism__thread .v-message-scroll-root[data-slot="scroll-area"] {height:100%;max-height:100%;border-radius:0;box-shadow:none;}
+.v-organism__thread .v-scroller {padding-right:var(--s-3);}
+.v-organism__thread .v-scroller__content {gap:var(--s-2);}
+.v-organism__bubble {justify-self:start;font-size:var(--fs-small);}
+.v-organism__bubble.-me {justify-self:end;}
+.v-organism__empty {display:block;padding-block:var(--s-12);text-align:center;}
+.v-organism__task-count {justify-content:flex-start;}
+.v-organism__progress {align-content:center;}
+.v-organism__progress [data-slot="progress"] {min-height:0;height:12px;}
+.v-organism__dock-caption {text-align:center;color:var(--v-text-2);}
+.v-organism[data-kind="dock"] .v-organism__surface {border-radius:var(--r-pill);}
+.v-organism[data-kind="side-panel"] .v-organism__identity [data-slot="card-title"],
+.v-organism[data-kind="dashboard"] .v-organism__identity [data-slot="card-title"] {font-size:var(--fs-title);}
+
+/* A small project board: paper, a quiet index, and one coloured mark per task. */
+.v-organism:is([data-kind="side-panel"],[data-kind="dashboard"]) .v-organism__surface {border-radius:var(--r-sheet);background:var(--v-paper);}
+.v-organism__panel-heading [data-slot="card-title"] {font-size:var(--fs-title);line-height:1.15;white-space:pre-line;letter-spacing:-.035em;}
+.v-organism__panel-heading .v-meta {font-size:var(--fs-caps);font-weight:var(--fw-semibold);line-height:1.4;letter-spacing:.08em;color:var(--v-text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.v-organism__panel-art {position:relative;overflow:visible;}
+.v-organism__panel-art [data-slot="shape"] {position:absolute;width:54px;height:69px;--c:var(--v-blue);rotate:16deg;left:2px;top:0;}
+.v-organism__panel-art [data-slot="shape"]:last-child {width:38px;height:38px;--c:var(--v-yellow);rotate:-19deg;left:20px;top:40px;}
+.v-organism__task-summary {display:flex;align-items:center;gap:var(--s-3);}
+.v-organism__task-summary .v-badge {height:24px;padding:0 var(--s-3);font-size:var(--fs-caps);flex:none;}
+.v-organism__task-summary .v-meta {font-size:var(--fs-caps);line-height:1.3;color:var(--v-text-2);}
+.v-organism__task[data-slot] {--mfill:transparent;display:flex;align-items:center;gap:var(--s-3);background:transparent;padding:var(--s-2) 0;border-radius:0;border:0;border-bottom:1px solid var(--v-border);box-shadow:none;color:var(--v-text);}
+.v-organism__task-mark {position:relative;display:grid;place-items:center;flex:none;width:36px;height:36px;color:var(--v-on-accent);}
+.v-organism__task-mark > [data-slot="shape"] {position:absolute;inset:0;width:100%;height:100%;--c:var(--v-blue);}
+.v-organism__task-mark > .v-animated-icon {position:relative;width:17px;height:17px;}
+.v-organism__task[data-complete="true"] .v-organism__task-mark > [data-slot="shape"] {--c:var(--v-olive);}
+.v-organism__task [data-slot="item-content"] {gap:var(--s-1);}
+.v-organism__task [data-slot="item-title"] {font-size:var(--fs-small);font-weight:var(--fw-semibold);line-height:1.25;-webkit-line-clamp:1;}
+.v-organism__task [data-slot="item-description"] {font-size:var(--fs-caps);line-height:1.4;color:var(--v-text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.v-organism__task[data-complete="true"] [data-slot="item-title"] {text-decoration:line-through;text-decoration-color:var(--v-text-2);}
+.v-organism__task-number {font:var(--fw-medium) var(--fs-caps)/1 var(--font-text);color:var(--v-text-2);align-self:center;flex:none;}
+.v-organism__panel-progress {display:flex;align-items:center;gap:var(--s-3);}
+.v-organism__panel-progress [data-slot="progress"] {height:7px;flex:1;}
+.v-organism__panel-progress .v-meta {font-size:var(--fs-caps);font-variant-numeric:tabular-nums;}
+.v-organism:is([data-kind="side-panel"],[data-kind="dashboard"]) [data-assembly-part="secondary"] {font-size:var(--fs-caps);color:var(--v-text-2);}
+
+/* A command tray, with useful labels kept alongside expressive icons. */
+.v-organism[data-kind="dock"] .v-organism__surface {border-radius:var(--r-sheet);background:var(--v-beige);box-shadow:none;}
+.v-organism__dock-heading {display:flex;justify-content:center;align-items:center;}
+.v-organism__dock-heading .v-meta {font-size:var(--fs-caps);letter-spacing:.1em;font-weight:var(--fw-semibold);color:var(--v-text-2);}
+.v-organism__dock-spark [data-slot="shape"] {width:25px;height:25px;--c:var(--v-on-accent);rotate:12deg;}
+.v-organism__dock-tool[data-slot] {--mfill:transparent;padding:var(--s-2) 2px;border-radius:var(--r-card);gap:0;}
+.v-organism__dock-tool[data-slot][aria-pressed="true"] {--mfill:var(--v-pink);background:var(--v-pink);color:var(--v-on-accent);}
+.v-organism__dock-tool[data-slot][aria-pressed="false"]:hover {--mfill:var(--v-beige);}
+/* The shared travelling surface owns the dock selection after assembly. */
+.v-organism[data-kind="dock"][data-flow-owned].v-glide {--glide-bg:var(--v-pink);--glide-fg:var(--v-on-accent);--glide-layer-z:1;--glide-hover-z:3;--glide-trail-z:1;}
+.v-organism[data-kind="dock"][data-flow-owned].v-glide .v-organism__dock-tool[data-slot] {--mfill:transparent;background:transparent;}
+.v-organism[data-kind="dock"][data-flow-owned].v-glide .v-organism__dock-tool[data-glide-active] {color:var(--glide-fg);}
+.v-organism__dock-tool > .v-assembly-content {width:100%;display:grid;justify-items:center;align-content:center;gap:var(--s-2);}
+.v-organism__dock-tool .v-animated-icon {width:24px;height:24px;}
+.v-organism__tool-name {max-width:100%;font-size:var(--fs-caps);line-height:1.1;font-weight:var(--fw-semibold);overflow:hidden;text-overflow:ellipsis;}
+.v-organism__dock-caption {display:flex;align-items:start;justify-content:center;}
+.v-organism__dock-caption .v-meta {font-size:var(--fs-meta);line-height:1.4;text-align:center;color:var(--v-text-2);}
+
+/* A studio messenger. The library scrollport owns scrolling; its frame is quiet. */
+.v-organism[data-kind="chat"] .v-organism__surface {border-radius:var(--r-sheet);background:var(--v-paper);}
+.v-organism__chat-avatar {font-size:var(--fs-small);font-weight:var(--fw-semibold);}
+.v-organism__identity--chat [data-slot="card-title"] {font-size:var(--fs-lead);letter-spacing:-.02em;}
+.v-organism__identity--chat .v-meta {display:flex;align-items:center;gap:var(--s-1);font-size:var(--fs-caps);white-space:nowrap;}
+.v-organism__identity--chat .v-meta [data-slot="shape"] {width:6px;height:6px;flex:none;--c:var(--v-olive);}
+.v-organism__chat-date {display:flex;justify-content:center;align-items:center;}
+.v-organism__chat-date .v-meta {font-size:var(--fs-caps);line-height:1.4;color:var(--v-text-2);text-align:center;}
+.v-organism__thread .v-message-scroll-root[data-slot="scroll-area"] {padding:0;border:0;box-shadow:none;background:transparent;}
+.v-organism__thread .v-scroller[data-slot] {border:0;box-shadow:none;background:transparent;padding:var(--s-2) var(--s-3) var(--s-3) 0;border-radius:0;}
+.v-organism__thread .v-scroller__content {display:grid;align-content:start;gap:var(--s-4);}
+.v-organism__conversation[data-slot="bubble"] {--bubble-surface:var(--v-paper);display:grid;gap:var(--s-4);padding:0 0 0 var(--s-2);background:transparent;border-radius:0;}
+:root .v-organism[data-kind="chat"] .v-organism__thread .v-organism__message[data-slot] {padding-left:0;}
+.v-organism__thread [data-slot="scroll-area-scrollbar"] .v-scroll__contour {width:5px;left:50%;translate:-50% 0;}
+.v-organism__thread [data-slot="scroll-area-thumb"] {color:color-mix(in oklab,var(--v-text-2) 48%,var(--v-paper));}
+.v-organism__thread [data-slot="scroll-area-scrollbar"]:is(:hover,[data-dragging="true"]) [data-slot="scroll-area-thumb"] {color:var(--v-text-2);}
+.v-organism__thread .v-scroll__grip {display:none;}
+.v-organism__message[data-slot] {width:100%;max-width:90%;margin:0;}
+.v-organism__message.-me {max-width:88%;}
+.v-organism__message .v-organism__bubble {max-width:100%;padding:var(--s-3) var(--s-4);font-size:var(--fs-meta);line-height:1.65;background:var(--v-beige);border-radius:var(--r-card) var(--r-card) var(--r-card) var(--r-xs);}
+.v-organism__message .v-organism__bubble.-me {background:var(--v-blue);color:var(--v-on-accent);border-radius:var(--r-card) var(--r-card) var(--r-xs) var(--r-card);}
+:root .v-organism[data-kind="chat"] .v-organism__bubble[data-slot] {--mfill:color-mix(in oklab,var(--v-paper) 72%,var(--v-blue));background:var(--mfill);color:var(--v-text);border-radius:var(--r-card);border:0;box-shadow:none;}
+:root .v-organism[data-kind="chat"] .v-organism__bubble[data-slot].-me {--mfill:var(--v-blue);color:var(--v-on-accent);border-radius:var(--r-card) var(--r-card) var(--r-xs) var(--r-card);}
+:root .v-organism[data-kind="chat"] .v-organism__bubble[data-slot]:has(>svg.v-morph) {background:transparent;box-shadow:none;}
+.v-organism__conversation .v-organism__bubble.-tail::before {background:var(--mfill);}
+.v-organism[data-kind="chat"] .v-organism__composer[data-slot] {background:var(--v-beige);box-shadow:none;border:0;border-radius:var(--r-panel);}
+.v-organism[data-kind="chat"] .v-organism__composer [data-slot="input-group-input"] {font-size:var(--fs-meta);padding-inline:var(--s-4);}
+.v-organism[data-kind="chat"] .v-organism__composer [data-slot="input-group-button"] {background:var(--v-pink);color:var(--v-on-accent);width:34px;height:34px;min-width:34px;padding:0;margin-right:var(--s-2);}
+.v-organism__local-note {text-align:center;font-size:var(--fs-caps);line-height:1.4;color:var(--v-text-2);}
+
+/* Focus is a real local clock, with a calm typographic centre. */
+.v-organism[data-kind="focus"] .v-organism__surface {border-radius:var(--r-sheet);background:var(--v-paper);}
+.v-organism__focus-heading .v-meta {font-size:var(--fs-caps);line-height:1.3;letter-spacing:.09em;color:var(--v-text-2);font-weight:var(--fw-semibold);}
+.v-organism__focus-heading [data-slot="card-title"] {white-space:normal;font-size:var(--fs-title);line-height:1.15;letter-spacing:-.025em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.v-organism__focus-art {display:grid;place-items:center;}
+.v-organism__focus-art [data-slot="shape"] {width:65px;height:65px;--c:var(--v-yellow);rotate:-13deg;}
+.v-organism__clock {display:grid;justify-items:center;align-content:center;gap:var(--s-3);}
+.v-organism[data-kind="focus"] .v-organism__clock [data-slot="typography-meta"][role="timer"] {font:var(--fw-medium) clamp(48px,8vw,64px)/1 var(--font-display);letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:var(--v-text);white-space:nowrap;}
+.v-organism__clock [role="timer"] > span {color:var(--v-text-2);padding-inline:3px;}
+.v-organism__clock > .v-meta:last-child {font-size:var(--fs-caps);color:var(--v-text-2);}
+.v-organism[data-kind="focus"] .v-organism__progress [data-slot="progress"] {height:7px;}
+.v-organism__focus-description {font-size:var(--fs-meta);line-height:1.5;text-align:center;color:var(--v-text-2);display:flex;align-items:center;justify-content:center;}
+.v-organism[data-kind="focus"] [data-assembly-part="primary"] {font-size:var(--fs-small);}
+
+/* An invitation is a small event card; the RSVP stays on the current page. */
+.v-organism[data-kind="invite"] .v-organism__surface {border-radius:var(--r-sheet);background:var(--v-paper);}
+.v-organism__invite-cover {padding:0;overflow:hidden;border-radius:var(--r-panel);}
+.v-organism__invite-cover > [data-slot="card-content"] {height:100%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:flex-end;padding:var(--s-6);}
+.v-organism__invite-cover [data-slot="shape"] {position:absolute;left:-18px;top:-20px;width:145px;height:145px;--c:var(--v-pink);rotate:15deg;}
+.v-organism__invite-cover [data-slot="shape"]:nth-child(2) {left:70px;top:34px;width:83px;height:110px;--c:var(--v-yellow);rotate:-19deg;}
+.v-organism[data-kind="invite"] .v-organism__invite-cover [data-slot="typography-meta"] {position:relative;max-width:12ch;font-size:var(--fs-caps);line-height:1.5;font-weight:var(--fw-semibold);letter-spacing:.045em;color:var(--v-on-accent);}
+.v-organism__invite-heading [data-slot="card-title"] {font-size:var(--fs-title);white-space:normal;line-height:1.15;letter-spacing:-.035em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.v-organism__invite-heading [data-slot="card-description"] {font-size:var(--fs-meta);line-height:1.5;}
+.v-organism__event-details {display:grid;gap:var(--s-3);align-content:center;}
+.v-organism__event-details .v-meta {display:flex;align-items:center;gap:var(--s-2);font-size:var(--fs-caps);line-height:1.4;color:var(--v-text-2);}
+.v-organism__event-details .v-icon {width:14px;height:14px;flex:none;}
+.v-organism__participants {display:flex;align-items:center;gap:var(--s-3);}
+.v-organism__avatar-stack {display:flex;padding-left:0;}
+.v-organism__avatar-stack [data-slot="avatar"] {width:30px;height:30px;font-size:var(--fs-caps);border:3px solid var(--v-paper);margin-left:-7px;}
+.v-organism__avatar-stack [data-slot="avatar"]:first-child {margin-left:0;}
+.v-organism__participants > .v-meta {font-size:var(--fs-caps);color:var(--v-text-2);}
+.v-organism__invite-status {font-size:var(--fs-caps);line-height:1.5;color:var(--v-text-2);}
+.v-organism[data-kind="invite"] [data-assembly-part="primary"],.v-organism[data-kind="invite"] [data-assembly-part="secondary"] {font-size:var(--fs-caps);padding-inline:var(--s-3);}
+
+}

@@ -1,0 +1,197 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sidebar",
+  "title": "Sidebar",
+  "description": "A paper folio, a readable compact index and a motion drawer. Three calm ways to keep the same workspace within reach.",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/sidebar.tsx",
+      "content": "\"use client\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport * as React from \"react\";\nimport { Slot } from \"@radix-ui/react-slot\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { Button } from \"@/components/ui/button\";\nimport { useFlowGroup } from \"@/lib/cojeev-motion/use-flow\";\nconst SidebarContext = React.createContext<{\n  open: boolean;\n  setOpen: (open: boolean) => void;\n} | null>(null);\nexport function useSidebar() {\n  const context = React.useContext(SidebarContext);\n  if (!context)\n    throw new Error(\"Sidebar parts must be inside Sidebar or SidebarProvider\");\n  return context;\n}\nexport type SidebarProviderProps = {\n  children: React.ReactNode;\n  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n};\nexport function SidebarProvider({\n  children,\n  open,\n  defaultOpen = true,\n  onOpenChange,\n}: SidebarProviderProps) {\n  const [local, setLocal] = React.useState(defaultOpen);\n  return (\n    <SidebarContext.Provider\n      value={{\n        open: open ?? local,\n        setOpen: (next) => {\n          if (open === undefined) setLocal(next);\n          onOpenChange?.(next);\n        },\n      }}\n    >\n      {children}\n    </SidebarContext.Provider>\n  );\n}\nexport const sidebarVariants = cva(\n  \"v-sidebar relative self-stretch flex shrink-0 flex-col gap-[var(--s-2)] w-[var(--sidebar-w)] min-h-0 max-h-none bg-[var(--v-structure)] text-[color:var(--on-structure)] rounded-[var(--r-panel)] pt-[var(--s-6)] px-[var(--s-4)] pb-[var(--s-5)]\",\n);\nexport type SidebarProps = React.ComponentProps<\"aside\"> & {\n  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  /** Container layout fills its parent; viewport layout follows the authored standalone rail. */\n  layout?: \"container\" | \"viewport\";\n  appearance?: \"folio\" | \"index\" | \"drawer\";\n};\nexport function Sidebar({\n  open,\n  defaultOpen = true,\n  onOpenChange,\n  layout = \"container\",\n  appearance,\n  ...props\n}: SidebarProps) {\n  const parent = React.useContext(SidebarContext);\n  return parent && open === undefined && onOpenChange === undefined ? (\n    <SidebarRail\n      data-layout={layout}\n      data-appearance={appearance}\n      data-morph={appearance ? \"both\" : undefined}\n      data-r={appearance ? \"css\" : undefined}\n      {...props}\n    />\n  ) : (\n    <SidebarProvider\n      open={open}\n      defaultOpen={defaultOpen}\n      onOpenChange={onOpenChange}\n    >\n      <SidebarRail\n        data-layout={layout}\n        data-appearance={appearance}\n        data-morph={appearance ? \"both\" : undefined}\n        data-r={appearance ? \"css\" : undefined}\n        {...props}\n      />\n    </SidebarProvider>\n  );\n}\nfunction SidebarRail({\n  ref: externalMorphRef,\n  className,\n  ...props\n}: React.ComponentProps<\"aside\">) {\n  const sidebar = useSidebar();\n  const ownedMorphRef = useMorph<HTMLElement>(\"surfaces\", externalMorphRef);\n  return (\n    <aside\n      ref={ownedMorphRef}\n      data-slot=\"sidebar\"\n      data-part=\"root\"\n      data-state={sidebar.open ? \"expanded\" : \"collapsed\"}\n      className={cn(\n        sidebarVariants(),\n        !sidebar.open && \"-mini w-[var(--sidebar-w-mini)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SidebarHeaderProps = React.ComponentProps<\"div\">;\nexport function SidebarHeader({ className, ...props }: SidebarHeaderProps) {\n  return (\n    <div\n      data-slot=\"sidebar-header\"\n      data-part=\"header\"\n      className={cn(\n        \"v-brand relative flex items-center justify-center gap-[var(--s-2)] h-[56px] mb-[var(--s-6)] font-[family-name:var(--font-display)] text-[30px] font-medium tracking-[-.02em] text-[color:var(--sidebar-foreground)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SidebarTriggerProps = React.ComponentProps<\"button\">;\nexport function SidebarTrigger({\n  ref: externalMorphRef,\n  className,\n  children,\n  onClick,\n  ...props\n}: SidebarTriggerProps) {\n  const sidebar = useSidebar();\n  return (\n    <Button\n      ref={externalMorphRef}\n      data-slot=\"sidebar-trigger\"\n      data-part=\"trigger\"\n      data-rail-collapse=\"\"\n      type=\"button\"\n      variant=\"ghost\"\n      aria-expanded={sidebar.open}\n      aria-label={sidebar.open ? \"Collapse the rail\" : \"Expand the rail\"}\n      className={cn(\n        \"v-collapse relative ml-auto shrink-0 grid place-items-center size-[44px] p-0 [border-radius:50%] text-[length:var(--fs-small)] font-[family-name:var(--font-text)] font-medium leading-none tracking-normal\",\n        className,\n      )}\n      onClick={(event) => {\n        onClick?.(event);\n        if (!event.defaultPrevented) sidebar.setOpen(!sidebar.open);\n      }}\n      {...props}\n    >\n      {children ?? (\n        <Icon name={sidebar.open ? \"chevron-left\" : \"chevron-right\"} />\n      )}\n    </Button>\n  );\n}\nexport type SidebarContentProps = React.ComponentProps<\"nav\">;\nexport function SidebarContent({\n  ref,\n  className,\n  ...props\n}: SidebarContentProps) {\n  const flowRef = useFlowGroup<HTMLElement>(ref);\n  return (\n    <nav\n      ref={flowRef}\n      data-slot=\"sidebar-content\"\n      data-part=\"viewport\"\n      aria-label=\"Destinations\"\n      className={cn(\"v-nav grid gap-[2px]\", className)}\n      {...props}\n    />\n  );\n}\nexport type SidebarGroupLabelProps = React.ComponentProps<\"div\">;\nexport function SidebarGroupLabel({\n  className,\n  ...props\n}: SidebarGroupLabelProps) {\n  return (\n    <div\n      data-slot=\"sidebar-group-label\"\n      className={cn(\n        \"v-nav__group text-[length:var(--fs-small)] text-[color:var(--sidebar-muted)] pt-[var(--s-4)] px-[var(--s-3)] pb-[var(--s-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SidebarMenuButtonProps = React.ComponentProps<\"a\"> & {\n  asChild?: boolean;\n  isActive?: boolean;\n  label?: string;\n};\nexport function SidebarMenuButton({\n  ref: externalMorphRef,\n  className,\n  asChild,\n  isActive,\n  label,\n  ...props\n}: SidebarMenuButtonProps) {\n  const Comp = asChild ? Slot : \"a\";\n  const accessibleLabel = label ?? getSidebarText(props.children);\n  const ownedMorphRef = useMorph<HTMLAnchorElement>(\"nav\", externalMorphRef);\n  return (\n    <Comp\n      ref={ownedMorphRef}\n      data-slot=\"sidebar-menu-button\"\n      data-state={isActive ? \"active\" : \"inactive\"}\n      aria-current={isActive ? \"page\" : undefined}\n      aria-label={accessibleLabel || undefined}\n      className={cn(\n        \"v-nav__item relative flex items-center gap-[var(--s-4)] h-[var(--nav-row)] pl-[var(--s-5)] pr-[var(--s-3)] rounded-[var(--r-md)] text-[color:var(--sidebar-foreground)] text-[length:var(--fs-body)] no-underline\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SidebarMenuLabelProps = React.ComponentProps<\"span\">;\nexport function SidebarMenuLabel({\n  className,\n  ...props\n}: SidebarMenuLabelProps) {\n  return (\n    <span\n      data-slot=\"sidebar-menu-label\"\n      className={cn(\n        \"v-nav__label flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type SidebarFooterProps = React.ComponentProps<\"div\">;\nexport function SidebarFooter({ className, ...props }: SidebarFooterProps) {\n  return (\n    <div\n      data-slot=\"sidebar-footer\"\n      data-part=\"footer\"\n      className={cn(\"v-sidebar__foot mt-auto grid gap-[2px]\", className)}\n      {...props}\n    />\n  );\n}\nexport type SidebarMenuBadgeProps = React.ComponentProps<\"span\">;\nexport function SidebarMenuBadge({\n  ref: externalMorphRef,\n  className,\n  ...props\n}: SidebarMenuBadgeProps) {\n  const ownedMorphRef = useMorph<HTMLSpanElement>(\"pills\", externalMorphRef);\n  return (\n    <span\n      ref={ownedMorphRef}\n      data-slot=\"sidebar-menu-badge\"\n      className={cn(\n        \"v-nav__count grid place-items-center min-w-[18px] h-[18px] px-[var(--s-1)] rounded-[var(--r-pill)] bg-[var(--v-pink)] text-[color:var(--v-on-accent)] text-[length:var(--fs-caps)] font-bold\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n\nfunction getSidebarText(children: React.ReactNode): string {\n  return React.Children.toArray(children)\n    .map((child) =>\n      typeof child === \"string\" || typeof child === \"number\"\n        ? String(child)\n        : React.isValidElement<{ children?: React.ReactNode }>(child)\n          ? getSidebarText(child.props.children)\n          : \"\",\n    )\n    .filter(Boolean)\n    .join(\" \");\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/sidebar.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"sidebar\"] {\n  transition: width var(--t-element) var(--enter);\n}\n[data-slot=\"sidebar-trigger\"] .v-icon {\n  width: 18px;\n  height: 18px;\n  stroke-width: 2.5;\n}\n[data-slot=\"sidebar-menu-button\"] {\n  cursor: pointer;\n  transition:\n    background var(--t-micro),\n    color var(--t-micro);\n}\n[data-slot=\"sidebar-menu-button\"]:hover {\n  background: rgba(251, 244, 230, 0.07);\n}\n[data-slot=\"sidebar-menu-button\"] .v-icon {\n  width: 20px;\n  height: 20px;\n  transition: transform var(--t-element) var(--enter);\n}\n[data-slot=\"sidebar-menu-button\"]:hover .v-icon {\n  transform: translateY(-1px) rotate(-6deg);\n}\n[data-slot=\"sidebar-menu-button\"]:active .v-icon {\n  transform: scale(0.92);\n}\n[data-slot=\"sidebar-menu-button\"][aria-current=\"page\"],\n[data-slot=\"sidebar-menu-button\"][aria-current=\"page\"] .v-icon {\n  color: var(--v-pink);\n}\n[data-slot=\"sidebar-menu-button\"][aria-current=\"page\"]::after {\n  content: \"\";\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  background: var(--sidebar-primary);\n  animation: v-sidebar-breathe var(--breath) ease-in-out infinite;\n}\n[data-slot=\"sidebar\"].-mini\n  :is(.v-nav__label, .v-nav__group, .v-brand span:not(.v-collapse)) {\n  display: none;\n}\n[data-slot=\"sidebar\"].-mini .v-brand {\n  justify-content: center;\n  font-size: 0;\n  min-height: 44px;\n  gap: 0;\n}\n[data-slot=\"sidebar\"].-mini .v-brand > *:not(.v-collapse) {\n  display: none;\n}\n[data-slot=\"sidebar\"].-mini .v-collapse {\n  margin: 0;\n  width: 44px;\n  height: 44px;\n  font-size: var(--fs-small);\n  box-shadow: 0 0 0 3px color-mix(in oklab, var(--v-pink) 28%, transparent);\n}\n[data-slot=\"sidebar\"].-mini .v-collapse .v-icon {\n  width: 15px;\n  height: 15px;\n  transform: none;\n}\n[data-slot=\"sidebar\"].-mini .v-nav__item {\n  justify-content: center;\n  padding: 0;\n}\n[data-slot=\"sidebar\"].-mini .v-nav__item::after {\n  display: none;\n}\n[data-slot=\"sidebar\"].-mini .v-nav__count {\n  position: absolute;\n  top: 4px;\n  right: 6px;\n  min-width: 16px;\n  height: 16px;\n  font-size: var(--fs-caps);\n}\n:root[data-mode=\"dark\"] [data-slot=\"sidebar\"],\n:root[data-mode=\"dark\"]\n  [data-slot=\"sidebar\"]\n  :is(\n    .v-nav,\n    .v-nav__item,\n    .v-nav__label,\n    .v-icon,\n    .v-sidebar__foot,\n    .v-brand\n  ) {\n  color: var(--structure-text);\n}\n/* The collapse icon sits on pink, independently of the rail surface. */\n:root[data-mode=\"dark\"]\n  [data-slot=\"sidebar\"]\n  [data-slot=\"sidebar-trigger\"]\n  .v-icon {\n  color: var(--v-on-accent);\n}\n:root[data-mode=\"dark\"] [data-slot=\"sidebar\"] .v-nav__item[aria-current=\"page\"],\n:root[data-mode=\"dark\"]\n  [data-slot=\"sidebar\"]\n  .v-nav__item[aria-current=\"page\"]\n  :is(.v-nav__label, .v-icon) {\n  color: var(--v-pink);\n}\n:root[data-mode=\"dark\"]\n  [data-slot=\"sidebar\"]\n  .v-nav__item:hover:not([aria-current=\"page\"]),\n:root[data-mode=\"dark\"]\n  [data-slot=\"sidebar\"]\n  .v-nav__item:hover:not([aria-current=\"page\"])\n  :is(.v-nav__label, .v-icon) {\n  color: var(--on-structure);\n}\n@keyframes v-sidebar-breathe {\n  0%,\n  100% {\n    opacity: 0.35;\n    transform: scale(0.8);\n  }\n  50% {\n    opacity: 1;\n    transform: scale(1);\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"sidebar-menu-button\"][aria-current=\"page\"]::after {\n    animation: none;\n  }\n}\n\n/* Standalone authored rail; embedded rails keep the container sizing contract. */\n[data-slot=\"sidebar\"][data-layout=\"viewport\"] {\n  position: sticky;\n  top: var(--shell-inset);\n  min-height: calc(100vh - var(--shell-inset) * 2);\n  max-height: calc(100vh - var(--shell-inset) * 2);\n}\n\n[data-slot=\"sidebar-content\"] {\n  --glide-fg: var(--v-pink);\n}\n[data-slot=\"sidebar-content\"].v-glide > .v-glide__pill {\n  background: rgba(251, 244, 230, 0.1);\n}\n\n[data-slot=\"sidebar\"][data-layout=\"viewport\"]:not(.-mini) {\n  width: auto;\n}\n\n/* New compositions are opt-in; the documentation shell owns its own design. */\n.v-sidebar[data-slot=\"sidebar\"][data-appearance] {\n  --mfill: var(--v-paper);\n  --mstroke: var(--v-edge);\n  --sidebar-foreground: var(--v-text);\n  --sidebar-muted: var(--v-text-3);\n  background: var(--v-paper);\n  color: var(--v-text);\n  border-radius: var(--r-panel);\n  width: 240px;\n  max-width: 100%;\n  min-height: 380px;\n  padding: var(--s-5) var(--s-3) var(--s-4);\n  gap: var(--s-4);\n  isolation: isolate;\n}\n.v-sidebar[data-slot][data-appearance]:has(> svg.v-morph) {\n  background: transparent;\n}\n.v-sidebar[data-slot][data-appearance]::before {\n  content: \"\";\n  position: absolute;\n  inset: 0;\n  border-radius: inherit;\n  background: radial-gradient(\n    ellipse at 12% 0%,\n    var(--v-blue-soft),\n    transparent 70%\n  );\n  pointer-events: none;\n  z-index: 0;\n}\n.v-sidebar[data-slot][data-appearance] > :not(svg) {\n  position: relative;\n  z-index: 1;\n}\n.v-sidebar[data-slot][data-appearance] .v-brand {\n  height: auto;\n  min-height: 44px;\n  margin: 0;\n  justify-content: flex-start;\n  font-size: var(--fs-lead);\n  gap: var(--s-3);\n  padding-inline: var(--s-1);\n  color: var(--v-text);\n}\n.v-sidebar[data-slot][data-appearance]\n  :is(\n    .v-nav,\n    .v-nav__item,\n    .v-nav__label,\n    .v-icon,\n    .v-sidebar__foot,\n    .v-brand\n  ) {\n  color: var(--v-text);\n}\n.v-sidebar[data-slot][data-appearance] .v-collapse {\n  width: 44px;\n  min-width: 44px;\n  height: 44px;\n  min-height: 44px;\n  box-shadow: none;\n  padding: 0;\n  overflow: visible;\n}\n.v-sidebar[data-slot][data-appearance] .v-collapse .v-icon {\n  color: var(--v-text);\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__group {\n  padding: var(--s-3) var(--s-3) var(--s-2);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.05em;\n  text-transform: uppercase;\n  color: var(--v-text-3);\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__item {\n  min-height: 44px;\n  height: auto;\n  width: 100%;\n  gap: var(--s-3);\n  padding: var(--s-3) var(--s-3);\n  border: 0;\n  border-radius: var(--r-md);\n  background: transparent;\n  text-align: left;\n  font: var(--fw-regular) var(--fs-small)/1.4 var(--font-text);\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__item:hover {\n  background: var(--v-beige);\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__item[aria-current] {\n  background: var(--v-blue-soft);\n  box-shadow: inset 2px 0 var(--v-blue);\n  font-weight: var(--fw-semibold);\n}\n.v-sidebar[data-slot][data-appearance]\n  .v-nav__item[aria-current]\n  :is(.v-nav__label, .v-icon) {\n  color: var(--v-text);\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__item::after {\n  display: none;\n  animation: none;\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__item .v-icon {\n  width: 18px;\n  height: 18px;\n  transform: none;\n  flex: none;\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__label {\n  white-space: normal;\n  overflow-wrap: anywhere;\n}\n.v-sidebar[data-slot][data-appearance] .v-nav__count {\n  background: transparent;\n  color: var(--v-text-3);\n  font-weight: var(--fw-regular);\n  margin-inline-start: auto;\n}\n.v-sidebar[data-slot][data-appearance] .v-sidebar__foot {\n  border-top: 1px solid var(--v-edge);\n  padding: var(--s-4) var(--s-2) 0;\n  font-size: var(--fs-caps);\n  line-height: 1.5;\n  gap: var(--s-3);\n}\n.v-sidebar[data-slot][data-appearance] .v-sidebar__foot p {\n  margin: 0;\n}\n.v-sidebar[data-slot][data-appearance=\"index\"] {\n  width: 164px;\n  min-height: 360px;\n  border-radius: var(--r-card-sm);\n  padding-inline: var(--s-3);\n  --mstroke: transparent;\n}\n.v-sidebar[data-slot][data-appearance=\"index\"]::before {\n  background: linear-gradient(var(--v-yellow-soft), transparent 55%);\n}\n.v-sidebar[data-slot][data-appearance=\"index\"] .v-brand {\n  flex-wrap: wrap;\n  gap: var(--s-2);\n}\n.v-sidebar[data-slot][data-appearance=\"index\"] .v-sidebar-example__seal {\n  display: none;\n}\n.v-sidebar[data-slot][data-appearance=\"index\"] .v-nav__count {\n  display: none;\n}\n.v-sidebar[data-slot][data-appearance=\"index\"] .v-nav__item {\n  padding-inline: var(--s-2);\n  font-size: var(--fs-meta);\n}\n.v-sidebar[data-slot][data-appearance=\"drawer\"] {\n  width: 100%;\n  min-height: 0;\n  padding: var(--s-3) 0;\n  --mstroke: transparent;\n}\n.v-sidebar[data-slot][data-appearance].-mini {\n  width: 134px;\n  padding-inline: var(--s-2);\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-nav__label {\n  display: block;\n  font-size: var(--fs-caps);\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-nav__item {\n  justify-content: flex-start;\n  gap: var(--s-2);\n  padding: var(--s-3) var(--s-2);\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-nav__count {\n  display: none;\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-brand {\n  justify-content: center;\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-brand > :not(.v-collapse) {\n  display: none;\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-sidebar__foot p {\n  display: none;\n}\n.v-sidebar[data-slot][data-appearance].-mini .v-sidebar__foot .v-btn {\n  font-size: var(--fs-caps);\n  padding-inline: var(--s-2);\n}\n.v-sidebar-example {\n  display: grid;\n  gap: var(--s-6);\n  width: 100%;\n  padding-inline: var(--s-5);\n  color: var(--v-text);\n}\n.v-sidebar-example > header {\n  display: grid;\n  gap: var(--s-3);\n}\n.v-sidebar-example > header > span {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.08em;\n  color: var(--v-text-3);\n}\n.v-sidebar-example h3 {\n  margin: 0;\n  font: var(--fw-medium) var(--fs-section)/1.25 var(--font-display);\n}\n.v-sidebar-example p {\n  margin: 0;\n  font-size: var(--fs-small);\n  line-height: 1.7;\n  color: var(--v-text-2);\n}\n.v-sidebar-example__stage {\n  display: flex;\n  align-items: start;\n  gap: var(--s-7);\n}\n.v-sidebar-example__stage > article {\n  flex: 1;\n  min-width: 0;\n  display: grid;\n  gap: var(--s-5);\n  padding-top: var(--s-6);\n}\n.v-sidebar-example__stage h4 {\n  margin: 0;\n  font: var(--fw-medium) var(--fs-section)/1.2 var(--font-display);\n}\n.v-sidebar-example__seal {\n  display: grid;\n  place-items: center;\n  width: 30px;\n  height: 30px;\n  border-radius: var(--r-md);\n  background: var(--v-blue);\n  color: var(--v-on-accent);\n  flex: none;\n}\n.v-sidebar-example__scroll[data-slot=\"scroll-area\"] {\n  --h: 250px;\n  width: 100%;\n  min-width: 0;\n  border-radius: 0;\n  background: transparent;\n}\n.v-sidebar-example__scroll.v-scroll.-plain[data-slot=\"scroll-area\"]\n  > [data-slot=\"scroll-area-viewport\"] {\n  padding: 0 var(--s-3) 0 0;\n}\n.v-sidebar-example__canvas {\n  padding: var(--s-6);\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-card);\n  background: var(--v-paper);\n  display: grid;\n  gap: var(--s-5);\n}\n.v-sidebar-example__canvas > span {\n  font-size: var(--fs-caps);\n  color: var(--v-text-3);\n}\n.v-sidebar-example__draft {\n  display: grid;\n  gap: var(--s-2);\n  font-size: var(--fs-meta);\n}\n.v-sidebar-example__stage .v-btn {\n  min-height: 44px;\n}\n@media (max-width: 600px) {\n  .v-sidebar-example__stage {\n    flex-direction: column;\n    gap: var(--s-6);\n  }\n  .v-sidebar-example__stage > .v-sidebar[data-appearance]:not(.-mini) {\n    width: 100%;\n  }\n  .v-sidebar-example__stage > article {\n    width: 100%;\n    padding-top: 0;\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"sidebar\"] {\n    transition: none;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/sidebar.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/sidebar.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "sidebar",
+      "name": "Sidebar",
+      "tier": "base",
+      "evidence": "I15 I16 I17 I18",
+      "status": "source",
+      "root": ".v-sidebar",
+      "variants": [
+        "folio",
+        "index",
+        "drawer"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "collapsed",
+        "rest",
+        "hover",
+        "focus",
+        "active",
+        "selected"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group",
+        "press",
+        "enters"
+      ],
+      "canvas": "480x640",
+      "contract": "entries/sidebar/contract.md",
+      "demo": "entries/sidebar/demo.html",
+      "isolation": [
+        "default-default-rest-480x640.html",
+        "default-default-rest-dark-480x640.html",
+        "default-default-selected-480x640.html",
+        "default-default-selected-dark-480x640.html",
+        "default-default-collapsed-480x640.html",
+        "default-default-collapsed-dark-480x640.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "SidebarProviderProps",
+        "props": [
+          {
+            "name": "children",
+            "type": "React.ReactNode",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "SidebarProps",
+        "props": [
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "layout",
+            "type": "\"container\" | \"viewport\"",
+            "required": false,
+            "description": "Container layout fills its parent; viewport layout follows the authored standalone rail."
+          },
+          {
+            "name": "appearance",
+            "type": "\"folio\" | \"index\" | \"drawer\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "SidebarHeaderProps",
+        "props": []
+      },
+      {
+        "name": "SidebarTriggerProps",
+        "props": []
+      },
+      {
+        "name": "SidebarContentProps",
+        "props": []
+      },
+      {
+        "name": "SidebarGroupLabelProps",
+        "props": []
+      },
+      {
+        "name": "SidebarMenuButtonProps",
+        "props": [
+          {
+            "name": "asChild",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "isActive",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "label",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "SidebarMenuLabelProps",
+        "props": []
+      },
+      {
+        "name": "SidebarFooterProps",
+        "props": []
+      },
+      {
+        "name": "SidebarMenuBadgeProps",
+        "props": []
+      }
+    ],
+    "category": "Navigation",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

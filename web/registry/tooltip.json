@@ -1,0 +1,106 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tooltip",
+  "title": "Tooltip",
+  "description": "Precise ink callouts, useful keyboard hints and small paper annotations. Short explanations that appear where attention already is.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-tooltip"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/tooltip.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-tooltip\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nexport type TooltipProps = React.ComponentProps<typeof Primitive.Root>;\nexport function Tooltip(props: TooltipProps) {\n  return <Primitive.Root delayDuration={220} {...props} />;\n}\nexport type TooltipProviderProps = React.ComponentProps<\n  typeof Primitive.Provider\n>;\nexport function TooltipProvider(props: TooltipProviderProps) {\n  return <Primitive.Provider delayDuration={220} {...props} />;\n}\nexport type TooltipTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n>;\nexport function TooltipTrigger(props: TooltipTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"tooltip-trigger\"\n      data-part=\"trigger\"\n      {...props}\n    />\n  );\n}\nexport type TooltipPortalProps = React.ComponentProps<typeof Primitive.Portal>;\nexport function TooltipPortal(props: TooltipPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport const tooltipContentVariants = cva(\n  \"v-tip -show bg-[var(--v-ink)] text-[color:var(--v-on-ink)] text-[length:var(--fs-meta)] leading-[1.3] py-1.5 px-2.5 rounded-[var(--r-sm)] max-w-[260px] z-[var(--z-tooltip)]\",\n);\nexport type TooltipContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & { portal?: boolean; appearance?: \"callout\" | \"shortcut\" | \"annotation\" };\nfunction TooltipPaint() {\n  const ref = useMorph<HTMLSpanElement>(\"surfaces\");\n  return (\n    <span\n      ref={ref}\n      className=\"v-tooltip-paint\"\n      data-morph=\"both\"\n      data-r=\"css\"\n      aria-hidden=\"true\"\n    />\n  );\n}\nexport function TooltipContent({\n  className,\n  ref,\n  children,\n  sideOffset = 8,\n  portal = true,\n  appearance,\n  ...props\n}: TooltipContentProps) {\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, ref, \"grow\");\n  const content = (\n    <Primitive.Content\n      ref={flowRef}\n      data-slot=\"tooltip-content\"\n      data-part=\"content\"\n      data-appearance={appearance}\n      sideOffset={sideOffset}\n      className={cn(tooltipContentVariants(), className)}\n      {...props}\n    >\n      {appearance && !props.asChild && <TooltipPaint />}\n      {children}\n    </Primitive.Content>\n  );\n  return portal ? <Primitive.Portal>{content}</Primitive.Portal> : content;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/tooltip.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-tip:where([data-slot=\"tooltip\"], [data-slot^=\"tooltip-\"]) {\n  z-index: var(--z-tooltip);\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  font-size: var(--fs-meta);\n  line-height: 1.3;\n  padding: var(--s-2) var(--s-3);\n  border-radius: var(--r-sm);\n  pointer-events: auto;\n  opacity: 0;\n  transition: opacity var(--t-micro);\n  max-width: min(260px, calc(100vw - 24px));\n  overflow-wrap: anywhere;\n}\n.v-tip:where([data-slot=\"tooltip\"], [data-slot^=\"tooltip-\"]).-show {\n  opacity: 1;\n}\n.v-tip[data-appearance] {\n  --mfill: var(--v-ink);\n  --mstroke: var(--v-ink);\n  border-radius: var(--r-sm);\n  padding: var(--s-3) var(--s-3);\n  box-shadow: var(--shadow-float);\n}\n.v-tip[data-appearance]:has(> .v-tooltip-paint > svg.v-morph) {\n  background: transparent;\n}\n.v-tip[data-appearance] {\n  isolation: isolate;\n}\n.v-tooltip-paint {\n  position: absolute;\n  inset: 0;\n  border-radius: inherit;\n  pointer-events: none;\n  z-index: -1;\n}\n.v-tip[data-appearance=\"shortcut\"] {\n  display: flex;\n  align-items: center;\n  gap: var(--s-5);\n  border-radius: var(--r-md);\n}\n.v-tip[data-appearance=\"shortcut\"] kbd {\n  border: 1px solid color-mix(in oklab, currentColor 35%, transparent);\n  border-bottom-width: 3px;\n  border-radius: var(--r-xs);\n  padding: var(--s-1) var(--s-2);\n  font-family: inherit;\n  white-space: nowrap;\n}\n.v-tip[data-appearance=\"annotation\"] {\n  --mfill: var(--v-paper);\n  --mstroke: var(--v-border);\n  color: var(--v-text);\n  border-radius: var(--r-xs) var(--r-md) var(--r-md) var(--r-xs);\n  padding: var(--s-3) var(--s-4);\n  font-size: var(--fs-meta);\n  line-height: 1.55;\n}\n.v-tip[data-appearance=\"annotation\"] strong {\n  display: block;\n  font-size: var(--fs-caps);\n  color: var(--v-text-3);\n  margin-bottom: 3px;\n}\n.v-tip[data-appearance=\"annotation\"]::before {\n  content: \"\";\n  position: absolute;\n  width: 3px;\n  top: 8px;\n  bottom: 8px;\n  left: 0;\n  background: var(--v-pink);\n  border-radius: var(--r-xs);\n  pointer-events: none;\n}\n.v-tip[data-appearance=\"callout\"]::after {\n  content: \"\";\n  position: absolute;\n  background: var(--v-ink);\n  pointer-events: none;\n}\n.v-tip[data-appearance=\"callout\"][data-side=\"top\"]::after {\n  top: 100%;\n  left: 50%;\n  width: 1px;\n  height: 6px;\n}\n.v-tip[data-appearance=\"callout\"][data-side=\"bottom\"]::after {\n  bottom: 100%;\n  left: 50%;\n  width: 1px;\n  height: 6px;\n}\n.v-tip[data-appearance=\"callout\"][data-side=\"left\"]::after {\n  left: 100%;\n  top: 50%;\n  height: 1px;\n  width: 6px;\n}\n.v-tip[data-appearance=\"callout\"][data-side=\"right\"]::after {\n  right: 100%;\n  top: 50%;\n  height: 1px;\n  width: 6px;\n}\n.v-tooltip-example {\n  display: grid;\n  gap: var(--s-5);\n  width: 100%;\n  max-width: 580px;\n  margin-inline: auto;\n  padding: var(--s-6);\n  border-left: 2px solid var(--v-edge);\n  color: var(--v-text);\n}\n.v-tooltip-example__label {\n  color: var(--v-text-3);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.07em;\n  text-transform: uppercase;\n}\n.v-tooltip-example h3 {\n  margin: 0;\n  font-family: var(--font-display);\n  font-size: var(--fs-section);\n  line-height: 1.25;\n}\n.v-tooltip-example p {\n  margin: 0;\n  line-height: 1.6;\n  max-width: 42ch;\n}\n.v-tooltip-example__actions {\n  display: flex;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n  align-items: center;\n}\n.v-tooltip-example [data-slot=\"tooltip-trigger\"] {\n  min-height: 44px;\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"tooltip\"],\n  [data-slot^=\"tooltip-\"],\n  [data-slot=\"tooltip\"]::before,\n  [data-slot=\"tooltip\"]::after,\n  [data-slot^=\"tooltip-\"]::before,\n  [data-slot^=\"tooltip-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/tooltip.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/tooltip.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "tooltip",
+      "name": "Tooltip",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": "[data-tooltip]",
+      "variants": [
+        "callout",
+        "shortcut",
+        "annotation"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "none",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x240",
+      "contract": "entries/tooltip/contract.md",
+      "demo": "entries/tooltip/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-open.html",
+        "default-default-open-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "TooltipProps",
+        "props": []
+      },
+      {
+        "name": "TooltipProviderProps",
+        "props": []
+      },
+      {
+        "name": "TooltipTriggerProps",
+        "props": []
+      },
+      {
+        "name": "TooltipPortalProps",
+        "props": []
+      },
+      {
+        "name": "TooltipContentProps",
+        "props": [
+          {
+            "name": "portal",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"callout\" | \"shortcut\" | \"annotation\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

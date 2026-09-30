@@ -1,0 +1,90 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "theme-toggle",
+  "title": "Theme toggle",
+  "description": "A controlled light/dark switch with a morphing sun and moon and a smooth organic page reveal.",
+  "dependencies": [
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/theme-toggle.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { motion } from \"motion/react\";\nimport { Button, type ButtonProps } from \"@/components/ui/button\";\nimport { useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { cn } from \"@/lib/utils\";\nimport { rememberThemeOrigin, type ThemeChangeDetails } from \"@/lib/cojeev-motion/theme-transition\";\n\nexport type ThemeMode = \"light\" | \"dark\";\nexport { applyTheme } from \"@/lib/cojeev-motion/theme-transition\";\nexport type { ThemeChangeDetails, ThemeRevealOrigin, ThemeRevealOptions } from \"@/lib/cojeev-motion/theme-transition\";\nexport type ThemeToggleProps = Omit<ButtonProps,\"onChange\"> & {\n  mode: ThemeMode;\n  onModeChange: (mode: ThemeMode, details?:ThemeChangeDetails) => void;\n  showLabel?: boolean;\n  label?: React.ReactNode;\n  /** Keep a label on desktop and the same 44px icon target on small screens. */\n  responsive?: boolean;\n};\nconst sun = \"M12 5C15.866 5 19 8.134 19 12C19 15.866 15.866 19 12 19C8.134 19 5 15.866 5 12C5 8.134 8.134 5 12 5Z\";\nconst moon = \"M18.9 15.2C17.2 19.3 12.9 21.2 8.8 19.4C4.7 17.6 2.7 13 4.4 8.8C5.4 6.2 7.7 4.3 10.4 3.8C8.1 10.4 12.3 16.8 18.9 15.2Z\";\n\n/** Controlled theme switch: the application owns persistence and the theme scope. */\nexport function ThemeToggle({mode,onModeChange,showLabel=true,label,responsive=false,className,onClick,...props}:ThemeToggleProps) {\n  const {quiet,transition}=useChoreography();\n  const dark=mode===\"dark\";\n  return <Button variant=\"ghost\" size=\"sm\" data-label={showLabel?\"visible\":\"hidden\"} data-responsive={responsive} data-morph=\"both\" data-tier=\"pill\" data-lobes=\"3\" data-depth=\".008\" data-asym=\".05\" role=\"switch\" aria-checked={dark} aria-label=\"Dark appearance\" title={`Switch to ${dark?\"light\":\"dark\"} theme`} className={cn(\"v-theme-toggle\",className)} onClick={event=>{onClick?.(event);if(!event.defaultPrevented)onModeChange(dark?\"light\":\"dark\",rememberThemeOrigin(event.currentTarget))}} {...props} data-slot=\"theme-toggle\">\n    <svg data-slot=\"theme-toggle-icon\" viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\">\n      <motion.g initial={false} animate={{rotate:dark?45:0}} transition={transition} style={{transformOrigin:\"12px 12px\"}}>\n        {Array.from({length:8},(_,i)=><motion.path key={i} d=\"M12 1.5V3\" transform={`rotate(${i*45} 12 12)`} stroke=\"currentColor\" strokeWidth=\"1.6\" strokeLinecap=\"round\" initial={false} animate={{pathLength:dark?0:1,opacity:dark?0:1}} transition={{duration:quiet?0:.2,delay:quiet?0:i*.015}}/>)}\n      </motion.g>\n      <motion.path initial={false} d={dark?moon:sun} animate={{d:dark?moon:sun,rotate:dark?-12:0}} transition={transition} fill=\"currentColor\" style={{transformOrigin:\"12px 12px\"}}/>\n    </svg>\n    {showLabel&&<span className=\"v-theme-toggle__label\">{label ?? (dark?\"Dark\":\"Light\")}</span>}\n  </Button>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/theme-toggle.css",
+      "content": "@layer cojeev-states {\n:root .v-btn.v-theme-toggle[data-slot][data-label] {\n  --mfill:var(--v-paper); --mstroke:var(--v-border);\n  gap:var(--s-2); height:44px; width:112px; min-width:112px; padding:0 var(--s-4); border-radius:var(--r-pill);\n  background:var(--mfill); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-border);\n}\n:root .v-btn.v-theme-toggle[data-slot][data-label]:is(:hover,:focus-visible) { --mfill:var(--v-beige); --mstroke:var(--v-text-2); }\n:root .v-btn.v-theme-toggle[data-slot][data-label]:has(>svg.v-morph) { background:transparent; box-shadow:none; }\n[data-slot=\"theme-toggle-icon\"] { flex:none; overflow:visible; }\n.v-theme-toggle__label { color:inherit; font:var(--fw-medium) var(--fs-small)/1 var(--font-text); }\n:root .v-btn.v-theme-toggle[data-slot][data-label=\"hidden\"] { min-width:44px; width:44px; padding:0; }\n:root .v-btn.v-theme-toggle[data-slot][data-label]:is(:disabled,[aria-disabled=\"true\"]:not([aria-busy=\"true\"])) { --mfill:var(--v-disabled-face); --mstroke:var(--v-disabled-edge); color:var(--v-disabled-ink); }\n@media (max-width:640px) {\n  :root .v-btn.v-theme-toggle[data-slot][data-responsive=\"true\"] { min-width:44px; width:44px; padding:0; }\n  .v-theme-toggle[data-responsive=\"true\"] .v-theme-toggle__label { display:none; }\n}\n\n/* The destination DOM is clipped; Motion owns the changing organic contour. */\n:root[data-theme-reveal]::view-transition { pointer-events:none; }\n:root[data-theme-reveal]::view-transition-group(root) { animation:none; background-image:var(--v-theme-glyph,none); background-position:var(--v-theme-glyph-position,0 0); background-size:var(--v-theme-glyph-size,0 0); background-repeat:no-repeat; }\n:root[data-theme-reveal]::view-transition-image-pair(root) { isolation:isolate; }\n:root[data-theme-reveal]::view-transition-old(root),\n:root[data-theme-reveal]::view-transition-new(root) { mix-blend-mode:normal; opacity:1; mask-image:var(--v-theme-glyph-mask,none); mask-size:100% 100%; }\n:root[data-theme-reveal]::view-transition-old(root) { animation:none; z-index:1; }\n:root[data-theme-reveal]::view-transition-new(root) { animation:v-theme-retain 8s linear; clip-path:var(--v-theme-clip); z-index:2; }\n@keyframes v-theme-retain { from { opacity:1; } to { opacity:1; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/theme-toggle.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/theme-toggle.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Theme toggle",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default",
+        "sm",
+        "lg"
+      ],
+      "states": [
+        "light",
+        "dark",
+        "focused",
+        "disabled",
+        "reduced-motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "ThemeToggleProps",
+        "props": [
+          {
+            "name": "mode",
+            "type": "ThemeMode",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "onModeChange",
+            "type": "(mode: ThemeMode, details?:ThemeChangeDetails) => void",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "showLabel",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "label",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "responsive",
+            "type": "boolean",
+            "required": false,
+            "description": "Keep a label on desktop and the same 44px icon target on small screens."
+          }
+        ]
+      }
+    ],
+    "category": "Actions",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

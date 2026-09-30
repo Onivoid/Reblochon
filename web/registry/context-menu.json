@@ -1,0 +1,150 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "context-menu",
+  "title": "Context Menu",
+  "description": "Reveals contextual actions for a target through a context-menu interaction.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-context-menu"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json",
+    "https://000h.cojeev.com/r/item-adornment.json",
+    "https://000h.cojeev.com/r/animated-icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/context-menu.tsx",
+      "content": "\"use client\";\nimport { scrollAreaListChildren } from \"@/components/ui/scroll-area\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-context-menu\";\nimport {\n  useFlowAppearance,\n  useFlowGroup,\n} from \"@/lib/cojeev-motion/use-flow\";\n\nimport { adornMenuItem, itemText, type ItemAdornmentItemProps } from \"@/components/ui/item-adornment\";\nimport { StateChevron, AnimatedIcon } from \"@/components/ui/animated-icon\";\n\nexport type ContextMenuProps = React.ComponentProps<typeof Primitive.Root>;\nexport function ContextMenu(props: ContextMenuProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type ContextMenuPortalProps = React.ComponentProps<\n  typeof Primitive.Portal\n>;\nexport function ContextMenuPortal(props: ContextMenuPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type ContextMenuGroupProps = React.ComponentProps<\n  typeof Primitive.Group\n>;\nexport function ContextMenuGroup(props: ContextMenuGroupProps) {\n  return <Primitive.Group data-slot=\"context-menu-group\" {...props} />;\n}\nexport type ContextMenuRadioGroupProps = React.ComponentProps<\n  typeof Primitive.RadioGroup\n>;\nexport function ContextMenuRadioGroup(props: ContextMenuRadioGroupProps) {\n  return (\n    <Primitive.RadioGroup data-slot=\"context-menu-radiogroup\" {...props} />\n  );\n}\nexport type ContextMenuSubProps = React.ComponentProps<typeof Primitive.Sub>;\nexport function ContextMenuSub(props: ContextMenuSubProps) {\n  return <Primitive.Sub {...props} />;\n}\nexport type ContextMenuTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n>;\nexport function ContextMenuTrigger({\n  className,\n  ref,\n  onKeyDown,\n  ...props\n}: ContextMenuTriggerProps) {\n  return (\n    <Primitive.Trigger\n      ref={ref}\n      data-slot=\"context-menu-trigger\"\n      data-part=\"trigger\"\n      data-context=\"\"\n      tabIndex={0}\n      onKeyDown={(event) => {\n        onKeyDown?.(event);\n        if (event.defaultPrevented || props.disabled) return;\n        if (\n          event.key === \"ContextMenu\" ||\n          (event.shiftKey && event.key === \"F10\")\n        ) {\n          event.preventDefault();\n          const rect = event.currentTarget.getBoundingClientRect();\n          event.currentTarget.dispatchEvent(\n            new MouseEvent(\"contextmenu\", {\n              bubbles: true,\n              cancelable: true,\n              clientX: rect.left + rect.width / 2,\n              clientY: rect.top + rect.height / 2,\n            }),\n          );\n        }\n      }}\n      className={cn(\"\", className)}\n      {...props}\n    />\n  );\n}\nexport const contextmenuContentVariants = cva(\n  \"v-menu [background:var(--popover)] [border-radius:var(--r-card-sm)] [padding:var(--s-2)] [min-width:200px] [box-shadow:var(--shadow-float)] [border:1px_solid_var(--v-border)] [display:grid] [gap:2px]\",\n);\nexport type ContextMenuContentProps = React.ComponentProps<\n  typeof Primitive.Content\n>;\nexport function ContextMenuContent({\n  className,\n  ref,\n  children,\n  ...props\n}: ContextMenuContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const groupRef = useFlowGroup<HTMLDivElement>(morphRef, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[data-highlighted]\",\n  });\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, groupRef, \"grow\");\n  return (\n    <Primitive.Portal>\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"context-menu-content\"\n        data-part=\"content\"\n        className={cn(contextmenuContentVariants(), className)}\n        {...props}\n      >\n        {scrollAreaListChildren(children, props.asChild)}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\nexport type ContextMenuSubContentProps = React.ComponentProps<\n  typeof Primitive.SubContent\n>;\nexport function ContextMenuSubContent({\n  className,\n  children,\n  ref,\n  ...props\n}: ContextMenuSubContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const groupRef = useFlowGroup<HTMLDivElement>(morphRef, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[data-highlighted]\",\n  });\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, groupRef, \"grow\");\n  return (\n    <Primitive.Portal>\n      <Primitive.SubContent\n        ref={flowRef}\n        data-slot=\"context-menu-sub-content\"\n        data-part=\"content\"\n        className={cn(contextmenuContentVariants(), className)}\n        {...props}\n      >{scrollAreaListChildren(children, props.asChild)}</Primitive.SubContent>\n    </Primitive.Portal>\n  );\n}\nexport type ContextMenuItemProps = React.ComponentProps<\n  typeof Primitive.Item\n> & { variant?: \"default\" | \"danger\"; inset?: boolean } & ItemAdornmentItemProps;\nexport function ContextMenuItem({\n  className,\n  children,\n  adornment,\n  adornmentId,\n  variant,\n  inset,\n  ref,\n  ...props\n}: ContextMenuItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.Item\n      ref={morphRef}\n      data-slot=\"context-menu-item\"\n      data-part=\"item\"\n      data-inset={inset || undefined}\n      className={cn(\n        \"v-menu__item flex items-center gap-[var(--s-3)] min-h-10 px-[var(--s-3)] rounded-[var(--r-md)] text-[length:var(--fs-control)] w-full text-left whitespace-nowrap outline-none\",\n        variant === \"danger\" && \"-danger\",\n        className,\n      )}\n      {...props}\n    >{adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild)}</Primitive.Item>\n  );\n}\nexport type ContextMenuSubTriggerProps = React.ComponentProps<\n  typeof Primitive.SubTrigger\n> & { inset?: boolean } & ItemAdornmentItemProps;\nexport function ContextMenuSubTrigger({\n  className,\n  adornment,\n  adornmentId,\n  inset,\n  children,\n  ref,\n  ...props\n}: ContextMenuSubTriggerProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.SubTrigger\n      ref={morphRef}\n      data-slot=\"context-menu-sub-trigger\"\n      data-part=\"item\"\n      data-inset={inset || undefined}\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <StateChevron direction=\"right\" />)}\n    </Primitive.SubTrigger>\n  );\n}\nexport type ContextMenuCheckboxItemProps = React.ComponentProps<\n  typeof Primitive.CheckboxItem\n> & ItemAdornmentItemProps;\nexport function ContextMenuCheckboxItem({\n  className,\n  adornment,\n  adornmentId,\n  children,\n  ref,\n  ...props\n}: ContextMenuCheckboxItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.CheckboxItem\n      ref={morphRef}\n      data-slot=\"context-menu-checkbox-item\"\n      data-part=\"item\"\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <span className=\"v-menu__check\" aria-hidden=\"true\"><Primitive.ItemIndicator data-slot=\"context-menu-item-indicator\" data-part=\"indicator\"><AnimatedIcon name=\"check\" preset=\"validation\" /></Primitive.ItemIndicator></span>)}\n    </Primitive.CheckboxItem>\n  );\n}\nexport type ContextMenuRadioItemProps = React.ComponentProps<\n  typeof Primitive.RadioItem\n> & ItemAdornmentItemProps;\nexport function ContextMenuRadioItem({\n  className,\n  adornment,\n  adornmentId,\n  children,\n  ref,\n  ...props\n}: ContextMenuRadioItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.RadioItem\n      ref={morphRef}\n      data-slot=\"context-menu-radio-item\"\n      data-part=\"item\"\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <span className=\"v-menu__check\" aria-hidden=\"true\"><Primitive.ItemIndicator data-slot=\"context-menu-item-indicator\" data-part=\"indicator\"><AnimatedIcon name=\"dot\" preset=\"validation\" /></Primitive.ItemIndicator></span>)}\n    </Primitive.RadioItem>\n  );\n}\nexport type ContextMenuLabelProps = React.ComponentProps<\n  typeof Primitive.Label\n>;\nexport function ContextMenuLabel({\n  className,\n  ...props\n}: ContextMenuLabelProps) {\n  return (\n    <Primitive.Label\n      data-slot=\"context-menu-label\"\n      data-part=\"group\"\n      className={cn(\"v-menu__group\", className)}\n      {...props}\n    />\n  );\n}\nexport type ContextMenuSeparatorProps = React.ComponentProps<\n  typeof Primitive.Separator\n>;\nexport function ContextMenuSeparator({\n  className,\n  ...props\n}: ContextMenuSeparatorProps) {\n  return (\n    <Primitive.Separator\n      data-slot=\"context-menu-separator\"\n      data-part=\"separator\"\n      className={cn(\"v-menu__sep\", className)}\n      {...props}\n    />\n  );\n}\nexport type ContextMenuShortcutProps = React.ComponentProps<\"span\">;\nexport function ContextMenuShortcut({\n  className,\n  ...props\n}: ContextMenuShortcutProps) {\n  return (\n    <span\n      data-slot=\"context-menu-shortcut\"\n      className={cn(\n        \"ml-auto text-[length:var(--fs-caps)] text-[color:var(--muted-foreground)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/context-menu.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-menu__item:where([data-slot=\"context-menu\"], [data-slot^=\"context-menu-\"]) {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-height: 40px;\n  padding: 0 var(--s-3);\n  border-radius: var(--r-md);\n  font-size: var(--fs-control);\n  width: 100%;\n  text-align: left;\n  white-space: nowrap;\n}\n.v-menu__item:where(\n    [data-slot=\"context-menu\"],\n    [data-slot^=\"context-menu-\"]\n  ):hover,\n.v-menu__item:where(\n    [data-slot=\"context-menu\"],\n    [data-slot^=\"context-menu-\"]\n  )[data-highlighted] {\n  background: var(--v-beige);\n}\n.v-menu__item:where(\n    [data-slot=\"context-menu\"],\n    [data-slot^=\"context-menu-\"]\n  ).-danger {\n  color: var(--v-danger-ink);\n}\n.v-menu__sep:where([data-slot=\"context-menu\"], [data-slot^=\"context-menu-\"]) {\n  height: 1px;\n  background: var(--v-border);\n  margin: var(--s-1) 0;\n}\n.v-menu__group:where([data-slot=\"context-menu\"], [data-slot^=\"context-menu-\"]) {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.06em;\n  text-transform: uppercase;\n  color: var(--muted-foreground);\n  padding: var(--s-2) var(--s-3) var(--s-1);\n}\n.v-menu:where([data-slot=\"context-menu\"], [data-slot^=\"context-menu-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-menu:where(\n    [data-slot=\"context-menu\"],\n    [data-slot^=\"context-menu-\"]\n  )::-webkit-scrollbar {\n  width: 12px;\n  height: 12px;\n}\n.v-menu:where(\n    [data-slot=\"context-menu\"],\n    [data-slot^=\"context-menu-\"]\n  )::-webkit-scrollbar-track {\n  background: transparent;\n  border-radius: var(--r-pill);\n}\n.v-menu:where(\n    [data-slot=\"context-menu\"],\n    [data-slot^=\"context-menu-\"]\n  )::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-ink) 34%, transparent);\n  border-radius: var(--r-pill);\n  border: 4px solid transparent;\n  background-clip: content-box;\n  min-height: 36px;\n}\n.v-menu:where([data-slot=\"context-menu\"], [data-slot^=\"context-menu-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-menu:where([data-slot=\"context-menu\"], [data-slot^=\"context-menu-\"]) {\n  scrollbar-gutter: stable;\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"context-menu\"],\n  [data-slot^=\"context-menu-\"],\n  [data-slot=\"context-menu\"]::before,\n  [data-slot=\"context-menu\"]::after,\n  [data-slot^=\"context-menu-\"]::before,\n  [data-slot^=\"context-menu-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"context-menu-trigger\"]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 2px;\n}\n\n[data-slot^=\"context-menu-\"][data-inset] {\n  padding-left: var(--s-8);\n}\n[data-slot^=\"context-menu-\"][data-disabled] {\n  color: var(--v-disabled-ink);\n  cursor: not-allowed;\n}\n[data-slot^=\"context-menu-\"][data-highlighted] {\n  outline: none;\n  background: var(--v-beige);\n}\n\n[data-slot=\"context-menu-content\"], [data-slot=\"context-menu-sub-content\"] {\n min-width:min(200px,var(--radix-context-menu-content-available-width,calc(100vw - 24px)));\n max-width:min(calc(100vw - 24px),var(--radix-context-menu-content-available-width,calc(100vw - 24px)));\n max-height:min(480px,var(--radix-context-menu-content-available-height,calc(100dvh - 32px)));\n overflow:visible; overscroll-behavior:contain; overflow-wrap:anywhere;\n}\n[data-slot=\"context-menu-item\"] { min-width:0; height:auto; min-height:36px; white-space:normal; }\n[data-slot=\"context-menu-content\"], [data-slot=\"context-menu-sub-content\"] { z-index:var(--z-popover); }\n[data-slot^=\"context-menu-\"][data-part=\"item\"] { min-width:0; white-space:normal; overflow-wrap:anywhere; padding-block:var(--s-2); }\n\n[data-slot=\"context-menu-content\"], [data-slot=\"context-menu-sub-content\"] { width:var(--menu-width,260px); min-width:min(200px,calc(100vw - 24px)); max-width:calc(100vw - 24px); color:var(--popover-foreground); }\n[data-slot^=\"context-menu-\"][data-part=\"item\"] { min-width:0; min-height:44px; padding-block:var(--s-2); gap:var(--s-3); white-space:normal; overflow-wrap:anywhere; text-align:start; }\n[data-slot^=\"context-menu-\"][data-part=\"item\"]:is(:hover,[data-highlighted],[data-state=\"checked\"]) { background:var(--v-beige); color:var(--v-text); }\n[data-slot^=\"context-menu-\"][data-part=\"item\"][data-state=\"checked\"], [data-slot^=\"context-menu-\"][data-part=\"item\"]:active { background:var(--v-pink-soft); color:var(--v-text); }\n[data-slot^=\"context-menu-\"][data-part=\"item\"].-danger { color:var(--v-danger-ink); }\n[data-slot^=\"context-menu-\"][data-part=\"item\"][data-disabled] { background:transparent; color:var(--v-disabled-ink); }\n[data-slot^=\"context-menu-\"] .v-menu__check { display:inline-grid; place-items:center; width:18px; min-width:18px; margin-inline-start:auto; color:inherit; }\n[data-slot^=\"context-menu-\"] .v-menu__check .v-icon { width:16px; height:16px; }\n\n/* A native flyout may share a narrow viewport with its parent. Use Popper's\n   measured free width so its labels wrap instead of leaving the screen. */\n[data-slot=\"context-menu-sub-content\"] { min-width:min(200px,var(--radix-context-menu-content-available-width,200px)); max-width:min(calc(100vw - 24px),var(--radix-context-menu-content-available-width,260px)); }\n\n/* The shared ScrollArea owns menu overflow and its custom thumb. */\n:is([data-slot=\"context-menu-content\"],[data-slot=\"context-menu-sub-content\"]) .v-list-scroll { --list-scroll-max-height:min(320px, calc(var(--radix-popper-available-height, 60dvh) - 20px)); }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/context-menu.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/context-menu.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "context-menu",
+      "name": "Context Menu",
+      "tier": "base",
+      "evidence": "Ext I18",
+      "status": "derived",
+      "root": "[data-context]",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "none",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x360",
+      "contract": "entries/context-menu/contract.md",
+      "demo": "entries/context-menu/demo.html",
+      "isolation": [
+        "default-default-rest-480x360.html",
+        "default-default-rest-dark-480x360.html",
+        "default-default-open-480x360.html",
+        "default-default-open-dark-480x360.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ContextMenuProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuPortalProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuGroupProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuRadioGroupProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuSubProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuTriggerProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuContentProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuSubContentProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuItemProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "inset",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ContextMenuSubTriggerProps",
+        "props": [
+          {
+            "name": "inset",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ContextMenuCheckboxItemProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuRadioItemProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuLabelProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuSeparatorProps",
+        "props": []
+      },
+      {
+        "name": "ContextMenuShortcutProps",
+        "props": []
+      }
+    ],
+    "category": "Actions",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

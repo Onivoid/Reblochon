@@ -1,0 +1,581 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "date-picker",
+  "title": "Date Picker",
+  "description": "Choose one day, a range, or multiple dates from a labelled field and calendar popover.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/calendar.json",
+    "https://000h.cojeev.com/r/popover.json",
+    "https://000h.cojeev.com/r/icon.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/scroll-area.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/date-picker.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { controlRadiusStyle, type ControlAppearanceProps } from \"@/lib/cojeev/control-appearance\";\nimport { Calendar, type CalendarSingleProps, type CalendarRangeProps, type CalendarMultipleProps, type DateRange } from \"@/components/ui/calendar\";\nimport { Popover, PopoverTrigger, PopoverContent } from \"@/components/ui/popover\";\nimport { Icon } from \"@/components/ui/icon\";\nimport { Button } from \"@/components/ui/button\";\nimport { ScrollAreaList } from \"@/components/ui/scroll-area\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { useFlowPress } from \"@/lib/cojeev-motion/flow-press\";\nexport const datePickerVariants = cva(\"v-menuhost [display:inline-block]\");\ntype DatePickerBaseProps = Omit<React.ComponentProps<\"div\">, \"defaultValue\" | \"onChange\"> & ControlAppearanceProps & {\n  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  placeholder?: string;\n  disabled?: boolean;\n  /** Format each day; ranges and multiple summaries reuse this formatter. */\n  formatDate?: (date: Date) => string;\n  triggerProps?: React.ComponentProps<\"button\">;\n  clearLabel?: string;\n  doneLabel?: string;\n};\nexport type DatePickerSingleProps = DatePickerBaseProps & {\n  mode?: \"single\";\n  date?: Date;\n  defaultDate?: Date;\n  onDateChange?: (date: Date | undefined) => void;\n  calendarProps?: Omit<CalendarSingleProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">;\n};\nexport type DatePickerRangeProps = DatePickerBaseProps & {\n  mode: \"range\";\n  date?: DateRange;\n  defaultDate?: DateRange;\n  onDateChange?: (range: DateRange | undefined) => void;\n  /** Range pickers default to one night; set min=0 to allow a one-day range. */\n  calendarProps?: Omit<CalendarRangeProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">;\n};\nexport type DatePickerMultipleProps = DatePickerBaseProps & {\n  mode: \"multiple\";\n  date?: Date[];\n  defaultDate?: Date[];\n  onDateChange?: (dates: Date[] | undefined) => void;\n  calendarProps?: Omit<CalendarMultipleProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">;\n};\nexport type DatePickerProps = DatePickerSingleProps | DatePickerRangeProps | DatePickerMultipleProps;\ntype DateSelection = Date | DateRange | Date[] | undefined;\n\nexport function DatePicker(datePickerProps: DatePickerProps) {\n  const {\n    radius, appearance, style, className, mode = \"single\", date, defaultDate,\n    onDateChange, open, defaultOpen = false, onOpenChange,\n    placeholder = \"Pick a date\", disabled, calendarProps,\n    formatDate = (date) => date.toLocaleDateString(\"en-GB\", { day: \"numeric\", month: \"short\", year: \"numeric\" }),\n    triggerProps, clearLabel = \"Clear dates\", doneLabel = \"Done\", ...props\n  } = datePickerProps;\n  const [internal, setInternal] = React.useState({ mode, value: defaultDate });\n  const [internalOpen, setInternalOpen] = React.useState(defaultOpen);\n  const value = Object.prototype.hasOwnProperty.call(datePickerProps, \"date\") ? date : internal.mode === mode ? internal.value : defaultDate;\n  const setOpen = (next: boolean) => { setInternalOpen(next); onOpenChange?.(next); };\n  const change = (next: DateSelection) => {\n    setInternal({ mode, value: next });\n    if (mode === \"range\") (onDateChange as DatePickerRangeProps[\"onDateChange\"])?.(next as DateRange | undefined);\n    else if (mode === \"multiple\") (onDateChange as DatePickerMultipleProps[\"onDateChange\"])?.(next as Date[] | undefined);\n    else (onDateChange as DatePickerSingleProps[\"onDateChange\"])?.(next as Date | undefined);\n  };\n  let summary: string = placeholder;\n  let initialMonth: Date | undefined;\n  let calendar: React.ReactNode;\n  let hasValue = false;\n  if (mode === \"range\") {\n    const range = value as DateRange | undefined;\n    initialMonth = range?.from;\n    hasValue = !!range?.from;\n    summary = range?.from ? `${formatDate(range.from)} – ${range.to ? formatDate(range.to) : \"Choose end\"}` : placeholder;\n    calendar = <Calendar autoFocus defaultMonth={initialMonth} min={1} {...(calendarProps as DatePickerRangeProps[\"calendarProps\"])} mode=\"range\" selected={range} onSelect={next => { change(next); if (next?.from && next.to) setOpen(false); }} />;\n  } else if (mode === \"multiple\") {\n    const dates = value as Date[] | undefined;\n    initialMonth = dates?.[0];\n    hasValue = !!dates?.length;\n    summary = dates?.length ? `${dates.length} ${dates.length === 1 ? \"day\" : \"days\"} selected` : placeholder;\n    calendar = <Calendar autoFocus defaultMonth={initialMonth} {...(calendarProps as DatePickerMultipleProps[\"calendarProps\"])} mode=\"multiple\" selected={dates} onSelect={change} />;\n  } else {\n    const selected = value as Date | undefined;\n    initialMonth = selected;\n    hasValue = !!selected;\n    summary = selected ? formatDate(selected) : placeholder;\n    calendar = <Calendar autoFocus defaultMonth={initialMonth} {...(calendarProps as DatePickerSingleProps[\"calendarProps\"])} selected={selected} onSelect={next => { change(next); setOpen(false); }} />;\n  }\n  const clearDisabled = !hasValue || calendarProps?.required || (mode === \"multiple\" && ((calendarProps as DatePickerMultipleProps[\"calendarProps\"])?.min ?? 0) > 0);\n  return <Popover open={!disabled && (open ?? internalOpen)} onOpenChange={setOpen}>\n    <div data-slot=\"date-picker\" data-selection-mode={mode} data-appearance={appearance} style={{ ...style, ...controlRadiusStyle(radius) }} data-part=\"root\" data-datepicker=\"\" className={cn(datePickerVariants(), className)} {...props}>\n      <DatePickerTrigger appearance={appearance} disabled={disabled} {...triggerProps}>\n        <Icon name=\"calendar\" /><span data-value=\"\">{summary}</span><Icon name=\"chevron-down\" />\n      </DatePickerTrigger>\n      <DatePickerContent>\n        <ScrollAreaList className=\"v-datepicker__scroll\" maxHeight=\"max(160px, calc(var(--radix-popover-content-available-height, 80dvh) - 112px))\" viewportProps={{ \"aria-label\": \"Choose dates\", tabIndex: -1 }}>\n          {calendar}\n        </ScrollAreaList>\n        <div className=\"v-datepicker__footer\">\n          <Button size=\"sm\" variant=\"ghost\" disabled={clearDisabled} onClick={() => { change(undefined); setOpen(false); }}>{clearLabel}</Button>\n          {mode === \"multiple\" ? <Button size=\"sm\" onClick={() => setOpen(false)}>{doneLabel}</Button> : <span className=\"v-datepicker__hint\">{mode === \"range\" ? \"Choose a start and end\" : \"Choose one day\"}</span>}\n        </div>\n      </DatePickerContent>\n    </div>\n  </Popover>;\n}\nexport type DatePickerTriggerProps = React.ComponentProps<typeof PopoverTrigger> & ControlAppearanceProps;\nexport function DatePickerTrigger({\n  radius, appearance, style,\n  className,\n  ref,\n  ...props\n}: DatePickerTriggerProps) {\n  const morphRef = useMorph<HTMLButtonElement>(\"buttons\", ref);\n  const pressRef = useFlowPress(morphRef);\n  return (\n    <PopoverTrigger\n      ref={pressRef}\n      data-slot=\"date-picker-trigger\"\n      data-motion={appearance === \"editorial\" ? \"off\" : undefined}\n      data-appearance={appearance}\n      style={{ ...style, ...controlRadiusStyle(radius) }}\n      data-part=\"trigger\"\n      className={cn(\"v-select\", className)}\n      {...props}\n    />\n  );\n}\nexport type DatePickerContentProps = React.ComponentProps<\n  typeof PopoverContent\n>;\nexport function DatePickerContent({\n  className,\n  ...props\n}: DatePickerContentProps) {\n  return (\n    <PopoverContent\n      data-slot=\"date-picker-content\"\n      data-part=\"content\"\n      align=\"start\"\n      sideOffset={8}\n      collisionPadding={12}\n      className={className}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/date-picker.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  )[data-morph] {\n  --mfill: var(--v-beige);\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-ink[data-morph] {\n  --mfill: var(--v-ink);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]) {\n  display: inline-flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-3);\n  height: var(--ctl-md);\n  padding: 0 var(--s-4) 0 var(--s-5);\n  border-radius: var(--r-pill);\n  background: var(--v-beige);\n  font-size: var(--fs-control);\n  font-weight: var(--fw-medium);\n  white-space: nowrap;\n  cursor: pointer;\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-ink {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block {\n  width: 100%;\n  height: var(--ctl-lg);\n  font-size: var(--fs-body);\n  font-weight: var(--fw-regular);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-sm {\n  height: var(--ctl-sm);\n  font-size: var(--fs-small);\n  padding: 0 var(--s-3) 0 var(--s-4);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"])\n  .v-icon {\n  width: 14px;\n  height: 14px;\n  stroke-width: 2.4;\n}\n.v-popover:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]) {\n  background: var(--popover);\n  border-radius: var(--r-card);\n  padding: var(--s-5);\n  box-shadow: var(--shadow-float);\n  border: 1px solid var(--v-border);\n}\n.v-menuhost:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"])\n  > .v-menu {\n  z-index: var(--z-dialog);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]):not(\n    .-ink\n  ) {\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root[data-mode=\"dark\"]\n  .v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]):not(\n    .-ink\n  ) {\n  color: var(--v-text);\n}\n:root[data-mode=\"dark\"]\n  .v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-ink {\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ):disabled {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  opacity: 1;\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]) {\n  height: 40px;\n  padding: 0 var(--s-3) 0 var(--s-4);\n  gap: var(--s-3);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n  background: var(--v-canvas);\n  color: var(--v-text);\n  font-weight: var(--fw-medium);\n  transition:\n    background var(--t-micro),\n    box-shadow var(--t-micro);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]):hover {\n  background: var(--v-beige);\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  )[aria-expanded=\"true\"] {\n  box-shadow: inset 0 0 0 2px var(--v-brand);\n  background: var(--v-pink-soft);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"])\n  > .v-icon:last-child {\n  width: 14px;\n  height: 14px;\n  stroke-width: 2.4;\n  color: var(--v-text-2);\n  transition: transform var(--t-element) var(--enter);\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  )[aria-expanded=\"true\"]\n  > .v-icon:last-child {\n  transform: rotate(180deg);\n  color: var(--v-text);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-ink {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  box-shadow: none;\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-ink:hover {\n  background: var(--v-ink-soft);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-ink\n  > .v-icon:last-child {\n  color: currentColor;\n  opacity: .75;\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-ink[aria-expanded=\"true\"] {\n  background: var(--v-ink);\n  box-shadow: inset 0 0 0 2px var(--v-pink);\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-ink[aria-expanded=\"true\"]\n  > .v-icon:last-child {\n  color: var(--v-pink);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block {\n  width: 100%;\n  height: 52px;\n  padding: 0 var(--s-2) 0 var(--s-2);\n  font-size: var(--fs-body);\n  font-weight: var(--fw-medium);\n  background: var(--input);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  > span:first-child {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-width: 0;\n  flex: 1;\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  > span:first-child\n  > [data-value],\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  > span:first-child\n  > span:not(.v-disk) {\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  text-align: left;\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  .v-disk {\n  width: 36px;\n  height: 36px;\n  flex: none;\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  .v-disk\n  .v-icon {\n  width: 17px;\n  height: 17px;\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  > .v-icon:last-child {\n  width: 28px;\n  height: 28px;\n  padding: var(--s-2);\n  border-radius: 50%;\n  background: var(--v-canvas);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n  color: var(--v-text);\n  stroke-width: 2.2;\n  flex: none;\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-block[aria-expanded=\"true\"]\n  > .v-icon:last-child {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  box-shadow: none;\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-block:hover {\n  background: color-mix(in oklab, var(--input) 90%, var(--v-canvas));\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ).-block[aria-expanded=\"true\"] {\n  background: var(--v-pink-soft);\n}\n.v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-sm {\n  height: 32px;\n  padding: 0 var(--s-3) 0 var(--s-4);\n  font-size: var(--fs-small);\n}\n.v-select:where(\n    [data-slot=\"date-picker\"],\n    [data-slot^=\"date-picker-\"]\n  ):focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 2px;\n}\n:root[data-mode=\"dark\"]\n  .v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]):not(\n    .-ink\n  ) {\n  background: var(--v-beige);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n:root[data-mode=\"dark\"]\n  .v-select:where([data-slot=\"date-picker\"], [data-slot^=\"date-picker-\"]).-block\n  > .v-icon:last-child {\n  background: var(--v-beige-2);\n  box-shadow: none;\n  color: var(--v-text);\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"date-picker\"],\n  [data-slot^=\"date-picker-\"],\n  [data-slot=\"date-picker\"]::before,\n  [data-slot=\"date-picker\"]::after,\n  [data-slot^=\"date-picker-\"]::before,\n  [data-slot^=\"date-picker-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n\n/* Disabled paint wins over variant, open, hover, and theme rules. */\n:root [data-slot=\"date-picker-trigger\"].v-select:disabled { background: var(--v-disabled-face); color: var(--v-disabled-ink); box-shadow: inset 0 0 0 1px var(--v-disabled-edge); }\n\n[data-slot=\"date-picker-content\"] {\n  width: min(380px, calc(100vw - 24px));\n  min-width: 0; max-width: calc(100vw - 24px);\n  max-height: var(--radix-popover-content-available-height, calc(100dvh - 24px));\n  overflow: hidden; overscroll-behavior: contain;\n  color: var(--popover-foreground);\n}\n\n/* A field-like trigger keeps the chosen date prominent; the popup remains an\n   opaque, viewport-bounded extension of the same paper surface. */\n[data-slot=\"date-picker\"] { max-width:100%; }\n:root [data-slot=\"date-picker-trigger\"].v-select { min-width:200px; max-width:100%; height:46px; gap:var(--s-3); padding:0 var(--s-4); border-radius:var(--v-control-radius,14px); background:var(--card); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-border); font-size:var(--fs-control); }\n:root [data-slot=\"date-picker-trigger\"].v-select:not(:disabled):hover { background:var(--v-beige-2); }\n:root [data-slot=\"date-picker-trigger\"].v-select[aria-expanded=\"true\"] { background:var(--v-blue); color:var(--v-on-accent); box-shadow:none; }\n:root [data-slot=\"date-picker-trigger\"].v-select > .v-icon:last-child { color:currentColor; opacity:1; }\n[data-slot=\"date-picker-trigger\"] [data-value] { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:start; }\n[data-slot=\"date-picker-trigger\"] > .v-icon:first-child { width:18px; height:18px; flex:none; }\n:root [data-slot=\"date-picker-trigger\"].v-select:disabled { background:var(--v-disabled-face); color:var(--v-disabled-ink); box-shadow:inset 0 0 0 1px var(--v-disabled-edge); }\n[data-slot=\"date-picker-content\"] { padding:var(--s-5); border-radius:var(--r-card); background:var(--popover); color:var(--popover-foreground); }\n@media(max-width:420px) { [data-slot=\"date-picker-content\"] { padding:var(--s-4); } [data-slot=\"date-picker-trigger\"].v-select { min-width:0; width:100%; } }\n.v-datepicker__scroll { min-width:0; }\n.v-datepicker__footer { display:flex; align-items:center; justify-content:space-between; gap:var(--s-2); padding-top:var(--s-3); margin-top:var(--s-3); border-top:1px solid var(--v-border); }\n.v-datepicker__hint { color:var(--v-text-2); font-size:var(--fs-meta); }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/date-picker.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/date-picker.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "date-picker",
+      "name": "Date Picker",
+      "tier": "base",
+      "evidence": "I07 I15",
+      "status": "source",
+      "root": ".v-menuhost[data-datepicker]",
+      "variants": [
+        "single",
+        "range",
+        "multiple"
+      ],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "opens"
+      ],
+      "canvas": "480x520",
+      "contract": "entries/date-picker/contract.md",
+      "demo": "entries/date-picker/demo.html",
+      "isolation": [
+        "default-default-rest-480x520.html",
+        "default-default-rest-dark-480x520.html",
+        "default-default-open-480x520.html",
+        "default-default-open-dark-480x520.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "DatePickerBaseProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "formatDate",
+            "type": "(date: Date) => string",
+            "required": false,
+            "description": "Format each day; ranges and multiple summaries reuse this formatter."
+          },
+          {
+            "name": "triggerProps",
+            "type": "React.ComponentProps<\"button\">",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "clearLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "doneLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DatePickerSingleProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "formatDate",
+            "type": "(date: Date) => string",
+            "required": false,
+            "description": "Format each day; ranges and multiple summaries reuse this formatter."
+          },
+          {
+            "name": "triggerProps",
+            "type": "React.ComponentProps<\"button\">",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "clearLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "doneLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"single\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "date",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultDate",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onDateChange",
+            "type": "(date: Date | undefined) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "calendarProps",
+            "type": "Omit<CalendarSingleProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DatePickerRangeProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "formatDate",
+            "type": "(date: Date) => string",
+            "required": false,
+            "description": "Format each day; ranges and multiple summaries reuse this formatter."
+          },
+          {
+            "name": "triggerProps",
+            "type": "React.ComponentProps<\"button\">",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "clearLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "doneLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"range\"",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "date",
+            "type": "DateRange",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultDate",
+            "type": "DateRange",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onDateChange",
+            "type": "(range: DateRange | undefined) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "calendarProps",
+            "type": "Omit<CalendarRangeProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">",
+            "required": false,
+            "description": "Range pickers default to one night; set min=0 to allow a one-day range."
+          }
+        ]
+      },
+      {
+        "name": "DatePickerMultipleProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "formatDate",
+            "type": "(date: Date) => string",
+            "required": false,
+            "description": "Format each day; ranges and multiple summaries reuse this formatter."
+          },
+          {
+            "name": "triggerProps",
+            "type": "React.ComponentProps<\"button\">",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "clearLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "doneLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"multiple\"",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "date",
+            "type": "Date[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultDate",
+            "type": "Date[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onDateChange",
+            "type": "(dates: Date[] | undefined) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "calendarProps",
+            "type": "Omit<CalendarMultipleProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DatePickerProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "open",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOpen",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOpenChange",
+            "type": "(open: boolean) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "formatDate",
+            "type": "(date: Date) => string",
+            "required": false,
+            "description": "Format each day; ranges and multiple summaries reuse this formatter."
+          },
+          {
+            "name": "triggerProps",
+            "type": "React.ComponentProps<\"button\">",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "clearLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "doneLabel",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "mode",
+            "type": "\"single\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "date",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultDate",
+            "type": "Date",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onDateChange",
+            "type": "(date: Date | undefined) => void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "calendarProps",
+            "type": "Omit<CalendarSingleProps, \"selected\" | \"onSelect\" | \"mode\" | \"defaultSelected\">",
+            "required": false,
+            "description": "Range pickers default to one night; set min=0 to allow a one-day range."
+          }
+        ]
+      },
+      {
+        "name": "DatePickerTriggerProps",
+        "props": [
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "FieldAppearance",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "DatePickerContentProps",
+        "props": []
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

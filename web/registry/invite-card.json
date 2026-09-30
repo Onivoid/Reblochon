@@ -1,0 +1,40 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "invite-card",
+  "title": "Invite card",
+  "description": "An event invitation with participant avatars and a reversible local RSVP, composed from Cojeev primitives.",
+  "dependencies": [],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/organism-composition.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/invite-card.tsx",
+      "content": "\"use client\";\nexport { InviteCard, type OrganismProps as InviteCardProps } from \"@/components/ui/organism-composition\";\n",
+      "type": "registry:ui"
+    }
+  ],
+  "meta": {
+    "source": {
+      "name": "Invite card",
+      "variants": [
+        "default"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "rest",
+        "accepted",
+        "declined",
+        "reduced-motion"
+      ]
+    },
+    "api": [],
+    "category": "Composition",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

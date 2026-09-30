@@ -1,0 +1,8 @@
+node_modules
+dist
+pnpm-lock.yaml
+src/components/ui
+src/lib/cojeev
+src/lib/cojeev-motion
+src/styles
+*.min.js

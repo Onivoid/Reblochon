@@ -1,0 +1,124 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tabs",
+  "title": "Tabs",
+  "description": "Switches between related content panels while keeping the available views visible.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-tabs"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/presence.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/tabs.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-tabs\";\nimport { useFlowGroup } from \"@/lib/cojeev-motion/use-flow\";\nimport { MotionPresence, MotionSurface } from \"@/components/ui/presence\";\nexport const tabsVariants = cva(\"v-tabs [display:flex] [gap:var(--s-6)]\", {\n  variants: {\n    variant: {\n      default: \"-pills -default gap-[var(--s-2)]\",\n      pills: \"-pills gap-[var(--s-2)]\",\n      underline: \"-underline gap-[var(--s-6)]\",\n      lenses: \"-lenses gap-[var(--s-6)]\",\n      notebook: \"-notebook\",\n      rail: \"-rail\",\n    },\n  },\n  defaultVariants: { variant: \"default\" },\n});\nconst TabsVariantContext =\n  React.createContext<VariantProps<typeof tabsVariants>[\"variant\"]>(\"default\");\nconst TabsValueContext = React.createContext<string | undefined>(undefined);\nexport type TabsProps = React.ComponentProps<typeof Primitive.Root> &\n  VariantProps<typeof tabsVariants>;\nexport function Tabs({\n  className,\n  variant = \"default\",\n  children,\n  value,\n  defaultValue,\n  onValueChange,\n  ...props\n}: TabsProps) {\n  const [uncontrolledValue, setUncontrolledValue] =\n    React.useState(defaultValue);\n  const selected = value ?? uncontrolledValue;\n  return (\n    <TabsVariantContext.Provider value={variant}>\n      <TabsValueContext.Provider value={selected}>\n        <Primitive.Root\n          data-slot=\"tabs\"\n          data-tabs-appearance={variant}\n          className={cn(\"v-tabs-root grid min-w-0 gap-[var(--s-4)]\", className)}\n          value={selected}\n          onValueChange={(next) => {\n            if (value === undefined) setUncontrolledValue(next);\n            onValueChange?.(next);\n          }}\n          {...props}\n        >\n          {children}\n        </Primitive.Root>\n      </TabsValueContext.Provider>\n    </TabsVariantContext.Provider>\n  );\n}\nexport type TabsListProps = React.ComponentProps<typeof Primitive.List> &\n  VariantProps<typeof tabsVariants>;\nexport function TabsList({ className, variant, ref, ...props }: TabsListProps) {\n  const inherited = React.useContext(TabsVariantContext);\n  const resolved = variant ?? inherited;\n  // Underline travels as a ruled-line marker; every other variant moves its\n  // whole selected surface (ink lozenge, beige lens, paper sheet, index line).\n  const flowRef = useFlowGroup<HTMLDivElement>(ref, {\n    kind: resolved === \"underline\" ? \"bar\" : \"pill\",\n    itemSelector: '[data-slot=\"tabs-trigger\"]',\n    activeSelector: '[aria-selected=\"true\"]',\n  });\n  return (\n    <Primitive.List\n      ref={flowRef}\n      data-slot=\"tabs-list\"\n      data-part=\"root\"\n      data-flow-group=\"\"\n      className={cn(tabsVariants({ variant: resolved }), className)}\n      {...props}\n    />\n  );\n}\nexport type TabsTriggerProps = React.ComponentProps<typeof Primitive.Trigger>;\nexport function TabsTrigger({ className, ref, ...props }: TabsTriggerProps) {\n  const morphRef = useMorph<HTMLButtonElement>(\"nav\", ref);\n  return (\n    <Primitive.Trigger\n      ref={morphRef}\n      data-slot=\"tabs-trigger\"\n      data-part=\"trigger\"\n      className={cn(\"v-tab shrink-0\", className)}\n      {...props}\n    />\n  );\n}\nexport type TabsContentProps = React.ComponentProps<typeof Primitive.Content>;\nexport function TabsContent({\n  className,\n  ref,\n  forceMount,\n  value,\n  ...props\n}: TabsContentProps) {\n  const selected = React.useContext(TabsValueContext);\n  const content = (\n    <Primitive.Content\n      ref={ref}\n      value={value}\n      forceMount\n      data-slot=\"tabs-content\"\n      data-tabs-managed={!forceMount || undefined}\n      data-part=\"content\"\n      className={className}\n      {...props}\n    />\n  );\n  // Explicit forceMount leaves visibility under the consumer's control.\n  if (forceMount) return content;\n  return (\n    <MotionPresence>\n      {selected === value && (\n        <MotionSurface key={value} asChild preset=\"fade\">\n          {content}\n        </MotionSurface>\n      )}\n    </MotionPresence>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/tabs.css",
+      "content": "@layer cojeev-states {\n/* Tabs: six paper choices on one trigger contract. The shared flow layer\n   moves the selected surface; each variant only names what that surface is:\n   an ink lozenge (pills), a beige lens, a ruled-line marker (underline), the\n   top sheet of a notebook, or a soft line in a rail index. */\n.v-tab:where(\n    [data-slot=\"tabs\"],\n    [data-slot^=\"tabs-\"]\n  )[aria-selected=\"true\"][data-morph] {\n  --mfill: var(--v-ink);\n}\n\n[data-slot=\"tabs-list\"] {\n  min-width: 0;\n  max-width: 100%;\n}\n[data-slot=\"tabs-trigger\"] {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--s-2);\n  min-width: 0;\n  line-height: 1.2;\n  white-space: nowrap;\n  transition:\n    color var(--t-micro),\n    background var(--t-micro),\n    box-shadow var(--t-micro);\n}\n[data-slot=\"tabs-trigger\"] > .v-icon {\n  flex: none;\n}\n/* A leading icon carries its own visual weight: pull it in by a hair so the\n   pill reads balanced instead of icon-heavy on the leading side. */\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]):is(.-pills, .-lenses)\n  .v-tab:has(> .v-icon:first-child) {\n  padding-inline-start: var(--s-3);\n}\n[data-slot=\"tabs-trigger\"]:focus-visible {\n  outline: 2px solid var(--ring);\n  outline-offset: 2px;\n}\n[data-slot=\"tabs-list\"][data-orientation=\"vertical\"] {\n  flex-direction: column;\n  align-items: stretch;\n}\n[data-slot=\"tabs-trigger\"][data-disabled] {\n  color: var(--v-disabled-ink);\n  cursor: not-allowed;\n}\n[data-slot=\"tabs-content\"] {\n  min-width: 0;\n}\n\n/* Pills and Default: quiet beige pills, one ink lozenge. */\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-pills {\n  gap: var(--s-2);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-pills .v-tab {\n  height: var(--ctl-sm);\n  padding: 0 var(--s-4);\n  border-radius: var(--r-pill);\n  background: var(--v-beige);\n  color: var(--v-text);\n  font-size: var(--fs-small);\n  font-weight: var(--fw-medium);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-pills\n  .v-tab:not([aria-selected=\"true\"]) {\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-pills\n  .v-tab:not([aria-selected=\"true\"]):not([data-disabled]):hover {\n  background: var(--v-beige-2);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-pills\n  .v-tab[aria-selected=\"true\"] {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-default .v-tab {\n  height: var(--ctl-md);\n  padding-inline: var(--s-4);\n  font-size: var(--fs-control);\n}\n@media (pointer: coarse) {\n  .v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-default .v-tab {\n    min-height: var(--ctl-lg);\n  }\n}\n\n/* Lenses: quiet labels, one beige lens with a real edge. */\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-lenses {\n  gap: var(--s-2);\n  --glide-bg: var(--v-beige);\n  --glide-fg: var(--v-text);\n  --glide-ring: inset 0 0 0 1px var(--v-edge);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-lenses .v-tab {\n  height: var(--ctl-md);\n  padding: 0 var(--s-4);\n  border-radius: var(--r-pill);\n  font-size: var(--fs-control);\n  font-weight: var(--fw-medium);\n  color: var(--v-text-2);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-lenses\n  .v-tab:not([aria-selected=\"true\"]):not([data-disabled]):hover {\n  color: var(--v-text);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-lenses\n  .v-tab[aria-selected=\"true\"] {\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n\n/* Underline: reading-size labels on one ruled line; a pink marker rides it. */\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-underline {\n  gap: var(--s-6);\n  box-shadow: inset 0 -1px 0 var(--v-border);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-underline .v-tab {\n  padding: var(--s-2) 2px var(--s-3);\n  font-size: var(--fs-lead);\n  font-weight: var(--fw-medium);\n  color: var(--v-text-2);\n  border-bottom: 2px solid transparent;\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-underline\n  .v-tab:not([aria-selected=\"true\"]):not([data-disabled]):hover {\n  color: var(--v-text);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-underline\n  .v-tab[aria-selected=\"true\"] {\n  color: var(--v-text);\n  border-color: var(--v-pink);\n}\n/* While the flow layer travels, the stationary border would sit on top of\n   its marker; hand the line to the layer and keep the quiet fallback pink. */\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-underline.v-glide\n  .v-tab[data-glide-active] {\n  border-color: transparent;\n}\n\n@media (max-width: 640px) {\n  .v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]) {\n    overflow-x: auto;\n    padding-bottom: 2px;\n  }\n  .v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])::-webkit-scrollbar {\n    display: none;\n  }\n  .v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]) .v-tab {\n    flex: none;\n  }\n}\n\n/* Dark mode: the ink lozenge becomes the pink accent with fixed ink; every\n   other surface keeps its own paired paint from the dark tokens. These stay\n   below the flow layer's selected-surface override in specificity, so an\n   unlayered consumer still hands the selected paint to the travelling layer. */\n[data-mode=\"dark\"] :is(.-pills, .-lenses) .v-tab[aria-selected=\"true\"] {\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n  box-shadow: none;\n}\n[data-mode=\"dark\"] .v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]).-lenses {\n  --glide-ring: none;\n}\n[data-mode=\"dark\"] .-pills .v-tab:not([aria-selected=\"true\"]) {\n  color: var(--v-text);\n}\n\n/* Consumer ink overrides keep their original contract. */\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])\n  .v-tab[data-ink=\"light\"],\n.v-tab:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])[data-ink=\"light\"] {\n  color: var(--cream-fixed);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"]) .v-tab[data-ink=\"dark\"],\n.v-tab:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])[data-ink=\"dark\"] {\n  color: var(--v-text-2);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])\n  .v-tab[data-ink=\"dark\"]:hover,\n.v-tab:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])[data-ink=\"dark\"]:hover {\n  color: var(--v-text);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])\n  .v-tab[data-ink=\"light\"][aria-selected=\"true\"],\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])\n  .v-tab[data-ink=\"light\"][aria-pressed=\"true\"] {\n  color: var(--cream-fixed);\n}\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])\n  .v-tab[data-ink=\"dark\"][aria-selected=\"true\"],\n.v-tabs:where([data-slot=\"tabs\"], [data-slot^=\"tabs-\"])\n  .v-tab[data-ink=\"dark\"][aria-pressed=\"true\"] {\n  color: var(--v-on-accent);\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"tabs\"],\n  [data-slot^=\"tabs-\"],\n  [data-slot=\"tabs\"]::before,\n  [data-slot=\"tabs\"]::after,\n  [data-slot^=\"tabs-\"]::before,\n  [data-slot^=\"tabs-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n/* Retained panels share one position: exit paint never creates another row.\n   Explicit forceMount remains entirely under the caller's visibility control. */\n.v-tabs-root > [data-tabs-managed] {\n  grid-column: 1;\n  grid-row: 2;\n  align-self: start;\n}\n.v-tabs-root > [data-tabs-managed][data-motion-exiting=\"true\"] {\n  pointer-events: none;\n}\n.v-tabs-root [data-slot=\"tabs-trigger\"] {\n  min-height: 44px;\n}\n\n/* Notebook: the section tabs are sheets on one ruled baseline. The selected\n   sheet is paper with an open bottom, so it continues into its page; the\n   travelling layer carries that sheet between sections. */\n.v-tabs-root[data-tabs-appearance=\"notebook\"] {\n  gap: 0;\n}\n[data-slot=\"tabs-list\"].-notebook {\n  position: relative;\n  z-index: 1;\n  isolation: isolate;\n  gap: var(--s-1);\n  padding: 0 var(--s-3) 1px;\n  --glide-bg: var(--v-paper);\n  --glide-fg: var(--v-text);\n  --glide-ring:\n    inset 1px 0 0 var(--v-edge), inset -1px 0 0 var(--v-edge),\n    inset 0 1px 0 var(--v-edge);\n  --glide-hover-bg: color-mix(in oklab, var(--v-ink) 5%, transparent);\n}\n[data-slot=\"tabs-list\"].-notebook::after {\n  content: \"\";\n  position: absolute;\n  inset: auto 0 0 0;\n  height: 1px;\n  background: var(--v-edge);\n  z-index: -1;\n  pointer-events: none;\n}\n[data-slot=\"tabs-list\"].-notebook [data-slot=\"tabs-trigger\"] {\n  display: flex;\n  align-items: center;\n  gap: var(--s-2);\n  flex: 1;\n  min-width: 0;\n  margin-bottom: -1px;\n  padding: var(--s-3) var(--s-4) var(--s-3);\n  border-radius: var(--r-card-sm) var(--r-card-sm) 0 0;\n  color: var(--v-text-2);\n  background: transparent;\n}\n[data-slot=\"tabs-list\"].-notebook\n  [data-slot=\"tabs-trigger\"]:not([aria-selected=\"true\"]):not(\n    [data-disabled]\n  ):hover {\n  color: var(--v-text);\n  background: color-mix(in oklab, var(--v-ink) 5%, transparent);\n}\n[data-slot=\"tabs-list\"].-notebook\n  [data-slot=\"tabs-trigger\"][aria-selected=\"true\"] {\n  color: var(--v-text);\n  background: var(--v-paper);\n  box-shadow:\n    inset 1px 0 0 var(--v-edge), inset -1px 0 0 var(--v-edge),\n    inset 0 1px 0 var(--v-edge);\n}\n.v-tabs-root[data-tabs-appearance=\"notebook\"] > [data-tabs-managed] {\n  border: 1px solid var(--v-edge);\n  border-top: 0;\n  border-radius: 0 0 var(--r-card) var(--r-card);\n  background: var(--v-paper);\n}\n\n/* Rail: a section index beside the workspace; the selected line is a soft\n   pink slip that travels up and down the column. */\n.v-tabs-root[data-tabs-appearance=\"rail\"] {\n  grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr);\n  align-items: start;\n  gap: var(--s-6);\n}\n.v-tabs-root[data-tabs-appearance=\"rail\"] > [data-slot=\"tabs-list\"] {\n  grid-column: 1;\n  grid-row: 1;\n}\n.v-tabs-root[data-tabs-appearance=\"rail\"] > [data-tabs-managed] {\n  grid-column: 2;\n  grid-row: 1;\n}\n[data-slot=\"tabs-list\"].-rail {\n  flex-direction: column;\n  gap: var(--s-1);\n  padding-inline-end: var(--s-4);\n  border-inline-end: 1px solid var(--v-border);\n  --glide-bg: var(--v-pink-soft);\n  --glide-fg: var(--v-text);\n  --glide-ring: none;\n}\n[data-slot=\"tabs-list\"].-rail [data-slot=\"tabs-trigger\"] {\n  justify-content: flex-start;\n  display: flex;\n  gap: var(--s-3);\n  padding: var(--s-3);\n  border-radius: var(--r-md);\n  text-align: start;\n  color: var(--v-text-2);\n}\n[data-slot=\"tabs-list\"].-rail\n  [data-slot=\"tabs-trigger\"]:not([aria-selected=\"true\"]):not(\n    [data-disabled]\n  ):hover {\n  color: var(--v-text);\n  background: color-mix(in oklab, var(--v-ink) 5%, transparent);\n}\n[data-slot=\"tabs-list\"].-rail [data-slot=\"tabs-trigger\"][aria-selected=\"true\"] {\n  background: var(--v-pink-soft);\n  color: var(--v-text);\n}\n[data-slot=\"tabs-list\"] .v-tabs__count {\n  margin-inline-start: auto;\n  padding-inline-start: var(--s-2);\n  font-size: var(--fs-caps);\n  font-variant-numeric: tabular-nums;\n  color: var(--v-text-3);\n}\n[data-slot=\"tabs-trigger\"][aria-selected=\"true\"] .v-tabs__count {\n  color: inherit;\n  opacity: 0.7;\n}\n\n/* Documentation story: the panel is one paper page under the chosen tab. */\n.v-tabs__story {\n  padding: var(--s-6);\n  min-height: 250px;\n  display: grid;\n  align-content: start;\n  gap: var(--s-4);\n  border-radius: var(--r-card);\n  border: 1px solid var(--v-border);\n  background: var(--v-paper);\n}\n[data-tabs-appearance=\"notebook\"] .v-tabs__story {\n  border: 0;\n  background: transparent;\n}\n.v-tabs__story > small {\n  color: var(--v-accent-ink);\n  text-transform: uppercase;\n  letter-spacing: 0.1em;\n  font-size: var(--fs-caps);\n}\n.v-tabs__story h3 {\n  margin: 0;\n  font: var(--fw-medium) var(--fs-section)/1.15 var(--font-display);\n  letter-spacing: -0.01em;\n}\n.v-tabs__story p {\n  color: var(--v-text-2);\n  margin: 0;\n  max-width: 45ch;\n}\n.v-tabs__story [data-slot=\"button\"] {\n  justify-self: start;\n  min-height: 44px;\n}\n@media (max-width: 640px) {\n  [data-slot=\"tabs-list\"]:is(.-underline, .-lenses) {\n    gap: var(--s-3);\n  }\n  [data-slot=\"tabs-list\"]:is(.-underline, .-lenses) [data-slot=\"tabs-trigger\"] {\n    font-size: var(--fs-control);\n    padding-inline: var(--s-3);\n  }\n  .v-tabs-root[data-tabs-appearance=\"rail\"] {\n    grid-template-columns: 112px minmax(0, 1fr);\n    gap: var(--s-3);\n  }\n  [data-slot=\"tabs-list\"].-rail {\n    padding-inline-end: var(--s-2);\n  }\n  [data-slot=\"tabs-list\"].-rail [data-slot=\"tabs-trigger\"] {\n    gap: var(--s-2);\n    padding-inline: var(--s-2);\n    font-size: var(--fs-small);\n  }\n  [data-slot=\"tabs-list\"].-rail .v-tabs__count {\n    display: none;\n  }\n  [data-slot=\"tabs-list\"].-notebook {\n    padding-inline: var(--s-1);\n  }\n  /* Sheets keep filling the row but never shrink below their label; a longer\n     set scrolls the row instead of clipping. Counts step aside like the rail's. */\n  [data-slot=\"tabs-list\"].-notebook [data-slot=\"tabs-trigger\"] {\n    flex: 1 0 auto;\n    padding-inline: var(--s-3);\n  }\n  [data-slot=\"tabs-list\"].-notebook .v-tabs__count {\n    display: none;\n  }\n  .v-tabs-root[data-tabs-appearance=\"rail\"] .v-tabs__story {\n    padding: var(--s-4);\n  }\n  .v-tabs-root[data-tabs-appearance=\"rail\"] .v-tabs__story h3 {\n    font-size: var(--fs-title);\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/tabs.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/tabs.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "tabs",
+      "name": "Tabs",
+      "tier": "base",
+      "evidence": "I11 I16 I18",
+      "status": "source",
+      "root": ".v-tabs",
+      "variants": [
+        "notebook",
+        "rail",
+        "underline",
+        "pills",
+        "lenses"
+      ],
+      "sizes": [],
+      "states": [
+        "selected",
+        "rest",
+        "hover",
+        "focus",
+        "active",
+        "on"
+      ],
+      "dataStates": [],
+      "category": "nav",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group",
+        "press",
+        "paces",
+        "enters"
+      ],
+      "canvas": "720x320",
+      "contract": "entries/tabs/contract.md",
+      "demo": "entries/tabs/demo.html",
+      "isolation": [
+        "default-default-rest-720x320.html",
+        "default-default-rest-dark-720x320.html",
+        "default-default-selected-720x320.html",
+        "default-default-selected-dark-720x320.html",
+        "default-default-on-720x320.html",
+        "default-default-on-dark-720x320.html",
+        "underline-default-rest-720x320.html",
+        "underline-default-rest-dark-720x320.html",
+        "underline-default-selected-720x320.html",
+        "underline-default-selected-dark-720x320.html",
+        "underline-default-on-720x320.html",
+        "underline-default-on-dark-720x320.html",
+        "lenses-default-rest-720x320.html",
+        "lenses-default-rest-dark-720x320.html",
+        "lenses-default-selected-720x320.html",
+        "lenses-default-selected-dark-720x320.html",
+        "lenses-default-on-720x320.html",
+        "lenses-default-on-dark-720x320.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "TabsProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"pills\" | \"underline\" | \"lenses\" | \"notebook\" | \"rail\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "TabsListProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"pills\" | \"underline\" | \"lenses\" | \"notebook\" | \"rail\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "TabsTriggerProps",
+        "props": []
+      },
+      {
+        "name": "TabsContentProps",
+        "props": []
+      }
+    ],
+    "category": "Navigation",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

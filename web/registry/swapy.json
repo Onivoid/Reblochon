@@ -1,0 +1,93 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "swapy",
+  "title": "Swapy",
+  "description": "Cards swap positions through a drag handle or keyboard controls and retain their order in React state.",
+  "dependencies": [
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/swapy.tsx",
+      "content": "\"use client\";\nimport * as React from \"react\";\nimport { motion } from \"motion/react\";\nimport { cn } from \"@/lib/utils\";\nimport { reconcileSwapOrder,swapLayoutItems } from \"@/lib/cojeev/reference-layouts\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\nexport type SwapyItem={id:string;label:string;content:React.ReactNode};\nexport type SwapyProps=Omit<React.ComponentProps<\"div\">,\"children\"> & {items:readonly SwapyItem[];order?:readonly string[];defaultOrder?:readonly string[];onOrderChange?:(order:string[])=>void;variant?:\"grid\"|\"list\";disabled?:boolean};\n/** React owns the order. Pointer capture is confined to explicit drag handles. */\nexport function Swapy({items,order,defaultOrder=[],onOrderChange,variant=\"grid\",disabled=false,className,ref,...props}:SwapyProps){\n const [localOrder,setLocalOrder]=React.useState<readonly string[]>(defaultOrder),[dragged,setDragged]=React.useState<string|null>(null),[target,setTarget]=React.useState<string|null>(null),[announcement,setAnnouncement]=React.useState(\"\");\n const host=React.useRef<HTMLDivElement>(null),drag=React.useRef<{id:string;pointer:number;target:string|null}|null>(null),{enabled,inView}=useMotionVisibility(host),instructions=React.useId();\n const ids=reconcileSwapOrder(order??localOrder,items.map(item=>item.id));\n const itemMap=new Map(items.map(item=>[item.id,item]));\n const hostRef=React.useCallback((node:HTMLDivElement|null)=>{host.current=node;return assignMotionRef(ref,node);},[ref]);\n const swap=(first:string,second:string)=>{if(disabled||first===second)return;const next=swapLayoutItems(ids,first,second);if(!next.includes(first)||!next.includes(second))return;if(order===undefined)setLocalOrder(next);onOrderChange?.(next);setAnnouncement(`${itemMap.get(first)?.label??first} moved to position ${next.indexOf(first)+1} of ${next.length}.`);};\n const end=()=>{drag.current=null;setDragged(null);setTarget(null);};\n const keyboard=(event:React.KeyboardEvent<HTMLButtonElement>,id:string)=>{const index=ids.indexOf(id);let next=index;if(event.key===\"ArrowLeft\"||event.key===\"ArrowUp\")next=Math.max(0,index-1);else if(event.key===\"ArrowRight\"||event.key===\"ArrowDown\")next=Math.min(ids.length-1,index+1);else if(event.key===\"Home\")next=0;else if(event.key===\"End\")next=ids.length-1;else if(event.key===\"Escape\"){end();event.preventDefault();return;}else return;event.preventDefault();swap(id,ids[next]);};\n return <div {...props} ref={hostRef} className={cn(\"v-swapy\",className)} data-slot=\"swapy\" data-variant={variant} data-disabled={disabled}>\n <p id={instructions} className=\"v-swapy__instructions\">Drag a handle onto another card, or use its arrow buttons to swap positions.</p>\n <ol className=\"v-swapy__grid\">{ids.map((id,index)=>{const item=itemMap.get(id)!;return <motion.li key={id} layout={enabled&&inView} transition={{duration:.3,ease:[.22,1,.36,1]}} className=\"v-swapy__item\" data-swap-id={id} data-dragged={dragged===id} data-drop-target={target===id&&dragged!==id}>\n <div className=\"v-swapy__header\"><strong>{item.label}</strong><button type=\"button\" disabled={disabled||ids.length<2} className=\"v-swapy__handle\" aria-label={`Move ${item.label}`} aria-describedby={instructions} onKeyDown={event=>keyboard(event,id)} onPointerDown={event=>{if(disabled||event.button!==0)return;event.preventDefault();event.currentTarget.focus();event.currentTarget.setPointerCapture(event.pointerId);drag.current={id,pointer:event.pointerId,target:null};setDragged(id);}} onPointerMove={event=>{const active=drag.current;if(!active||active.pointer!==event.pointerId)return;const hit=document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>(\"[data-swap-id]\");const next=hit&&host.current?.contains(hit)?hit.dataset.swapId??null:null;active.target=next;setTarget(next);}} onPointerUp={event=>{const active=drag.current;if(!active||active.pointer!==event.pointerId)return;if(active.target)swap(active.id,active.target);event.currentTarget.releasePointerCapture(event.pointerId);end();}} onPointerCancel={end} onLostPointerCapture={end}>⠿</button></div>\n <div className=\"v-swapy__content\">{item.content}</div>\n <div className=\"v-swapy__controls\"><button type=\"button\" aria-label={`Move ${item.label} earlier`} disabled={disabled||index===0} onClick={()=>swap(id,ids[index-1])}>←</button><span aria-hidden=\"true\">{String(index+1).padStart(2,\"0\")}</span><button type=\"button\" aria-label={`Move ${item.label} later`} disabled={disabled||index===ids.length-1} onClick={()=>swap(id,ids[index+1])}>→</button></div>\n </motion.li>;})}</ol>\n {!ids.length&&<p>No cards to arrange.</p>}<p role=\"status\" className=\"v-swapy__status\">{announcement||`${ids.length} ${ids.length===1?\"card\":\"cards\"} ready to arrange.`}</p>\n </div>;\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/swapy.css",
+      "content": "@layer cojeev-states {\n.v-swapy{width:100%;min-width:0}.v-swapy__instructions,.v-swapy__status{margin:0 0 var(--s-4);color:var(--v-text-2);font-size:var(--fs-small);line-height:1.5}.v-swapy__status{margin:var(--s-4) 0 0;min-height:20px}.v-swapy__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-4);list-style:none;margin:0;padding:0}.v-swapy__item{position:relative;min-width:0;display:grid;align-content:start;gap:var(--s-4);background:var(--v-paper);color:var(--v-text);border:1px solid var(--v-edge);border-radius:var(--r-card);padding:var(--s-5);box-shadow:0 3px 0 var(--v-beige)}.v-swapy__item[data-dragged=true]{opacity:.55;outline:2px dashed var(--v-brand);pointer-events:none}.v-swapy__item[data-drop-target=true]{outline:3px solid var(--v-brand);outline-offset:2px;background:var(--v-pink-soft)}.v-swapy__header{display:flex;align-items:center;justify-content:space-between;gap:var(--s-2)}.v-swapy__header strong{font:var(--fs-title)/1.1 var(--font-display);overflow-wrap:anywhere}.v-swapy__handle{touch-action:none;cursor:grab;user-select:none}.v-swapy__handle:active{cursor:grabbing}.v-swapy__content{min-width:0;font-size:var(--fs-control);line-height:1.5}.v-swapy__controls{display:flex;align-items:center;justify-content:space-between;gap:var(--s-2);margin-top:auto}.v-swapy__controls span{font-size:var(--fs-meta);color:var(--v-text-2)}.v-swapy button{display:grid;place-items:center;min-width:44px;height:44px;border:1px solid var(--v-edge);border-radius:50%;background:var(--v-beige);color:var(--v-ink);font-size:var(--fs-title)}.v-swapy button:disabled{opacity:.35;cursor:default}.v-swapy button:focus-visible{outline:2px solid var(--v-brand);outline-offset:3px}.v-swapy[data-variant=list] .v-swapy__grid{grid-template-columns:1fr}@media(max-width:480px){.v-swapy__grid{grid-template-columns:1fr}}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/swapy.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/swapy.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Swapy",
+      "variants": [
+        "grid",
+        "list"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "default",
+        "active",
+        "still"
+      ],
+      "reviewOnly": false
+    },
+    "api": [
+      {
+        "name": "SwapyProps",
+        "props": [
+          {
+            "name": "items",
+            "type": "readonly SwapyItem[]",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "order",
+            "type": "readonly string[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "defaultOrder",
+            "type": "readonly string[]",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onOrderChange",
+            "type": "(order:string[])=>void",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "variant",
+            "type": "\"grid\"|\"list\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

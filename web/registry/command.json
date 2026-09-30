@@ -1,0 +1,146 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "command",
+  "title": "Command",
+  "description": "Builds a searchable command list that users can navigate and activate from the keyboard.",
+  "dependencies": [
+    "class-variance-authority",
+    "cmdk"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json",
+    "https://000h.cojeev.com/r/dialog.json",
+    "https://000h.cojeev.com/r/item-adornment.json",
+    "https://000h.cojeev.com/r/icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/command.tsx",
+      "content": "\"use client\";\nimport { ScrollAreaList } from \"@/components/ui/scroll-area\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Command as Primitive } from \"cmdk\";\nimport {\n  Dialog,\n  DialogContent,\n  DialogTitle,\n  DialogDescription,\n  type DialogProps,\n} from \"@/components/ui/dialog\";\nimport { useFlowGroup } from \"@/lib/cojeev-motion/use-flow\";\nimport { adornItem, itemText, type ItemAdornmentItemProps } from \"@/components/ui/item-adornment\";\nimport { Icon } from \"@/components/ui/icon\";\nimport {\n  createMotionLane,\n  motionTokens,\n  useChoreography,\n} from \"@/lib/cojeev-motion/choreography\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\n\n/**\n * cmdk owns filtering and removes its own Item/Empty DOM. Keep that semantic\n * update immediate and coordinate the persistent results paint around it.\n * This is deliberately a results transition, not retained per-item exits.\n */\nexport function useCommandResultsMotion<T extends HTMLElement>(\n  forwardedRef?: React.Ref<T>,\n) {\n  const { quiet } = useChoreography();\n  const quietRef = React.useRef(quiet);\n  const settle = React.useRef<(() => void) | null>(null);\n  React.useLayoutEffect(() => {\n    quietRef.current = quiet;\n    if (quiet) settle.current?.();\n  }, [quiet]);\n  return React.useCallback(\n    (node: T | null) => {\n      const releaseRef = assignMotionRef(forwardedRef, node);\n      if (!node) return releaseRef;\n      const lane = createMotionLane(1, (value) =>\n        node.style.setProperty(\"--command-results-opacity\", String(value)),\n      );\n      settle.current = () => lane.jump(1);\n      const signature = () =>\n        Array.from(node.querySelectorAll(\"[cmdk-item]\"))\n          .map((item) => item.id)\n          .join(\"|\") +\n        \":\" +\n        Boolean(node.querySelector(\"[cmdk-empty]\"));\n      let previous = signature();\n      let revision = 0;\n      const observer = new MutationObserver(() => {\n        const next = signature();\n        if (next === previous) return;\n        previous = next;\n        node.dataset.resultsRevision = String(++revision);\n        if (quietRef.current) lane.jump(1);\n        else {\n          lane.jump(0.86);\n          lane.to(1, {\n            duration: motionTokens.duration.quick,\n            ease: [...motionTokens.ease.enter],\n          });\n        }\n      });\n      observer.observe(node, { childList: true, subtree: true });\n      return () => {\n        observer.disconnect();\n        settle.current = null;\n        lane.dispose();\n        node.style.removeProperty(\"--command-results-opacity\");\n        releaseRef();\n      };\n    },\n    [forwardedRef],\n  );\n}\nexport const commandVariants = cva(\n  \"v-cmd [background:var(--popover)] [width:min(520px,100%)] [overflow:hidden] [border:0] [box-shadow:var(--shadow-float),inset_0_0_0_1px_var(--v-border)] [border-radius:var(--r-panel)]\",\n);\nexport type CommandProps = React.ComponentProps<typeof Primitive>;\nexport function Command({ className, ref, ...props }: CommandProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  return (\n    <Primitive\n      ref={morphRef}\n      data-slot=\"command\"\n      data-part=\"root\"\n      data-command=\"\"\n      className={cn(commandVariants(), className)}\n      {...props}\n    />\n  );\n}\nexport type CommandDialogProps = DialogProps & {\n  title?: string;\n  description?: string;\n  className?: string;\n};\nexport function CommandDialog({\n  children,\n  title = \"Command palette\",\n  description = \"Search for a command to run.\",\n  className,\n  ...props\n}: CommandDialogProps) {\n  return (\n    <Dialog {...props}>\n      <DialogContent className=\"p-0\">\n        <DialogTitle className=\"sr-only\">{title}</DialogTitle>\n        <DialogDescription className=\"sr-only\">{description}</DialogDescription>\n        <Command className={className}>{children}</Command>\n      </DialogContent>\n    </Dialog>\n  );\n}\nexport type CommandInputProps = React.ComponentProps<typeof Primitive.Input> & {\n  leading?: React.ReactNode;\n  trailing?: React.ReactNode;\n};\nexport function CommandInput({\n  className,\n  leading,\n  trailing,\n  ...props\n}: CommandInputProps) {\n  const wrapperRef = useMorph<HTMLDivElement>(\"inputs\");\n  return (\n    <div\n      ref={wrapperRef}\n      data-slot=\"command-input-wrapper\"\n      className=\"v-cmd__input\"\n    >\n      {leading ?? <Icon name=\"search\" />}\n      <Primitive.Input\n        data-slot=\"command-input\"\n        data-part=\"trigger\"\n        aria-label=\"Search commands\"\n        className={cn(\n          \"min-w-0 flex-1 bg-transparent [border:0] [outline:0] [padding:1px_2px] text-[length:var(--fs-body)]\",\n          className,\n        )}\n        {...props}\n      />\n      {trailing}\n    </div>\n  );\n}\nexport type CommandListProps = React.ComponentProps<typeof Primitive.List>;\nexport function CommandList({ className, ref, children, ...props }: CommandListProps) {\n  const groupRef = useFlowGroup<HTMLDivElement>(ref, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[aria-selected=true]\",\n  });\n  const resultsRef = useCommandResultsMotion(groupRef);\n  return (\n    <ScrollAreaList>\n    <Primitive.List\n      ref={resultsRef}\n      data-slot=\"command-list\"\n      data-part=\"content\"\n      className={cn(\"v-cmd__list v-command-results\", className)}\n      {...props}\n    >{children}</Primitive.List>\n    </ScrollAreaList>\n  );\n}\nexport type CommandEmptyProps = React.ComponentProps<typeof Primitive.Empty>;\nexport function CommandEmpty({ className, ...props }: CommandEmptyProps) {\n  return (\n    <Primitive.Empty\n      data-slot=\"command-empty\"\n      data-part=\"empty\"\n      className={cn(\"v-cmd__empty\", className)}\n      {...props}\n    />\n  );\n}\nexport type CommandGroupProps = React.ComponentProps<typeof Primitive.Group>;\nexport function CommandGroup({ className, ...props }: CommandGroupProps) {\n  return (\n    <Primitive.Group\n      data-slot=\"command-group\"\n      data-part=\"group\"\n      className={className}\n      {...props}\n    />\n  );\n}\nexport type CommandItemProps = React.ComponentProps<typeof Primitive.Item> & {\n  variant?: \"default\" | \"danger\";\n} & ItemAdornmentItemProps;\nexport function CommandItem({\n  className,\n  adornment,\n  adornmentId,\n  variant,\n  ref,\n  children,\n  ...props\n}: CommandItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.Item\n      ref={morphRef}\n      data-slot=\"command-item\"\n      data-part=\"item\"\n      data-text-only={\n        typeof children === \"string\" || typeof children === \"number\"\n          ? \"\"\n          : undefined\n      }\n      className={cn(\n        \"v-menu__item\",\n        variant === \"danger\" && \"-danger\",\n        className,\n      )}\n      {...props}\n    >\n      {adornItem(children, adornment, adornmentId ?? props.value ?? itemText(children), props.asChild)}\n    </Primitive.Item>\n  );\n}\nexport type CommandSeparatorProps = React.ComponentProps<\n  typeof Primitive.Separator\n>;\nexport function CommandSeparator({\n  className,\n  ...props\n}: CommandSeparatorProps) {\n  return (\n    <Primitive.Separator\n      data-slot=\"command-separator\"\n      data-part=\"separator\"\n      className={cn(\"v-menu__sep\", className)}\n      {...props}\n    />\n  );\n}\nexport type CommandShortcutProps = React.ComponentProps<\"span\">;\nexport function CommandShortcut({ className, ...props }: CommandShortcutProps) {\n  return (\n    <span\n      data-slot=\"command-shortcut\"\n      className={cn(\"v-kbd ml-auto\", className)}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/command.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-menu:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  background: var(--popover);\n  border-radius: var(--r-card-sm);\n  padding: var(--s-2);\n  min-width: 200px;\n  box-shadow: var(--shadow-float);\n  border: 1px solid var(--v-border);\n  display: grid;\n  gap: 2px;\n}\n.v-menu__item:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-height: 40px;\n  padding: 0 var(--s-3);\n  border-radius: var(--r-md);\n  font-size: var(--fs-control);\n  width: 100%;\n  text-align: left;\n  white-space: nowrap;\n}\n.v-menu__item:where([data-slot=\"command\"], [data-slot^=\"command-\"]):hover,\n.v-menu__item:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )[aria-selected=\"true\"] {\n  background: var(--v-beige);\n}\n.v-menu__item:where([data-slot=\"command\"], [data-slot^=\"command-\"]).-danger {\n  color: var(--v-danger-ink);\n}\n.v-menu__sep:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  height: 1px;\n  background: var(--v-border);\n  margin: var(--s-1) 0;\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  height: 52px;\n  padding: 0 var(--s-5);\n  border-bottom: 1px solid var(--v-border);\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) input {\n  flex: 1;\n  background: none;\n  border: 0;\n  outline: 0;\n  font-size: var(--fs-body);\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  max-height: none;\n  overflow: visible;\n  padding: var(--s-2);\n}\n.v-cmd__empty:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  padding: var(--s-6);\n  text-align: center;\n  color: var(--muted-foreground);\n  font-size: var(--fs-control);\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n.v-cmd__input:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  ):focus-within {\n  box-shadow: inset 0 0 0 2px var(--v-brand);\n  border-color: transparent;\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  box-shadow: none;\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  height: 56px;\n  padding: 0 var(--s-4) 0 var(--s-5);\n  gap: var(--s-3);\n  border-bottom: 1px solid var(--v-border);\n  background: var(--v-canvas);\n  box-shadow: none;\n  color: var(--v-text);\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) > .v-icon {\n  width: 20px;\n  height: 20px;\n  color: var(--v-text-2);\n}\n.v-cmd__input:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  ):focus-within {\n  box-shadow: none;\n  background: color-mix(in oklab, var(--v-pink) 10%, var(--v-canvas));\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]):focus-within\n  > .v-icon {\n  color: var(--v-text);\n}\n.v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]) .v-kbd {\n  background: var(--v-beige);\n  border-bottom-color: var(--v-edge);\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  padding: var(--s-2);\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  [cmdk-group-heading] {\n  padding: var(--s-3) var(--s-3) var(--s-2);\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]),\n.v-menu:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-cmd__list:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )::-webkit-scrollbar,\n.v-menu:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )::-webkit-scrollbar {\n  width: 12px;\n  height: 12px;\n}\n.v-cmd__list:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )::-webkit-scrollbar-track,\n.v-menu:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )::-webkit-scrollbar-track {\n  background: transparent;\n  border-radius: var(--r-pill);\n}\n.v-cmd__list:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )::-webkit-scrollbar-thumb,\n.v-menu:where(\n    [data-slot=\"command\"],\n    [data-slot^=\"command-\"]\n  )::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-ink) 34%, transparent);\n  border-radius: var(--r-pill);\n  border: 4px solid transparent;\n  background-clip: content-box;\n  min-height: 36px;\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"]) .v-menu__item {\n  display: grid;\n  grid-template-columns: 28px minmax(0, 1fr) auto;\n  gap: var(--s-3);\n  align-items: center;\n  min-height: 44px;\n  padding: 0 var(--s-3) 0 var(--s-2);\n  border-radius: var(--r-md);\n  font-size: var(--fs-control);\n  transition: background var(--t-micro);\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item\n  .v-disk {\n  width: 28px;\n  height: 28px;\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item\n  .v-disk\n  .v-icon {\n  width: 15px;\n  height: 15px;\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item:hover {\n  background: color-mix(in oklab, var(--v-beige) 70%, var(--v-canvas));\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item[aria-selected=\"true\"] {\n  background: var(--v-pink-soft);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-pink);\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item[aria-selected=\"true\"]::after {\n  content: \"\\21B5\";\n  font-size: var(--fs-meta);\n  font-weight: var(--fw-semibold);\n  color: var(--v-text-2);\n  width: 22px;\n  height: 22px;\n  display: grid;\n  place-items: center;\n  border-radius: var(--r-sm);\n  background: var(--v-canvas);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item.-danger[aria-selected=\"true\"] {\n  background: var(--status-danger-bg);\n  box-shadow: inset 0 0 0 1px var(--v-danger);\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  [cmdk-group-heading] {\n  padding: var(--s-3) var(--s-3) var(--s-2);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.08em;\n  color: var(--v-text-2);\n}\n.v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  [cmdk-group-heading]\n  + .v-menu__item {\n  margin-top: 0;\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  padding: var(--s-2) var(--s-2) var(--s-3);\n  display: grid;\n  gap: 2px;\n}\n.v-cmd__empty:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  padding: var(--s-7) var(--s-5);\n  font-size: var(--fs-control);\n  color: var(--v-text-2);\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]),\n.v-menu:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-cmd__list:where([data-slot=\"command\"], [data-slot^=\"command-\"]),\n.v-menu:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  scrollbar-gutter: stable;\n}\n:root[data-mode=\"dark\"]\n  .v-cmd__input:where([data-slot=\"command\"], [data-slot^=\"command-\"]),\n:root[data-mode=\"dark\"]\n  .v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"]) {\n  background: var(--v-beige);\n}\n:root[data-mode=\"dark\"]\n  .v-cmd:where([data-slot=\"command\"], [data-slot^=\"command-\"])\n  .v-menu__item[aria-selected=\"true\"]::after {\n  background: var(--v-beige-2);\n  color: var(--v-text);\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"command\"],\n  [data-slot^=\"command-\"],\n  [data-slot=\"command\"]::before,\n  [data-slot=\"command\"]::after,\n  [data-slot^=\"command-\"]::before,\n  [data-slot^=\"command-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot=\"command-list\"] [cmdk-group],\n[data-slot=\"command-list\"] [cmdk-group-items] {\n  display: contents;\n}\n[data-slot=\"command-list\"] > [cmdk-list-sizer] {\n  display: grid;\n  gap: 2px;\n}\n[data-slot=\"command-group\"] [cmdk-group-heading] {\n  padding: var(--s-3) var(--s-3) var(--s-2);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  color: var(--v-text-2);\n}\n[data-slot=\"command-group\"][hidden] {\n  display: none;\n}\n[data-slot=\"command-item\"][data-disabled=\"true\"] {\n  color: var(--v-disabled-ink);\n  cursor: not-allowed;\n}\n[data-slot=\"command-item\"] {\n  cursor: pointer;\n}\n[data-slot=\"command-item\"][data-text-only] {\n  grid-template-columns: minmax(0, 1fr) auto;\n  white-space: normal;\n  overflow-wrap: anywhere;\n}\n\n/* cmdk keeps its semantic group wrappers; items still paint above the shared selection layer. */\n[data-flow-owned][data-slot=\"command-list\"] [data-slot=\"command-item\"] {\n  position: relative;\n  z-index: 1;\n}\n.v-command-results > [cmdk-list-sizer] {\n  opacity: var(--command-results-opacity, 1);\n}\n\n/* Automatic identity adds the first column; legacy/custom icon compositions keep theirs. */\n[data-slot=\"command-item\"]:has(> .v-item-adornment) { display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:var(--s-3); min-height:46px; padding-block:var(--s-2); }\n[data-slot=\"command-item\"] > .v-item-adornment { grid-column:1; }\n[data-slot=\"command-item\"]:has(> .v-item-adornment) > [data-slot=\"command-shortcut\"] { grid-column:3; }\n/* A command has one trailing cue. The Enter hint must not wrap below a supplied shortcut. */\n.v-cmd [data-slot=\"command-item\"]:has(> [data-slot=\"command-shortcut\"])::after { display:none; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/command.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/command.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "command",
+      "name": "Command",
+      "tier": "base",
+      "evidence": "Ext I15",
+      "status": "derived",
+      "root": ".v-cmd",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group",
+        "breathes"
+      ],
+      "canvas": "480x420",
+      "contract": "entries/command/contract.md",
+      "demo": "entries/command/demo.html",
+      "isolation": [
+        "default-default-rest-480x420.html",
+        "default-default-rest-dark-480x420.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "CommandProps",
+        "props": []
+      },
+      {
+        "name": "CommandDialogProps",
+        "props": [
+          {
+            "name": "title",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "className",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CommandInputProps",
+        "props": [
+          {
+            "name": "leading",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "trailing",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CommandListProps",
+        "props": []
+      },
+      {
+        "name": "CommandEmptyProps",
+        "props": []
+      },
+      {
+        "name": "CommandGroupProps",
+        "props": []
+      },
+      {
+        "name": "CommandItemProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "CommandSeparatorProps",
+        "props": []
+      },
+      {
+        "name": "CommandShortcutProps",
+        "props": []
+      }
+    ],
+    "category": "Tools",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

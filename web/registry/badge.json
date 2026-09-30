@@ -1,0 +1,212 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "badge",
+  "title": "Badge",
+  "description": "Stamp a review state, attach a filing tag or count a collection. Three compact treatments with one clear meaning in text.",
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/badge.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport {\n  controlRadiusStyle,\n  type ControlRadius,\n} from \"@/lib/cojeev/control-appearance\";\n\nconst badgeVariants = cva(\n  \"v-badge inline-flex items-center justify-center gap-[var(--s-2)] rounded-[var(--r-pill)] leading-none whitespace-nowrap bg-[var(--v-beige)] text-[color:var(--v-text)] tracking-[.005em]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        pink: \"-pink bg-[var(--v-pink)] text-[color:var(--v-on-accent)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        yellow:\n          \"-yellow bg-[var(--status-warn-bg)] text-[color:var(--status-warn-ink)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        olive:\n          \"-olive bg-[var(--status-ok-bg)] text-[color:var(--status-ok-ink)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        blue: \"-blue bg-[var(--status-info-bg)] text-[color:var(--status-info-ink)] [--muted-foreground:var(--muted-foreground-ink)]\",\n        ink: \"-ink bg-[var(--v-ink)] text-[color:var(--v-on-ink)]\",\n        cream: \"-cream bg-[var(--v-canvas)]\",\n        \"pink-soft\":\n          \"-pink-soft bg-[var(--v-pink-soft)] [--muted-foreground:var(--muted-foreground-tinted)]\",\n        \"yellow-soft\":\n          \"-yellow-soft bg-[var(--v-yellow-soft)] [--muted-foreground:var(--muted-foreground-tinted)]\",\n        \"olive-soft\":\n          \"-olive-soft bg-[var(--v-olive-soft)] [--muted-foreground:var(--muted-foreground-tinted)]\",\n        \"blue-soft\":\n          \"-blue-soft bg-[var(--v-blue-soft)] [--muted-foreground:var(--muted-foreground-tinted)]\",\n        danger:\n          \"-danger bg-[var(--status-danger-bg)] text-[color:var(--status-danger-ink)]\",\n        pending: \"-pending bg-[var(--v-ink)] text-[color:var(--v-on-ink)]\",\n        count:\n          \"-count min-w-[22px] bg-[var(--v-ink)] text-[color:var(--v-on-ink)] tabular-nums\",\n        dashed:\n          \"-dashed bg-[var(--v-canvas)] border border-dashed border-[var(--v-edge)]\",\n        caps: \"-caps uppercase tracking-[.08em]\",\n        test: \"-test bg-[var(--v-canvas)] border-[1.5px] border-solid border-[var(--v-ink)] tracking-[.03em]\",\n        live: \"-live bg-[var(--v-canvas)] [box-shadow:inset_0_0_0_1px_var(--v-edge)]\",\n      },\n      size: { default: \"\", sm: \"-sm\", lg: \"-lg\" },\n    },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\n// Later reference rules deliberately override sizes for count/caps/dashed/test.\nconst badgeDimensions = cva(\"\", {\n  variants: {\n    dimension: {\n      default: \"h-[26px] px-[var(--s-3)] py-0 text-[length:var(--fs-meta)] font-medium\",\n      sm: \"h-[20px] px-[var(--s-2)] py-0 text-[length:var(--fs-caps)] font-semibold\",\n      lg: \"h-[32px] px-[var(--s-4)] py-0 text-[length:var(--fs-small)] font-medium\",\n      count: \"h-[22px] px-[var(--s-2)] py-0 text-[length:var(--fs-caps)] font-semibold\",\n      caps: \"h-[26px] px-[var(--s-3)] py-0 text-[length:var(--fs-caps)] font-semibold\",\n    },\n  },\n});\n\ntype BadgeProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof badgeVariants> & {\n    appearance?: \"stamp\" | \"tag\" | \"counter\";\n    radius?: ControlRadius;\n  };\nconst badgeFaces: Record<string, string> = {\n  default: \"var(--v-beige)\",\n  pink: \"var(--v-pink)\",\n  yellow: \"var(--status-warn-bg)\",\n  olive: \"var(--status-ok-bg)\",\n  blue: \"var(--status-info-bg)\",\n  ink: \"var(--v-ink)\",\n  cream: \"var(--v-canvas)\",\n  \"pink-soft\": \"var(--v-pink-soft)\",\n  \"yellow-soft\": \"var(--v-yellow-soft)\",\n  \"olive-soft\": \"var(--v-olive-soft)\",\n  \"blue-soft\": \"var(--v-blue-soft)\",\n  danger: \"var(--status-danger-bg)\",\n  pending: \"var(--v-ink)\",\n  count: \"var(--v-ink)\",\n  dashed: \"var(--v-canvas)\",\n  caps: \"var(--v-beige)\",\n  test: \"var(--v-canvas)\",\n  live: \"var(--v-canvas)\",\n};\nfunction Badge({\n  ref: externalRef,\n  className,\n  variant = \"default\",\n  size = \"default\",\n  appearance,\n  radius,\n  style,\n  ...props\n}: BadgeProps) {\n  const morphRef = useMorph<HTMLSpanElement>(\"pills\", externalRef);\n  const dimension =\n    variant === \"count\" || variant === \"caps\" ? variant : (size ?? \"default\");\n  return (\n    <span\n      ref={morphRef}\n      data-slot=\"badge\"\n      data-part=\"root\"\n      data-state=\"rest\"\n      data-appearance={appearance}\n      data-morph={appearance ? \"both\" : undefined}\n      data-r={appearance ? \"css\" : undefined}\n      data-dash={appearance === \"stamp\" ? \"2 3\" : undefined}\n      style={{\n        ...((appearance\n          ? { \"--badge-face\": badgeFaces[variant ?? \"default\"] }\n          : {}) as React.CSSProperties),\n        ...style,\n        ...controlRadiusStyle(radius),\n      }}\n      className={cn(\n        badgeVariants({ variant, size }),\n        badgeDimensions({ dimension }),\n        (variant === \"dashed\" || variant === \"test\") && \"h-[26px] px-[var(--s-3)]\",\n        (variant === \"test\" || variant === \"danger\") && \"font-semibold\",\n        \"leading-none\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nfunction BadgeIndicator({ className, ...props }: React.ComponentProps<\"span\">) {\n  return (\n    <span\n      data-slot=\"badge-indicator\"\n      data-part=\"indicator\"\n      aria-hidden=\"true\"\n      className={cn(\n        \"v-dot size-[7px] [border-radius:50%] flex-none m-0 bg-current\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport { Badge, BadgeIndicator, badgeVariants };\nexport type { BadgeProps };\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/badge.css",
+      "content": "@layer cojeev-states {\n/* Descendant paint and explicit dark overrides from alive.css. */\n[data-slot=\"badge\"] > * {\n  line-height: 1;\n}\n.v-badge[data-slot].-caps {\n  height: 26px;\n  padding: 0 var(--s-3);\n  font-size: var(--fs-caps);\n  font-weight: var(--fw-semibold);\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n}\n[data-slot=\"badge\"] .v-dot {\n  width: 7px;\n  height: 7px;\n  border-radius: 50%;\n  flex: none;\n  margin: 0;\n  background: currentColor;\n}\n[data-slot=\"badge\"]:is(.-live, .-pending) .v-dot {\n  background: var(--v-olive);\n}\n:root[data-mode=\"dark\"]\n  [data-slot=\"badge\"]:is(\n    .-pink-soft,\n    .-yellow-soft,\n    .-olive-soft,\n    .-blue-soft\n  ) {\n  color: var(--v-text);\n  background: color-mix(in oklab, var(--badge-tint) 20%, var(--v-canvas));\n}\n:root[data-mode=\"dark\"] [data-slot=\"badge\"].-pink-soft {\n  --badge-tint: var(--v-pink);\n}\n:root[data-mode=\"dark\"] [data-slot=\"badge\"].-yellow-soft {\n  --badge-tint: var(--v-yellow);\n}\n:root[data-mode=\"dark\"] [data-slot=\"badge\"].-olive-soft {\n  --badge-tint: var(--v-olive);\n}\n:root[data-mode=\"dark\"] [data-slot=\"badge\"].-blue-soft {\n  --badge-tint: var(--v-blue);\n}\n:root[data-mode=\"dark\"] [data-slot=\"badge\"]:is(.-dashed, .-test, .-live) {\n  background: var(--v-beige-2);\n}\n/* The moving SVG owns this edge; a painted DOM edge would double it. */\n[data-slot=\"badge\"]:is(.-dashed, .-test).v-morph-live {\n  border-color: transparent;\n}\n\n/* Shape and paint are independent of the status/tone axis. The SVG owns both. */\n.v-badge[data-appearance] {\n  --mfill: var(--badge-face);\n  --mstroke: currentColor;\n  position: relative;\n  isolation: isolate;\n  border: 0;\n  border-radius: var(--v-control-radius, 8px);\n  box-shadow: none;\n}\n.v-badge[data-appearance=\"stamp\"] {\n  letter-spacing: 0.045em;\n}\n.v-badge[data-appearance=\"tag\"] {\n  border-radius: var(--v-control-radius, 4px 12px 12px 4px);\n}\n.v-badge[data-appearance=\"tag\"]::before {\n  content: \"\";\n  width: 5px;\n  height: 5px;\n  border-radius: 50%;\n  border: 1px solid currentColor;\n  flex: none;\n  opacity: 0.6;\n}\n.v-badge[data-appearance=\"counter\"] {\n  border-radius: var(--v-control-radius, 50%);\n  min-width: var(--badge-count-size, 28px);\n  font-variant-numeric: tabular-nums;\n}\n.v-badge[data-appearance].v-morph-live {\n  background: transparent;\n}\n:root[data-mode=\"dark\"]\n  .v-badge[data-appearance]:is(\n    .-pink-soft,\n    .-yellow-soft,\n    .-olive-soft,\n    .-blue-soft\n  ) {\n  --mfill: color-mix(in oklab, var(--badge-tint) 20%, var(--v-canvas));\n}\n:root[data-mode=\"dark\"] .v-badge[data-appearance]:is(.-dashed, .-test, .-live) {\n  --mfill: var(--v-beige-2);\n}\n.v-badge-example {\n  width: 100%;\n  max-width: 620px;\n  margin-inline: auto;\n  display: grid;\n  gap: var(--s-6);\n  color: var(--v-text);\n}\n.v-badge-example__surface {\n  position: relative;\n  min-width: 0;\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-card);\n  background: var(--v-paper);\n  padding: var(--s-7);\n}\n.v-badge-example__kicker {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  gap: var(--s-3);\n  font-size: var(--fs-caps);\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: var(--v-text-3);\n}\n.v-badge-example__surface h3 {\n  font-family: var(--font-display);\n  font-size: clamp(24px, 4cqi, 34px);\n  line-height: 1.18;\n  margin: var(--s-6) 0 var(--s-3);\n}\n.v-badge-example__surface p {\n  color: var(--v-text-2);\n  line-height: 1.6;\n  margin: 0;\n}\n.v-badge-example__surface[data-layout=\"stamp\"] {\n  border-radius: var(--r-xs) var(--r-panel) var(--r-panel) var(--r-xs);\n  border-left: 5px solid var(--v-pink);\n}\n.v-badge-example__stamp {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-5);\n  border-top: 1px solid var(--v-edge);\n  margin-top: var(--s-7);\n  padding-top: var(--s-5);\n}\n.v-badge-example__stamp .v-badge {\n  transform: rotate(-3deg);\n  transform-origin: center;\n}\n.v-badge-example__meta {\n  display: grid;\n  gap: var(--s-2);\n  font-size: var(--fs-meta);\n  color: var(--v-text-3);\n}\n.v-badge-example__meta strong {\n  font-size: var(--fs-control);\n  font-weight: var(--fw-medium);\n  color: var(--v-text);\n}\n.v-badge-example__tags {\n  margin: var(--s-7) 0 0;\n  display: grid;\n  gap: 0;\n}\n.v-badge-example__tags > div {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n  border-top: 1px solid var(--v-edge);\n  padding: var(--s-4) 0;\n}\n.v-badge-example__tags dt {\n  font-size: var(--fs-meta);\n  color: var(--v-text-3);\n}\n.v-badge-example__tags dd {\n  margin: 0;\n}\n.v-badge-example__counter {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: var(--s-5);\n}\n.v-badge-example__counter h3 {\n  margin: 0;\n}\n.v-badge-example__counter .v-badge {\n  --badge-count-size: 52px;\n  height: 52px;\n  padding-inline: var(--s-4);\n  font-size: var(--fs-section);\n}\n.v-badge-example__surface[data-layout=\"counter\"] p {\n  margin-block: var(--s-4) var(--s-6);\n}\n.v-badge-example__actions {\n  display: flex;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n}\n.v-badge-example__treatments {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: var(--s-3);\n}\n.v-badge-example__copy {\n  display: grid;\n  gap: var(--s-3);\n}\n.v-badge-example__eyebrow {\n  color: var(--v-text-3);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.05em;\n}\n.v-badge-example__counter .v-badge.-sm {\n  --badge-count-size: 40px;\n  height: 40px;\n  font-size: var(--fs-title);\n}\n.v-badge-example__counter .v-badge.-lg {\n  --badge-count-size: 64px;\n  height: 64px;\n  font-size: var(--fs-section);\n}\n@container (max-width:440px) {\n  .v-badge-example__surface {\n    padding: var(--s-6);\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/badge.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/badge.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "badge",
+      "name": "Badge",
+      "tier": "base",
+      "evidence": "I03 I18",
+      "status": "source",
+      "root": ".v-badge",
+      "variants": [
+        "stamp",
+        "tag",
+        "counter"
+      ],
+      "sizes": [
+        "default",
+        "sm",
+        "lg"
+      ],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "pills",
+      "motionOnByDefault": true,
+      "flowRoles": [
+        "enters"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/badge/contract.md",
+      "demo": "entries/badge/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-sm-rest.html",
+        "default-sm-rest-dark.html",
+        "default-lg-rest.html",
+        "default-lg-rest-dark.html",
+        "pink-default-rest.html",
+        "pink-default-rest-dark.html",
+        "pink-sm-rest.html",
+        "pink-sm-rest-dark.html",
+        "pink-lg-rest.html",
+        "pink-lg-rest-dark.html",
+        "yellow-default-rest.html",
+        "yellow-default-rest-dark.html",
+        "yellow-sm-rest.html",
+        "yellow-sm-rest-dark.html",
+        "yellow-lg-rest.html",
+        "yellow-lg-rest-dark.html",
+        "olive-default-rest.html",
+        "olive-default-rest-dark.html",
+        "olive-sm-rest.html",
+        "olive-sm-rest-dark.html",
+        "olive-lg-rest.html",
+        "olive-lg-rest-dark.html",
+        "blue-default-rest.html",
+        "blue-default-rest-dark.html",
+        "blue-sm-rest.html",
+        "blue-sm-rest-dark.html",
+        "blue-lg-rest.html",
+        "blue-lg-rest-dark.html",
+        "ink-default-rest.html",
+        "ink-default-rest-dark.html",
+        "ink-sm-rest.html",
+        "ink-sm-rest-dark.html",
+        "ink-lg-rest.html",
+        "ink-lg-rest-dark.html",
+        "cream-default-rest.html",
+        "cream-default-rest-dark.html",
+        "cream-sm-rest.html",
+        "cream-sm-rest-dark.html",
+        "cream-lg-rest.html",
+        "cream-lg-rest-dark.html",
+        "pink-soft-default-rest.html",
+        "pink-soft-default-rest-dark.html",
+        "pink-soft-sm-rest.html",
+        "pink-soft-sm-rest-dark.html",
+        "pink-soft-lg-rest.html",
+        "pink-soft-lg-rest-dark.html",
+        "yellow-soft-default-rest.html",
+        "yellow-soft-default-rest-dark.html",
+        "yellow-soft-sm-rest.html",
+        "yellow-soft-sm-rest-dark.html",
+        "yellow-soft-lg-rest.html",
+        "yellow-soft-lg-rest-dark.html",
+        "olive-soft-default-rest.html",
+        "olive-soft-default-rest-dark.html",
+        "olive-soft-sm-rest.html",
+        "olive-soft-sm-rest-dark.html",
+        "olive-soft-lg-rest.html",
+        "olive-soft-lg-rest-dark.html",
+        "blue-soft-default-rest.html",
+        "blue-soft-default-rest-dark.html",
+        "blue-soft-sm-rest.html",
+        "blue-soft-sm-rest-dark.html",
+        "blue-soft-lg-rest.html",
+        "blue-soft-lg-rest-dark.html",
+        "danger-default-rest.html",
+        "danger-default-rest-dark.html",
+        "danger-sm-rest.html",
+        "danger-sm-rest-dark.html",
+        "danger-lg-rest.html",
+        "danger-lg-rest-dark.html",
+        "pending-default-rest.html",
+        "pending-default-rest-dark.html",
+        "pending-sm-rest.html",
+        "pending-sm-rest-dark.html",
+        "pending-lg-rest.html",
+        "pending-lg-rest-dark.html",
+        "count-default-rest.html",
+        "count-default-rest-dark.html",
+        "count-sm-rest.html",
+        "count-sm-rest-dark.html",
+        "count-lg-rest.html",
+        "count-lg-rest-dark.html",
+        "dashed-default-rest.html",
+        "dashed-default-rest-dark.html",
+        "dashed-sm-rest.html",
+        "dashed-sm-rest-dark.html",
+        "dashed-lg-rest.html",
+        "dashed-lg-rest-dark.html",
+        "caps-default-rest.html",
+        "caps-default-rest-dark.html",
+        "caps-sm-rest.html",
+        "caps-sm-rest-dark.html",
+        "caps-lg-rest.html",
+        "caps-lg-rest-dark.html",
+        "test-default-rest.html",
+        "test-default-rest-dark.html",
+        "test-sm-rest.html",
+        "test-sm-rest-dark.html",
+        "test-lg-rest.html",
+        "test-lg-rest-dark.html",
+        "live-default-rest.html",
+        "live-default-rest-dark.html",
+        "live-sm-rest.html",
+        "live-sm-rest-dark.html",
+        "live-lg-rest.html",
+        "live-lg-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "BadgeProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\" | \"pink\" | \"yellow\" | \"blue\" | \"olive\" | \"ink\" | \"cream\" | \"pink-soft\" | \"yellow-soft\" | \"olive-soft\" | \"blue-soft\" | \"pending\" | \"count\" | \"dashed\" | \"caps\" | \"test\" | \"live\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | \"lg\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"stamp\" | \"tag\" | \"counter\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

@@ -1,0 +1,208 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "avatar",
+  "title": "Avatar",
+  "description": "Portraits, identity rows and participant groups that keep the person recognizable—with artwork, initials and independent shape choices.",
+  "dependencies": [
+    "@radix-ui/react-avatar",
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/avatar.tsx",
+      "content": "\"use client\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport * as React from \"react\";\nimport * as AvatarPrimitive from \"@radix-ui/react-avatar\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport { Button } from \"@/components/ui/button\";\n\nconst AvatarVariants = cva(\n  \"v-avatar [width:40px] [height:40px] [border-radius:50%] [object-fit:cover] [background:var(--c,var(--v-beige))] [display:inline-grid] [place-items:center] [font-size:var(--fs-small)] [font-weight:var(--fw-semibold)] [flex:none] [color:var(--v-text)] [box-shadow:0_0_0_2px_var(--v-canvas)] [font-family:var(--font-display)] [letter-spacing:.01em]\",\n  {\n    variants: {\n      variant: {\n        default: \"\",\n        square: \"-square [border-radius:var(--r-card-sm)]\",\n        pink: \"-pink [--c:var(--v-pink)] [color:var(--v-on-accent)]\",\n        yellow: \"-yellow [--c:var(--v-yellow)] [color:var(--v-on-accent)]\",\n        olive: \"-olive [--c:var(--v-olive)] [color:var(--v-on-accent)]\",\n        blue: \"-blue [--c:var(--v-blue)] [color:var(--v-on-accent)]\",\n        ink: \"-ink [--c:var(--v-ink)] [color:var(--v-on-ink)]\",\n        sm: \"-sm [width:28px] [height:28px] [font-size:var(--fs-caps)]\",\n      },\n      size: {\n        default: \"\",\n        sm: \"-sm [width:28px] [height:28px] [font-size:var(--fs-caps)]\",\n        lg: \"-lg [width:110px] [height:110px] [font-size:34px] [letter-spacing:-.01em]\",\n      },\n    },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AvatarProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AvatarVariants> & {\n    shape?: \"circle\" | \"rounded\" | \"pebble\";\n  };\nexport function Avatar({\n  ref: externalMorphRef,\n  className,\n  variant,\n  size,\n  shape,\n  ...props\n}: AvatarProps) {\n  const ownedMorphRef = useMorph<HTMLSpanElement>(\"controls\", externalMorphRef);\n  return (\n    <AvatarPrimitive.Root\n      ref={ownedMorphRef}\n      data-slot=\"avatar\"\n      data-part=\"root\"\n      data-avatar-shape={shape}\n      className={cn(AvatarVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AvatarGroupVariants = cva(\n  \"v-avatar-stack [display:inline-flex] [align-items:center]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AvatarGroupProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AvatarGroupVariants>;\nexport function AvatarGroup({\n  className,\n  variant,\n  size,\n  ...props\n}: AvatarGroupProps) {\n  return (\n    <span\n      data-slot=\"avatar-group\"\n      data-part=\"group\"\n      className={cn(AvatarGroupVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AvatarWrapperVariants = cva(\n  \"v-avatar-wrap [position:relative] [display:inline-block]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AvatarWrapperProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AvatarWrapperVariants>;\nexport function AvatarWrapper({\n  className,\n  variant,\n  size,\n  ...props\n}: AvatarWrapperProps) {\n  return (\n    <span\n      data-slot=\"avatar-wrapper\"\n      data-part=\"wrapper\"\n      className={cn(AvatarWrapperVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AvatarEditVariants = cva(\"v-edit \", {\n  variants: { variant: { default: \"\" }, size: { default: \"\" } },\n  defaultVariants: { variant: \"default\", size: \"default\" },\n});\nexport type AvatarEditProps = React.ComponentProps<\"button\"> &\n  VariantProps<typeof AvatarEditVariants>;\nexport function AvatarEdit({\n  className,\n  variant,\n  size,\n  ...props\n}: AvatarEditProps) {\n  return (\n    <Button\n      type=\"button\"\n      variant=\"secondary\"\n      aria-label=\"Edit avatar\"\n      data-stable-hit=\"\"\n      data-flow=\"off\"\n      data-slot=\"avatar-edit\"\n      data-part=\"edit\"\n      className={cn(AvatarEditVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AvatarHexVariants = cva(\n  \"v-hex [width:32px] [height:32px] [display:inline-grid] [place-items:center] [font-size:var(--fs-caps)] [font-weight:var(--fw-bold)] [background:var(--c,var(--v-blue))] [clip-path:polygon(25%_6.7%,75%_6.7%,100%_50%,75%_93.3%,25%_93.3%,0_50%)] [flex:none] [color:var(--v-on-accent)] [filter:drop-shadow(0_0_0_var(--v-canvas))]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AvatarHexProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AvatarHexVariants>;\nexport function AvatarHex({\n  ref: externalMorphRef,\n  className,\n  variant,\n  size,\n  ...props\n}: AvatarHexProps) {\n  const ownedMorphRef = useMorph<HTMLSpanElement>(\"controls\", externalMorphRef);\n  return (\n    <span\n      ref={ownedMorphRef}\n      data-slot=\"avatar-hex\"\n      data-part=\"hex\"\n      className={cn(AvatarHexVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AvatarHexGroupVariants = cva(\n  \"v-hexgroup [display:flex] [gap:0] [align-items:center]\",\n  {\n    variants: { variant: { default: \"\" }, size: { default: \"\" } },\n    defaultVariants: { variant: \"default\", size: \"default\" },\n  },\n);\nexport type AvatarHexGroupProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AvatarHexGroupVariants>;\nexport function AvatarHexGroup({\n  className,\n  variant,\n  size,\n  ...props\n}: AvatarHexGroupProps) {\n  return (\n    <span\n      data-slot=\"avatar-hex-group\"\n      data-part=\"hex-group\"\n      className={cn(AvatarHexGroupVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nconst AvatarMoreVariants = cva(\"v-more \", {\n  variants: { variant: { default: \"\" }, size: { default: \"\" } },\n  defaultVariants: { variant: \"default\", size: \"default\" },\n});\nexport type AvatarMoreProps = React.ComponentProps<\"span\"> &\n  VariantProps<typeof AvatarMoreVariants>;\nexport function AvatarMore({\n  className,\n  variant,\n  size,\n  ...props\n}: AvatarMoreProps) {\n  return (\n    <span\n      data-slot=\"avatar-more\"\n      data-part=\"more\"\n      className={cn(AvatarMoreVariants({ variant, size }), className)}\n      {...props}\n    />\n  );\n}\n\nexport type AvatarImageProps = React.ComponentProps<\n  typeof AvatarPrimitive.Image\n>;\nexport function AvatarImage({ className, ...props }: AvatarImageProps) {\n  return (\n    <AvatarPrimitive.Image\n      data-slot=\"avatar-image\"\n      className={cn(\"h-full w-full rounded-[inherit] object-cover\", className)}\n      {...props}\n    />\n  );\n}\nexport type AvatarFallbackProps = React.ComponentProps<\n  typeof AvatarPrimitive.Fallback\n>;\nexport function AvatarFallback(props: AvatarFallbackProps) {\n  return (\n    <AvatarPrimitive.Fallback\n      data-slot=\"avatar-fallback\"\n      data-part=\"fallback\"\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/avatar.css",
+      "content": "@layer cojeev-states {\n/* Orthogonal authored class modifiers remain composable with CVA axes. */\n.v-avatar[data-avatar-shape] {\n  padding: 3px;\n}\n.v-avatar[data-avatar-shape=\"circle\"] {\n  border-radius: 50%;\n}\n.v-avatar[data-avatar-shape=\"rounded\"] {\n  border-radius: 25%;\n}\n.v-avatar[data-avatar-shape=\"pebble\"] {\n  border-radius: 43% 57% 49% 51% / 55% 44% 56% 45%;\n}\n.v-avatar[data-slot].-square {\n  border-radius: var(--r-card-sm);\n}\n.v-avatar[data-slot].-lg {\n  width: 110px;\n  height: 110px;\n  font-size: 34px;\n  letter-spacing: -0.01em;\n}\n.v-avatar[data-slot].-pink {\n  --c: var(--v-pink);\n  color: var(--v-on-accent);\n}\n.v-avatar[data-slot].-yellow {\n  --c: var(--v-yellow);\n  color: var(--v-on-accent);\n}\n.v-avatar[data-slot].-olive {\n  --c: var(--v-olive);\n  color: var(--v-on-accent);\n}\n.v-avatar[data-slot].-blue {\n  --c: var(--v-blue);\n  color: var(--v-on-accent);\n}\n.v-avatar[data-slot].-ink {\n  --c: var(--v-ink);\n  color: var(--v-on-ink);\n}\n.v-avatar[data-slot].-sm {\n  width: 28px;\n  height: 28px;\n  font-size: var(--fs-caps);\n}\n\n/* Authored contextual and pseudo-element rules, scoped to component-owned roots. */\n.v-hexgroup[data-slot] .v-more {\n  width: var(--hex);\n  height: var(--hex);\n  border-radius: 50%;\n  background: var(--v-canvas);\n  font-size: var(--fs-caps);\n  font-weight: var(--fw-bold);\n  display: grid;\n  place-items: center;\n}\n.v-avatar-wrap[data-slot] .v-edit {\n  position: absolute;\n  top: -10px;\n  right: -10px;\n  width: var(--edit-badge);\n  height: var(--edit-badge);\n  display: grid;\n  place-items: center;\n  color: var(--v-text);\n}\n.v-avatar-wrap[data-slot] .v-edit .v-shape {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n}\n.v-avatar-wrap[data-slot] .v-edit .v-icon {\n  position: relative;\n  width: 14px;\n  height: 14px;\n}\n.v-avatar-wrap[data-slot] .v-edit {\n  color: var(--v-on-accent);\n}\n.v-hexgroup[data-slot] {\n  box-shadow: none;\n  border: 0;\n}\n.v-hexgroup[data-slot] .v-more {\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n  color: var(--v-text);\n}\n.v-avatar-wrap[data-slot] .v-edit {\n  width: 40px;\n  height: 40px;\n}\n.v-hexgroup[data-slot] > * + * {\n  margin-left: -6px;\n}\n.v-hexgroup[data-slot] .v-more {\n  width: 32px;\n  height: 32px;\n  font-size: var(--fs-caps);\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  box-shadow: 0 0 0 2px var(--v-canvas);\n}\n.v-avatar-stack[data-slot] > .v-avatar + .v-avatar {\n  margin-left: -10px;\n}\n.v-avatar-wrap[data-slot] .v-edit {\n  top: -6px;\n  right: -6px;\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n  box-shadow: 0 0 0 3px var(--v-canvas);\n  border-radius: 46% 54% 50% 50%/50% 46% 54% 50%;\n  cursor: pointer;\n  transition:\n    transform var(--t-element) var(--enter),\n    background var(--t-micro);\n}\n.v-avatar-wrap[data-slot] .v-edit:hover {\n  transform: scale(1.08) rotate(-8deg);\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n}\n.v-avatar-wrap[data-slot]:has(> .v-avatar:not(.-lg)) {\n  padding-right: 56px;\n  min-height: 44px;\n  display: inline-flex;\n  align-items: center;\n}\n.v-avatar-wrap[data-slot]:has(> .v-avatar:not(.-lg)) .v-edit {\n  right: 0;\n  top: 50%;\n  bottom: auto;\n  margin-top: -22px;\n}\n.v-avatar[data-slot].-square.-lg {\n  border-radius: var(--r-sheet);\n}\n.v-avatar-stack[data-slot] > .v-avatar {\n  transition: transform var(--t-element) var(--enter);\n}\n.v-avatar-stack[data-slot]:hover > .v-avatar {\n  transform: translateX(calc(var(--i, 0) * 4px));\n}\n.v-hexgroup[data-slot] > * {\n  transition: transform var(--t-element) var(--enter);\n}\n.v-hexgroup[data-slot]:hover > *:hover {\n  transform: translateY(-3px);\n  z-index: 1;\n}\n.v-avatar-wrap[data-slot] .v-edit > .v-shape {\n  display: none;\n}\n.v-avatar-wrap[data-slot] .v-edit .v-icon {\n  width: 15px;\n  height: 15px;\n  stroke-width: 2;\n}\n.v-avatar-wrap[data-slot] .v-edit {\n  width: 44px;\n  height: 44px;\n  min-width: 44px;\n  min-height: 44px;\n  padding: 0;\n  top: auto;\n  bottom: -12px;\n  right: -16px;\n  background: transparent;\n  color: var(--v-on-accent);\n  transform: none;\n  transition: none;\n}\n.v-avatar-wrap[data-slot] .v-edit:hover {\n  transform: none;\n  background: transparent;\n}\n.v-avatar-wrap[data-slot] .v-edit .v-icon {\n  width: 19px;\n  height: 19px;\n}\n:root[data-mode=\"dark\"] .v-hexgroup[data-slot] .v-more {\n  box-shadow: 0 0 0 2px var(--v-canvas);\n}\n:root[data-mode=\"dark\"] .v-avatar[data-slot] {\n  box-shadow: 0 0 0 2px var(--v-canvas);\n}\n\n/* Identity is the subject. One authored backdrop frames it; utilities stay quiet. */\n.v-identity-example {\n  width: 100%;\n  max-width: 640px;\n  margin-inline: auto;\n  display: grid;\n  gap: var(--s-6);\n  color: var(--v-text);\n}\n.v-identity-example p {\n  margin: 0;\n}\n.v-identity-example .v-identity-example__avatar-medium {\n  width: 80px;\n  height: 80px;\n  font-size: var(--fs-section);\n}\n.v-identity-example .v-avatar-wrap[data-slot][data-edit-placement=\"badge\"] {\n  padding-right: 0;\n}\n.v-identity-example\n  .v-avatar-wrap[data-slot][data-edit-placement=\"badge\"]\n  .v-edit {\n  top: auto;\n  bottom: -12px;\n  right: -16px;\n  margin-top: 0;\n}\n.v-identity-example__surface {\n  position: relative;\n  min-width: 0;\n  background: var(--v-paper);\n  border: 1px solid var(--v-edge);\n  border-radius: var(--r-panel);\n  padding: var(--s-7);\n}\n.v-identity-example__portrait {\n  display: grid;\n  justify-items: center;\n  gap: var(--s-6);\n  text-align: center;\n}\n.v-identity-example__art {\n  display: grid;\n  place-items: center;\n  min-width: 180px;\n  min-height: 180px;\n  padding: var(--s-7);\n  background:\n    radial-gradient(ellipse at 30% 15%, var(--v-pink-soft), transparent 70%),\n    var(--v-canvas);\n  border-radius: 46% 54% 51% 49%/45% 48% 52% 55%;\n}\n.v-identity-example__eyebrow {\n  display: block;\n  color: var(--v-text-3);\n  font-size: var(--fs-caps);\n  letter-spacing: 0.09em;\n  text-transform: uppercase;\n}\n.v-identity-example__name {\n  font-family: var(--font-display);\n  font-size: clamp(22px, 3cqi, 30px);\n  line-height: 1.2;\n  overflow-wrap: anywhere;\n}\n.v-identity-example__copy {\n  display: grid;\n  gap: var(--s-2);\n  min-width: 0;\n}\n.v-identity-example__row {\n  display: flex;\n  align-items: center;\n  gap: var(--s-6);\n}\n.v-identity-example__row .v-identity-example__copy {\n  flex: 1;\n}\n.v-identity-example__row .v-avatar-wrap {\n  flex: none;\n  margin-right: var(--s-3);\n}\n.v-identity-example__actions {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-3);\n}\n.v-identity-example__controls {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;\n  gap: var(--s-4);\n  align-items: end;\n  padding: var(--s-3);\n}\n.v-identity-example__controls > .v-btn {\n  justify-self: start;\n}\n.v-identity-example__detail {\n  padding-top: var(--s-5);\n  margin-top: var(--s-6);\n  border-top: 1px solid var(--v-edge);\n  line-height: 1.65;\n}\n.v-identity-example__participants {\n  display: grid;\n  gap: var(--s-6);\n}\n.v-identity-example__participants .v-avatar-stack {\n  flex-wrap: wrap;\n  gap: var(--s-2);\n  padding: var(--s-2) 0;\n}\n.v-identity-example__participants .v-avatar-stack > .v-avatar + .v-avatar {\n  margin-left: -12px;\n}\n.v-identity-example__roster {\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  border-top: 1px solid var(--v-edge);\n}\n.v-identity-example__roster li {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  padding-block: var(--s-3);\n  border-bottom: 1px solid var(--v-edge);\n}\n.v-identity-example__roster li > span:last-child {\n  display: grid;\n  gap: 3px;\n  min-width: 0;\n  overflow-wrap: anywhere;\n}\n.v-identity-example__roster small {\n  color: var(--v-text-3);\n}\n.v-identity-example__legacy {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-4);\n}\n@container (max-width:440px) {\n  .v-identity-example__surface {\n    padding: var(--s-5);\n  }\n  .v-identity-example__row {\n    flex-direction: column;\n    align-items: flex-start;\n  }\n  .v-identity-example__controls {\n    grid-template-columns: 1fr;\n  }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/avatar.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/avatar.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "avatar",
+      "name": "Avatar",
+      "tier": "base",
+      "evidence": "I04 I11 I18",
+      "status": "source",
+      "root": ".v-avatar",
+      "variants": [
+        "portrait",
+        "identity",
+        "participants"
+      ],
+      "sizes": [
+        "lg",
+        "default",
+        "sm"
+      ],
+      "states": [
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "controls",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "breathes"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/avatar/contract.md",
+      "demo": "entries/avatar/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "AvatarProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"pink\" | \"yellow\" | \"blue\" | \"olive\" | \"square\" | \"ink\" | \"sm\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | \"sm\" | \"lg\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "shape",
+            "type": "\"circle\" | \"rounded\" | \"pebble\"",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarGroupProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarWrapperProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarEditProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarHexProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarHexGroupProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarMoreProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "\"default\" | null | undefined",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AvatarImageProps",
+        "props": []
+      },
+      {
+        "name": "AvatarFallbackProps",
+        "props": []
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

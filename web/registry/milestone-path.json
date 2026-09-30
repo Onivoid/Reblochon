@@ -1,0 +1,109 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "milestone-path",
+  "title": "Milestone path",
+  "description": "Follow caller-owned progress as a connected Journey, a scrollable Sequence or a compact checkpoint Review.",
+  "dependencies": [
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/animated-icon.json",
+    "https://000h.cojeev.com/r/badge.json",
+    "https://000h.cojeev.com/r/button.json",
+    "https://000h.cojeev.com/r/empty.json",
+    "https://000h.cojeev.com/r/stepper.json",
+    "https://000h.cojeev.com/r/typography.json",
+    "https://000h.cojeev.com/r/scroll-area.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/milestone-path.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { motion } from \"motion/react\";\nimport { cn } from \"@/lib/utils\";\nimport { useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { AnimatedIcon } from \"@/components/ui/animated-icon\";\nimport { Badge } from \"@/components/ui/badge\";\nimport { Button } from \"@/components/ui/button\";\nimport { Empty, EmptyDescription, EmptyTitle } from \"@/components/ui/empty\";\nimport {\n  Stepper,\n  StepperIndicator,\n  StepperItem,\n  StepperList,\n  StepperTitle,\n} from \"@/components/ui/stepper\";\nimport { BodySecondary, Meta, Title } from \"@/components/ui/typography\";\nimport { ScrollArea, ScrollBar } from \"@/components/ui/scroll-area\";\n\nexport type MilestoneState = \"complete\" | \"current\" | \"upcoming\";\nexport type Milestone = {\n  /** Stable identity, independent of display text and array position. */\n  id: string;\n  title: React.ReactNode;\n  description?: React.ReactNode;\n  state: MilestoneState;\n  meta?: React.ReactNode;\n  /** Disables the optional selection button; does not change progress. */\n  disabled?: boolean;\n};\nexport type MilestonePathProps = Omit<\n  React.ComponentProps<\"section\">,\n  \"children\" | \"title\"\n> & {\n  /** Ordered journey. Supply at most one current milestone. */\n  items: readonly Milestone[];\n  title?: React.ReactNode;\n  description?: React.ReactNode;\n  empty?: React.ReactNode;\n  statusLabels?: Partial<Record<MilestoneState, React.ReactNode>>;\n  /** Makes titles native buttons. Progress remains owned by the caller. */\n  onMilestoneSelect?: (id: string) => void;\n  /** Omit for the original vertical composition. */\n  presentation?: \"journey\" | \"sequence\" | \"review\";\n};\n\nconst stateLabels: Record<MilestoneState, string> = {\n  complete: \"Completed\",\n  current: \"In progress\",\n  upcoming: \"Upcoming\",\n};\nconst connection = \"M18 0 C18 26 21 31 18 50 C15 69 18 75 18 100\";\n\nexport function MilestonePath({\n  items,\n  title,\n  description,\n  empty,\n  statusLabels,\n  onMilestoneSelect,\n  presentation,\n  className,\n  \"aria-label\": ariaLabel,\n  \"aria-labelledby\": labelledBy,\n  ...props\n}: MilestonePathProps) {\n  const titleId = React.useId();\n  const { quiet, transition } = useChoreography();\n  const currentIndex = items.findIndex((item) => item.state === \"current\");\n  const upcomingIndex = items.findIndex((item) => item.state === \"upcoming\");\n  // One terminal provider slot represents a finished journey without a fake\n  // current item. Per-item states remain authoritative for mixed histories.\n  const position =\n    currentIndex >= 0\n      ? currentIndex + 1\n      : upcomingIndex >= 0\n        ? upcomingIndex + 1\n        : items.length + 1;\n  const list = (\n    <StepperList\n      className=\"v-milestone-path__list\"\n      role=\"list\"\n      data-no-glide=\"\"\n      data-flow=\"off\"\n    >\n      {items.map((item, index) => (\n        <StepperItem\n          key={item.id}\n          step={index + 1}\n          data-milestone-id={item.id}\n          data-state={item.state}\n          aria-current={item.state === \"current\" ? \"step\" : undefined}\n          className=\"v-milestone-path__item\"\n        >\n          {index < items.length - 1 && (\n            <svg\n              aria-hidden=\"true\"\n              className=\"v-milestone-path__connection\"\n              viewBox={\n                presentation === \"sequence\" ? \"0 0 100 36\" : \"0 0 36 100\"\n              }\n              preserveAspectRatio=\"none\"\n              fill=\"none\"\n            >\n              <path\n                d={\n                  presentation === \"sequence\"\n                    ? \"M0 18 C26 18 31 21 50 18 C69 15 75 18 100 18\"\n                    : connection\n                }\n                className=\"v-milestone-path__track\"\n                vectorEffect=\"non-scaling-stroke\"\n              />\n              <motion.path\n                d={\n                  presentation === \"sequence\"\n                    ? \"M0 18 C26 18 31 21 50 18 C69 15 75 18 100 18\"\n                    : connection\n                }\n                className=\"v-milestone-path__progress\"\n                vectorEffect=\"non-scaling-stroke\"\n                initial={false}\n                animate={{ opacity: item.state === \"complete\" ? 1 : 0 }}\n                transition={quiet ? { duration: 0 } : transition}\n              />\n            </svg>\n          )}\n          <StepperIndicator\n            step={index + 1}\n            className=\"v-milestone-path__marker\"\n            aria-hidden=\"true\"\n            data-morph={\n              presentation && item.state === \"current\" ? \"fill\" : \"none\"\n            }\n          >\n            {item.state === \"complete\" ? (\n              <AnimatedIcon name=\"check\" preset=\"validation\" size=\"sm\" />\n            ) : (\n              <span>{index + 1}</span>\n            )}\n          </StepperIndicator>\n          <div className=\"v-milestone-path__content\">\n            <div className=\"v-milestone-path__heading\">\n              <StepperTitle className=\"v-milestone-path__title\">\n                {onMilestoneSelect ? (\n                  <Button\n                    variant=\"ghost\"\n                    size=\"sm\"\n                    disabled={item.disabled}\n                    data-morph=\"none\"\n                    data-flow=\"off\"\n                    data-stable-hit=\"\"\n                    className=\"v-milestone-path__select\"\n                    onClick={() => onMilestoneSelect(item.id)}\n                  >\n                    {item.title}\n                  </Button>\n                ) : (\n                  item.title\n                )}\n              </StepperTitle>\n              <Badge\n                size=\"sm\"\n                variant={\n                  item.state === \"complete\"\n                    ? \"olive-soft\"\n                    : item.state === \"current\"\n                      ? \"pink-soft\"\n                      : \"cream\"\n                }\n                className=\"v-milestone-path__status\"\n              >\n                {statusLabels?.[item.state] ?? stateLabels[item.state]}\n              </Badge>\n            </div>\n            {item.description && (\n              <BodySecondary as=\"div\" className=\"v-milestone-path__description\">\n                {item.description}\n              </BodySecondary>\n            )}\n            {item.meta && (\n              <Meta className=\"v-milestone-path__meta\">{item.meta}</Meta>\n            )}\n          </div>\n        </StepperItem>\n      ))}\n    </StepperList>\n  );\n  return (\n    <section\n      {...props}\n      data-slot=\"milestone-path\"\n      data-presentation={presentation}\n      data-motion-quiet={quiet || undefined}\n      aria-label={\n        ariaLabel ?? (!title && !labelledBy ? \"Milestones\" : undefined)\n      }\n      aria-labelledby={labelledBy ?? (title ? titleId : undefined)}\n      className={cn(\"v-milestone-path\", className)}\n    >\n      {(title || description) && (\n        <header className=\"v-milestone-path__header\">\n          {title && <Title id={titleId}>{title}</Title>}\n          {description && <BodySecondary as=\"div\">{description}</BodySecondary>}\n        </header>\n      )}\n      {items.length === 0 ? (\n        (empty ?? (\n          <Empty>\n            <EmptyTitle>No milestones yet</EmptyTitle>\n            <EmptyDescription>\n              Add the steps that matter to this journey.\n            </EmptyDescription>\n          </Empty>\n        ))\n      ) : (\n        <Stepper value={position} count={items.length + 1}>\n          {presentation === \"sequence\" ? (\n            <>\n              <ScrollArea\n                variant=\"plain\"\n                className=\"v-milestone-path__scroll\"\n                aria-label=\"Milestone sequence\"\n                viewportProps={{ style: { height: \"auto\" } }}\n                viewportWrapper={(viewport) => (\n                  <>\n                    {viewport}\n                    <ScrollBar orientation=\"horizontal\" />\n                  </>\n                )}\n              >\n                {list}\n              </ScrollArea>\n              <Meta className=\"v-milestone-path__scroll-note\">\n                Scroll to explore ·{\" \"}\n                {items.filter((item) => item.state === \"complete\").length} of{\" \"}\n                {items.length} completed\n              </Meta>\n            </>\n          ) : (\n            list\n          )}\n        </Stepper>\n      )}\n    </section>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/milestone-path.css",
+      "content": "@layer cojeev-states {\n.v-milestone-path[data-slot] {\n  min-width: 0;\n  width: 100%;\n  color: var(--v-text);\n}\n.v-milestone-path__header {\n  display: grid;\n  gap: var(--s-2);\n  margin-block-end: var(--s-7);\n}\n.v-milestone-path__header :is(h3, p) {\n  margin: 0;\n}\n.v-milestone-path[data-slot] .v-milestone-path__list {\n  display: grid;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n}\n.v-milestone-path[data-slot] .v-milestone-path__item {\n  position: relative;\n  display: grid;\n  grid-template-columns: 36px minmax(0, 1fr);\n  align-items: start;\n  column-gap: var(--s-5);\n  min-width: 0;\n  padding-block: 0 var(--s-8);\n}\n.v-milestone-path__item:last-child {\n  padding-block-end: 0;\n}\n.v-milestone-path__item::marker {\n  content: none;\n}\n.v-milestone-path[data-slot] .v-milestone-path__item::before {\n  display: none;\n}\n.v-milestone-path[data-slot] .v-milestone-path__marker {\n  position: relative;\n  z-index: 1;\n  display: grid;\n  place-items: center;\n  inline-size: 36px;\n  block-size: 36px;\n  border-radius: 45% 55% 51% 49% / 50% 46% 54% 50%;\n  background: var(--card);\n  box-shadow: inset 0 0 0 1.5px var(--v-edge);\n  color: var(--v-text-2);\n  font-size: var(--fs-small);\n  font-weight: var(--fw-semibold);\n  font-variant-numeric: tabular-nums;\n}\n.v-milestone-path[data-slot]\n  .v-milestone-path__item[data-state=\"complete\"]\n  .v-milestone-path__marker {\n  background: var(--v-olive);\n  color: var(--v-on-accent);\n  box-shadow: none;\n}\n.v-milestone-path[data-slot]\n  .v-milestone-path__item[data-state=\"current\"]\n  .v-milestone-path__marker {\n  background: var(--v-pink);\n  color: var(--v-on-accent);\n  box-shadow: 0 0 0 5px color-mix(in oklab, var(--v-pink) 18%, transparent);\n}\n.v-milestone-path__connection {\n  position: absolute;\n  pointer-events: none;\n  inset-inline-start: 0;\n  inset-block-start: 24px;\n  inline-size: 36px;\n  block-size: calc(100% - 13px);\n  overflow: visible;\n}\n.v-milestone-path__connection path {\n  stroke-width: 2;\n  stroke-linecap: round;\n}\n.v-milestone-path__track {\n  stroke: var(--v-edge);\n}\n.v-milestone-path__progress {\n  stroke: var(--v-olive);\n}\n.v-milestone-path__content {\n  display: grid;\n  align-content: start;\n  gap: var(--s-2);\n  min-width: 0;\n  padding-block-start: var(--s-1);\n}\n.v-milestone-path__heading {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--s-2) var(--s-3);\n  min-width: 0;\n}\n.v-milestone-path[data-slot] .v-milestone-path__title {\n  flex: 1 1 14rem;\n  min-width: 0;\n  font-size: var(--fs-reading);\n  font-weight: var(--fw-semibold);\n  line-height: 1.45;\n  color: var(--v-text);\n  overflow-wrap: anywhere;\n}\n.v-milestone-path__select[data-slot] {\n  min-height: 44px;\n  height: auto;\n  padding: 3px var(--s-2);\n  margin-inline-start: -8px;\n  font-size: var(--fs-reading);\n  line-height: 1.45;\n  white-space: normal;\n  text-align: start;\n  justify-content: flex-start;\n  max-width: 100%;\n  overflow-wrap: anywhere;\n}\n.v-milestone-path__status[data-slot] {\n  flex-shrink: 0;\n  max-width: 100%;\n  height: auto;\n  min-height: 20px;\n  padding-block: 3px;\n  white-space: normal;\n  line-height: 1.2;\n}\n.v-milestone-path__description[data-slot] {\n  max-width: 62ch;\n  overflow-wrap: anywhere;\n  line-height: 1.55;\n}\n.v-milestone-path__meta[data-slot] {\n  overflow-wrap: anywhere;\n}\n.v-milestone-path__description :first-child {\n  margin-block-start: 0;\n}\n.v-milestone-path__description :last-child {\n  margin-block-end: 0;\n}\n@media (max-width: 480px) {\n  .v-milestone-path[data-slot] .v-milestone-path__item {\n    column-gap: var(--s-3);\n    padding-block-end: var(--s-7);\n  }\n  .v-milestone-path__heading {\n    gap: var(--s-2) var(--s-3);\n  }\n}\n.v-milestone-path[data-slot] .v-milestone-path__item:last-child {\n  padding-block-end: 0;\n}\n\n.v-milestone-path[data-presentation] .v-milestone-path__marker {\n  --mfill: var(--v-pink);\n  box-shadow: none;\n}\n.v-milestone-path[data-presentation]\n  .v-milestone-path__marker:has(> svg.v-morph) {\n  background: transparent;\n}\n.v-milestone-path[data-presentation=\"journey\"] .v-milestone-path__content {\n  padding: var(--s-4) var(--s-5);\n  border: 1px solid transparent;\n  border-radius: var(--r-xs) var(--r-card) var(--r-card) var(--r-card);\n}\n.v-milestone-path[data-presentation=\"journey\"]\n  .v-milestone-path__item[data-state=\"current\"]\n  .v-milestone-path__content {\n  border-color: color-mix(in srgb, var(--v-pink) 50%, var(--v-border));\n  background: var(--v-paper);\n}\n.v-milestone-path[data-presentation=\"journey\"] .v-milestone-path__marker {\n  margin-top: var(--s-5);\n}\n.v-milestone-path[data-presentation=\"journey\"] .v-milestone-path__connection {\n  top: 42px;\n}\n.v-milestone-path[data-slot] .v-milestone-path__scroll {\n  --h: none;\n  height: auto;\n  max-width: 100%;\n  background: transparent;\n  border-radius: 0;\n  padding: 0;\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__list {\n  display: grid;\n  grid-auto-flow: column;\n  grid-auto-columns: 220px;\n  width: max-content;\n  min-width: 100%;\n  gap: var(--s-5);\n  padding: var(--s-2) var(--s-1) var(--s-7);\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__item {\n  grid-template-columns: 1fr;\n  gap: var(--s-6);\n  padding: 0;\n  align-content: start;\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__connection {\n  left: 28px;\n  right: auto;\n  top: 0;\n  width: calc(100% - 12px);\n  height: 36px;\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__content {\n  background: var(--v-paper);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-card) var(--r-card) var(--r-xs) var(--r-card);\n  padding: var(--s-4);\n  min-height: 228px;\n}\n.v-milestone-path[data-presentation=\"sequence\"]\n  .v-milestone-path__item[data-state=\"current\"]\n  .v-milestone-path__content {\n  border-top: 3px solid var(--v-pink);\n  padding-top: var(--s-4);\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__heading {\n  display: grid;\n  gap: var(--s-3);\n  justify-items: start;\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__title {\n  grid-column: 1/-1;\n  width: 100%;\n}\n.v-milestone-path[data-presentation=\"sequence\"] .v-milestone-path__item {\n  grid-template-rows: 36px minmax(0, 1fr);\n}\n.v-milestone-path__scroll-note[data-slot] {\n  margin-top: var(--s-3);\n  font-size: var(--fs-meta);\n}\n.v-milestone-path[data-presentation=\"review\"] .v-milestone-path__list {\n  background: var(--v-paper);\n  border: 1px solid var(--v-border);\n  border-radius: var(--r-card);\n  padding: var(--s-1) var(--s-5);\n}\n.v-milestone-path[data-presentation=\"review\"] .v-milestone-path__item {\n  grid-template-columns: 28px minmax(0, 1fr);\n  padding: var(--s-4) 0;\n  gap: var(--s-4);\n  align-items: center;\n}\n.v-milestone-path[data-presentation=\"review\"]\n  .v-milestone-path__item:last-child {\n  padding-block-end: var(--s-4);\n}\n.v-milestone-path[data-presentation=\"review\"]\n  .v-milestone-path__item\n  + .v-milestone-path__item {\n  border-top: 1px solid var(--v-border);\n}\n.v-milestone-path[data-presentation=\"review\"] .v-milestone-path__connection {\n  display: none;\n}\n.v-milestone-path[data-presentation=\"review\"] .v-milestone-path__marker {\n  width: 28px;\n  height: 28px;\n  font-size: var(--fs-caps);\n}\n.v-milestone-path[data-presentation=\"review\"] .v-milestone-path__content {\n  padding: 0;\n  gap: var(--s-1);\n}\n.v-milestone-path[data-presentation=\"review\"] .v-milestone-path__description {\n  font-size: var(--fs-meta);\n  line-height: 1.45;\n}\n.v-milestone-example {\n  width: 100%;\n  min-width: 0;\n  display: grid;\n  gap: var(--s-6);\n}\n.v-milestone-example__actions {\n  display: flex;\n  gap: var(--s-3);\n  flex-wrap: wrap;\n  align-items: center;\n}\n.v-milestone-example__actions > [data-slot=\"button\"] {\n  min-height: 44px;\n  width: auto;\n}\n.v-milestone-example__detail {\n  border-left: 2px solid var(--v-blue);\n  padding: var(--s-2) 0 var(--s-2) var(--s-5);\n  display: grid;\n  gap: var(--s-2);\n}\n.v-milestone-example__detail strong {\n  font-size: var(--fs-body);\n  font-weight: var(--fw-semibold);\n}\n.v-milestone-example__detail p {\n  margin: 0;\n  color: var(--v-text-2);\n  font-size: var(--fs-control);\n  line-height: 1.6;\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/milestone-path.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/milestone-path.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "name": "Milestone path",
+      "variants": [
+        "journey",
+        "sequence",
+        "review"
+      ],
+      "sizes": [
+        "default"
+      ],
+      "states": [
+        "complete",
+        "current",
+        "upcoming",
+        "disabled",
+        "empty",
+        "reduced-motion"
+      ]
+    },
+    "api": [
+      {
+        "name": "MilestonePathProps",
+        "props": [
+          {
+            "name": "items",
+            "type": "readonly Milestone[]",
+            "required": true,
+            "description": "Ordered journey. Supply at most one current milestone."
+          },
+          {
+            "name": "title",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "description",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "empty",
+            "type": "React.ReactNode",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "statusLabels",
+            "type": "Partial<Record<MilestoneState, React.ReactNode>>",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "onMilestoneSelect",
+            "type": "(id: string) => void",
+            "required": false,
+            "description": "Makes titles native buttons. Progress remains owned by the caller."
+          },
+          {
+            "name": "presentation",
+            "type": "\"journey\" | \"sequence\" | \"review\"",
+            "required": false,
+            "description": "Omit for the original vertical composition."
+          }
+        ]
+      }
+    ],
+    "category": "Data display",
+    "fidelity": "refined-design-family",
+    "baseComponent": false
+  },
+  "type": "registry:ui"
+}

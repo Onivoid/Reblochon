@@ -1,0 +1,293 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scroll-area",
+  "title": "Scroll Area",
+  "description": "Contains overflowing content in a bounded viewport with styled scrollbars.",
+  "dependencies": [
+    "motion",
+    "class-variance-authority",
+    "@radix-ui/react-scroll-area"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/scroll-area.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { motion, useMotionValue, useSpring, useTransform } from \"motion/react\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-scroll-area\";\nimport { motionTokens, useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { useMotionVisibility } from \"@/lib/cojeev-motion/use-motion-visibility\";\nimport { acquirePageScrollbar, acquireElementScrollbar, pageScrollGeometry, scrollThumbPath, scrollVelocity } from \"@/lib/cojeev-motion/scroll-thumb\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\n\nfunction useScrollFeedback(host:React.RefObject<HTMLDivElement|null>,mountedElement:HTMLDivElement|null,orientation:\"vertical\"|\"horizontal\",documentScroll=false,scrollElement?:HTMLElement|null) {\n  const {quiet}=useChoreography();\n  const {enabled,inView}=useMotionVisibility(host,mountedElement);\n  const [dragging,setDragging]=React.useState(false);\n  const hovered=React.useRef(false);\n  const engagementTarget=useMotionValue(0),pointerTarget=useMotionValue(0),velocityTarget=useMotionValue(0),pressureTarget=useMotionValue(0);\n  const engagement=useSpring(engagementTarget,motionTokens.spring.responsive),bend=useSpring(pointerTarget,motionTokens.spring.gentle),velocity=useSpring(velocityTarget,motionTokens.spring.responsive),pressure=useSpring(pressureTarget,motionTokens.spring.expressive);\n  const contour=useTransform([engagement,bend,velocity,pressure],values=>scrollThumbPath(...values as [number,number,number,number]));\n  const gripOffset=useTransform(velocity,value=>value*5);\n  const active=!quiet&&enabled&&inView;\n  React.useEffect(()=>{\n    if(!active){\n      for(const value of [engagementTarget,pointerTarget,velocityTarget,pressureTarget,engagement,bend,velocity,pressure])value.jump(0);\n      host.current?.removeAttribute(\"data-scrolling\");\n    }else{engagementTarget.set(dragging?1:hovered.current ? .65 : 0);pressureTarget.set(dragging?1:0);}\n  },[active,dragging,host,engagementTarget,pointerTarget,velocityTarget,pressureTarget,engagement,bend,velocity,pressure]);\n  React.useEffect(()=>{\n    const rail=host.current;\n    const owner=scrollElement??(documentScroll?document.scrollingElement:rail?.closest('[data-slot=\"scroll-area\"]')?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]'));\n    if(!rail||!owner)return;\n    const read=()=>orientation===\"vertical\"?owner.scrollTop:owner.scrollLeft;\n    let previous=read(),time=performance.now(),timer:ReturnType<typeof setTimeout>|undefined;\n    const onScroll=()=>{\n      const next=read(),now=performance.now(),delta=next-previous,impulse=scrollVelocity(delta,now-time);\n      previous=next;time=now;\n      if(!delta)return;\n      rail.dataset.direction=delta>0?\"forward\":\"backward\";\n      if(!active)return;\n      rail.dataset.scrolling=\"true\";rail.dataset.scrollVelocity=String(Number(impulse.toFixed(3)));velocityTarget.set(impulse);\n      clearTimeout(timer);timer=setTimeout(()=>{velocityTarget.set(0);rail.removeAttribute(\"data-scrolling\");rail.removeAttribute(\"data-scroll-velocity\")},120);\n    };\n    const source=documentScroll?window:owner;\n    source.addEventListener(\"scroll\",onScroll,{passive:true});\n    return()=>{clearTimeout(timer);source.removeEventListener(\"scroll\",onScroll);};\n  },[host,mountedElement,orientation,documentScroll,scrollElement,active,velocityTarget]);\n  const hover=(value:boolean)=>{hovered.current=value;if(active)engagementTarget.set(dragging?1:value ? .65 : 0);if(!value&&!dragging)pointerTarget.set(0);};\n  const press=(value:boolean)=>{setDragging(value);if(active){pressureTarget.set(value?1:0);engagementTarget.set(value?1:hovered.current ? .65 : 0);}if(!value)pointerTarget.set(0);};\n  const point=(event:React.PointerEvent<HTMLDivElement>)=>{\n    const thumb=host.current?.querySelector<HTMLElement>('[data-slot=\"scroll-area-thumb\"],[data-slot=\"page-scrollbar-thumb\"]');\n    if(!active||!thumb)return;\n    const rect=thumb.getBoundingClientRect(),offset=orientation===\"vertical\"?event.clientY-rect.top:event.clientX-rect.left,length=orientation===\"vertical\"?rect.height:rect.width;\n    pointerTarget.set(Math.max(-1,Math.min(1,offset/Math.max(1,length)*2-1)));\n  };\n  return {contour,gripOffset,active,dragging,hover,press,point};\n}\nfunction ScrollThumbPaint({feedback,orientation=\"vertical\"}:{feedback:ReturnType<typeof useScrollFeedback>;orientation?:\"vertical\"|\"horizontal\"}) {\n  return <><svg className=\"v-scroll__contour\" viewBox={orientation===\"vertical\"?\"0 0 20 100\":\"0 0 100 20\"} preserveAspectRatio=\"none\" aria-hidden=\"true\" focusable=\"false\"><motion.path d={feedback.contour} transform={orientation===\"horizontal\"?\"matrix(0 1 1 0 0 0)\":undefined}/></svg><motion.span className=\"v-scroll__grip\" aria-hidden=\"true\" style={orientation===\"vertical\"?{y:feedback.gripOffset}:{x:feedback.gripOffset}}><i/><i/><i/></motion.span></>;\n}\n\n/** Radix positions its thumb from a `requestAnimationFrame` loop it invokes immediately.\n *  Production minifiers read that IIFE's `@__PURE__` callee as a pure call and delete the\n *  loop, leaving the thumb written only on a gesture's first frame. Repeat Radix's own\n *  geometry from the live DOM so the paint survives any build, in any bundle a consumer\n *  makes of this file. The follow loop is armed by a scroll event and releases itself as\n *  soon as the position settles, so an idle scrollport costs nothing. */\nfunction useThumbTracking(scrollbar: HTMLDivElement | null, orientation: \"vertical\" | \"horizontal\") {\n  React.useEffect(() => {\n    const viewport = scrollbar?.closest('[data-slot=\"scroll-area\"]')?.querySelector<HTMLElement>(\"[data-radix-scroll-area-viewport]\");\n    if (!scrollbar || !viewport) return;\n    const vertical = orientation === \"vertical\";\n    const rail = getComputedStyle(scrollbar);\n    let frame = 0, previous = NaN;\n    const sync = () => {\n      const position = vertical ? viewport.scrollTop : viewport.scrollLeft;\n      const moved = position !== previous;\n      previous = position;\n      const thumb = scrollbar.querySelector<HTMLElement>('[data-slot=\"scroll-area-thumb\"]');\n      if (!thumb) return moved;\n      const padding = vertical\n        ? parseFloat(rail.paddingTop) + parseFloat(rail.paddingBottom)\n        : parseFloat(rail.paddingLeft) + parseFloat(rail.paddingRight);\n      const travel = Math.max(0, (vertical ? scrollbar.clientHeight : scrollbar.clientWidth) - padding - (vertical ? thumb.offsetHeight : thumb.offsetWidth));\n      const maxScroll = Math.max(0, vertical ? viewport.scrollHeight - viewport.offsetHeight : viewport.scrollWidth - viewport.offsetWidth);\n      // A right-to-left scrollport counts left from zero, so its thumb travels negative.\n      const reversed = !vertical && rail.direction === \"rtl\";\n      const clamped = reversed ? Math.min(0, Math.max(-maxScroll, position)) : Math.min(maxScroll, Math.max(0, position));\n      const offset = maxScroll > 0 ? clamped / maxScroll * travel : 0;\n      thumb.style.transform = vertical ? `translate3d(0, ${offset}px, 0)` : `translate3d(${offset}px, 0, 0)`;\n      return moved;\n    };\n    // Smooth, keyboard and inertial scrolling all keep moving after their last scroll\n    // event, so follow the position until it stops changing rather than trusting events.\n    const follow = () => { frame = sync() ? requestAnimationFrame(follow) : 0; };\n    const onScroll = () => { sync(); if (!frame) frame = requestAnimationFrame(follow); };\n    sync();\n    viewport.addEventListener(\"scroll\", onScroll, { passive: true });\n    // An expanded or collapsed group changes the range without any scrolling of its own.\n    const resize = new ResizeObserver(() => { previous = NaN; sync(); });\n    resize.observe(viewport);\n    if (viewport.firstElementChild) resize.observe(viewport.firstElementChild);\n    return () => {\n      if (frame) cancelAnimationFrame(frame);\n      resize.disconnect();\n      viewport.removeEventListener(\"scroll\", onScroll);\n    };\n  }, [scrollbar, orientation]);\n}\n\nexport const scrollAreaVariants = cva(\"v-scroll\", {\n  variants: { variant: { default: \"\", ink: \"-ink\", plain: \"-plain\" } },\n  defaultVariants: { variant: \"default\" },\n});\nexport type ScrollbarVariant = \"organic\" | \"rounded\" | \"minimal\";\nexport type ScrollbarAppearanceProps = {\n  /** Visible thumb thickness in pixels. The 24px rail remains the hit target. */\n  scrollbarSize?: number;\n  /** Thumb and active-rail color. */\n  scrollbarColor?: string;\n  /** Organic contour is the default; rounded and minimal use simpler paint. */\n  scrollbarVariant?: ScrollbarVariant;\n};\nexport const defaultScrollbarAppearance = {\n  scrollbarSize: 6,\n  scrollbarColor: \"var(--v-text-2)\",\n  scrollbarVariant: \"organic\",\n} as const satisfies Required<ScrollbarAppearanceProps>;\nconst ScrollbarAppearanceContext = React.createContext<Required<ScrollbarAppearanceProps>>(defaultScrollbarAppearance);\nfunction scrollbarAppearance(\n  { scrollbarSize, scrollbarColor, scrollbarVariant }: ScrollbarAppearanceProps,\n  inherited: Required<ScrollbarAppearanceProps> = defaultScrollbarAppearance,\n) {\n  scrollbarSize ??= inherited.scrollbarSize;\n  scrollbarColor ??= inherited.scrollbarColor;\n  scrollbarVariant ??= inherited.scrollbarVariant;\n  const size = Number.isFinite(scrollbarSize) ? Math.max(2, Math.min(16, scrollbarSize)) : 6;\n  return {\n    size,\n    color: scrollbarColor,\n    variant: scrollbarVariant,\n    style: {\n      \"--scrollbar-size\": `${size}px`,\n      ...(scrollbarColor ? { \"--scrollbar-color\": scrollbarColor } : {}),\n    } as React.CSSProperties,\n  };\n}\nexport type ScrollbarProviderProps = React.PropsWithChildren<ScrollbarAppearanceProps>;\n/** Mount once to share scrollbar appearance; individual controls may still override it. */\nexport function ScrollbarProvider({ children, scrollbarSize, scrollbarColor, scrollbarVariant }: ScrollbarProviderProps) {\n  const inherited = React.useContext(ScrollbarAppearanceContext);\n  const ownsRootPolicy = inherited === defaultScrollbarAppearance;\n  const appearance = scrollbarAppearance({ scrollbarSize, scrollbarColor, scrollbarVariant }, inherited);\n  React.useEffect(() => {\n    if (!ownsRootPolicy) return;\n    const root = document.documentElement;\n    const previousPolicy = root.getAttribute(\"data-scrollbar-policy\");\n    const previousSize = root.style.getPropertyValue(\"--cojeev-scrollbar-size\");\n    const previousColor = root.style.getPropertyValue(\"--cojeev-scrollbar-color\");\n    root.dataset.scrollbarPolicy = \"cojeev\";\n    root.style.setProperty(\"--cojeev-scrollbar-size\", `${appearance.size}px`);\n    root.style.setProperty(\"--cojeev-scrollbar-color\", appearance.color ?? defaultScrollbarAppearance.scrollbarColor);\n    return () => {\n      if (previousPolicy === null) root.removeAttribute(\"data-scrollbar-policy\");\n      else root.setAttribute(\"data-scrollbar-policy\", previousPolicy);\n      if (previousSize) root.style.setProperty(\"--cojeev-scrollbar-size\", previousSize);\n      else root.style.removeProperty(\"--cojeev-scrollbar-size\");\n      if (previousColor) root.style.setProperty(\"--cojeev-scrollbar-color\", previousColor);\n      else root.style.removeProperty(\"--cojeev-scrollbar-color\");\n    };\n  }, [ownsRootPolicy, appearance.size, appearance.color]);\n  // A stable value keeps every scroll area under the root provider from re-rendering with it.\n  const value = React.useMemo(() => ({\n    scrollbarSize: appearance.size,\n    scrollbarColor: appearance.color ?? defaultScrollbarAppearance.scrollbarColor,\n    scrollbarVariant: appearance.variant,\n  }), [appearance.size, appearance.color, appearance.variant]);\n  return <ScrollbarAppearanceContext.Provider value={value}>{children}</ScrollbarAppearanceContext.Provider>;\n}\nexport type ScrollAreaProps = React.ComponentProps<typeof Primitive.Root> &\n  VariantProps<typeof scrollAreaVariants> & {\n    viewportClassName?: string;\n    /** Native viewport attributes, including a ref, scroll listener or accessible name. */\n    viewportProps?: React.ComponentProps<typeof Primitive.Viewport>;\n    /** Compose a primitive around the actual scrolling element, preserving its ref. */\n    viewportWrapper?: (viewport: React.ReactElement) => React.ReactNode;\n  } & ScrollbarAppearanceProps;\nfunction ScrollViewport({ style, ...props }: React.ComponentProps<typeof Primitive.Viewport>) {\n  // An asChild parent such as Select.Viewport supplies an overflow shorthand.\n  // Normalize it before Radix writes its own axis styles to the same DOM node.\n  const { overflow, ...rest } = style ?? {};\n  const axes = typeof overflow === \"string\" ? overflow.split(/\\s+/) : [];\n  const normalized = axes.length ? { ...rest, overflowX: rest.overflowX ?? axes[0], overflowY: rest.overflowY ?? axes[1] ?? axes[0] } as React.CSSProperties : rest;\n  return <Primitive.Viewport {...props} style={normalized} />;\n}\nexport function ScrollArea({ className, variant, children, viewportClassName, viewportProps, viewportWrapper, type = \"auto\", scrollbarSize, scrollbarColor, scrollbarVariant, style, ...props }: ScrollAreaProps) {\n  const inheritedAppearance = React.useContext(ScrollbarAppearanceContext);\n  const appearance = scrollbarAppearance({ scrollbarSize, scrollbarColor, scrollbarVariant }, inheritedAppearance);\n  const viewport = (\n    <ScrollViewport\n      data-slot=\"scroll-area-viewport\"\n      data-part=\"viewport\"\n      tabIndex={0}\n      role=\"region\"\n      aria-label={props[\"aria-label\"] ?? \"Scrollable content\"}\n      {...viewportProps}\n      className={cn(\"v-scroll__viewport\", viewportClassName, viewportProps?.className)}\n    >{children}</ScrollViewport>\n  );\n  const value = React.useMemo(() => ({ scrollbarSize: appearance.size, scrollbarColor: appearance.color, scrollbarVariant: appearance.variant }), [appearance.size, appearance.color, appearance.variant]);\n  return <ScrollbarAppearanceContext.Provider value={value}>\n    <Primitive.Root data-slot=\"scroll-area\" data-part=\"root\" data-scrollbar-variant={appearance.variant} type={type} className={cn(scrollAreaVariants({ variant }), className)} style={{ ...appearance.style, ...style }} {...props}>\n      {viewportWrapper ? viewportWrapper(viewport) : viewport}\n      <ScrollBar scrollbarSize={appearance.size} scrollbarColor={appearance.color} scrollbarVariant={appearance.variant} />\n      <Primitive.Corner data-slot=\"scroll-area-corner\" />\n    </Primitive.Root>\n  </ScrollbarAppearanceContext.Provider>;\n}\nexport type ScrollAreaListProps = ScrollAreaProps & { maxHeight?: React.CSSProperties[\"maxHeight\"] };\n/** Internal list scrollport: its owning menu/list retains focus and semantics. */\nexport function ScrollAreaList({ maxHeight = \"var(--list-scroll-max-height, min(320px, 60dvh))\", className, style, viewportProps, ...props }: ScrollAreaListProps) {\n  return <ScrollArea variant=\"plain\" className={cn(\"v-list-scroll\", className)} style={{ \"--h\": typeof maxHeight === \"number\" ? `${maxHeight}px` : maxHeight, ...style } as React.CSSProperties} viewportProps={{ role: undefined, \"aria-label\": undefined, tabIndex: -1, ...viewportProps }} {...props} />;\n}\n/** Preserve a consumer's native asChild element while wrapping only its contents. */\nexport function scrollAreaListChildren(children: React.ReactNode, asChild?: boolean) {\n  if (asChild && React.isValidElement<{ children?: React.ReactNode }>(children))\n    return React.cloneElement(children, { children: <ScrollAreaList>{children.props.children}</ScrollAreaList> });\n  return <ScrollAreaList>{children}</ScrollAreaList>;\n}\nexport type ScrollBarProps = React.ComponentProps<typeof Primitive.Scrollbar> & ScrollbarAppearanceProps;\nexport function ScrollBar({\n  className,\n  ref,\n  scrollbarSize,\n  scrollbarColor,\n  scrollbarVariant,\n  style,\n  orientation = \"vertical\",\n  onPointerEnter,\n  onPointerLeave,\n  onPointerDown,\n  onPointerMove,\n  onPointerUp,\n  onPointerCancel,\n  onLostPointerCapture,\n  ...props\n}: ScrollBarProps) {\n  const inheritedAppearance = React.useContext(ScrollbarAppearanceContext);\n  const appearance = scrollbarAppearance({ scrollbarSize, scrollbarColor, scrollbarVariant }, inheritedAppearance);\n  const host = React.useRef<HTMLDivElement>(null);\n  const [mountedElement, setMountedElement] = React.useState<HTMLDivElement | null>(null);\n  const hostRef = React.useCallback((element: HTMLDivElement | null) => {\n    host.current = element;\n    setMountedElement(element);\n    const release = assignMotionRef(ref, element);\n    return () => { host.current = null; setMountedElement(null); release(); };\n  }, [ref]);\n  const feedback=useScrollFeedback(host,mountedElement,orientation);\n  const {active,dragging}=feedback;\n  useThumbTracking(mountedElement,orientation);\n  return (\n    <Primitive.Scrollbar\n      ref={hostRef}\n      data-slot=\"scroll-area-scrollbar\"\n      data-dragging={dragging ? \"true\" : undefined}\n      data-motion={active ? \"on\" : \"off\"}\n      data-scrollbar-variant={appearance.variant}\n      orientation={orientation}\n      className={cn(\"v-scroll__bar\", className)}\n      style={{ ...appearance.style, ...style }}\n      {...props}\n      onPointerEnter={event => { onPointerEnter?.(event); feedback.hover(true); feedback.point(event); }}\n      onPointerLeave={event => { onPointerLeave?.(event); feedback.hover(false); }}\n      onPointerDown={event => { onPointerDown?.(event); if (event.defaultPrevented || event.button !== 0) return; feedback.press(true); feedback.point(event); }}\n      onPointerMove={event => { onPointerMove?.(event); feedback.point(event); }}\n      onPointerUp={event => { onPointerUp?.(event); feedback.press(false); }}\n      onPointerCancel={event => { onPointerCancel?.(event); feedback.press(false); }}\n      onLostPointerCapture={event => { onLostPointerCapture?.(event); feedback.press(false); }}\n    >\n      <Primitive.Thumb data-slot=\"scroll-area-thumb\" data-part=\"thumb\" className=\"v-scroll__thumb\">\n        {appearance.variant === \"organic\" && <ScrollThumbPaint feedback={feedback} orientation={orientation}/>}\n      </Primitive.Thumb>\n    </Primitive.Scrollbar>\n  );\n}\n\nexport type PageScrollBarProps = React.ComponentProps<\"div\"> & ScrollbarAppearanceProps;\n/** Mount once near the application root. The document remains the scroll owner. */\nexport function PageScrollBar(props: PageScrollBarProps) { return <OwnedScrollBar {...props} />; }\nexport type ElementScrollBarProps = PageScrollBarProps & {\n  /** Null during attachment never falls back to taking over the document. */\n  scrollElement: HTMLElement | null;\n  /** Refresh after a controlled value changes without a native input event. */\n  refreshKey?: unknown;\n};\n/** Mount beside an existing native scrolling element, inside a positioned parent. */\nexport function ElementScrollBar(props: ElementScrollBarProps) { return <OwnedScrollBar {...props} />; }\nfunction OwnedScrollBar({ scrollElement, refreshKey, className, ref, onKeyDown, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, scrollbarSize, scrollbarColor, scrollbarVariant, style, ...props }: PageScrollBarProps & { scrollElement?: HTMLElement | null; refreshKey?: unknown }) {\n  const inheritedAppearance = React.useContext(ScrollbarAppearanceContext);\n  const appearance = scrollbarAppearance({ scrollbarSize, scrollbarColor, scrollbarVariant }, inheritedAppearance);\n  const host = React.useRef<HTMLDivElement>(null);\n  const [mountedElement,setMountedElement]=React.useState<HTMLDivElement|null>(null);\n  const externalRef = React.useCallback((element: HTMLDivElement | null) => {\n    host.current = element; setMountedElement(element);\n    const release = assignMotionRef(ref, element);\n    return () => { host.current = null; setMountedElement(null); release(); };\n  }, [ref]);\n  const generatedId = `page-scroll-${React.useId().replace(/:/g, \"\")}`;\n  const [controlledId, setControlledId] = React.useState(generatedId);\n  const [metrics, setMetrics] = React.useState({ maxScroll: 0, thumbSize: 0, thumbOffset: 0, travel: 0, scrollTop: 0, viewport: 0, nativeFallback: false });\n  const metricsRef = React.useRef(metrics);\n  const drag = React.useRef<{ pointerId: number; grabOffset: number } | null>(null);\n  const feedback=useScrollFeedback(host,mountedElement,\"vertical\",scrollElement===undefined,scrollElement);\n  const {active,dragging}=feedback;\n  const refresh = React.useRef<() => void>(() => {});\n  React.useLayoutEffect(() => refresh.current(), [refreshKey]);\n  React.useEffect(() => {\n    const rail = host.current, documentElement = document.documentElement;\n    if (!rail) return;\n    if (scrollElement === null) return;\n    const owner = scrollElement ?? document.scrollingElement ?? documentElement;\n    const previousId = owner.getAttribute(\"id\");\n    if (!previousId) owner.setAttribute(\"id\", generatedId);\n    const restoreNativeScrollbar = scrollElement ? acquireElementScrollbar(owner) : acquirePageScrollbar(documentElement);\n    let frame = 0;\n    const measure = () => {\n      frame = 0;\n      setControlledId(previousId || generatedId);\n      const next = {\n        ...pageScrollGeometry(owner.scrollHeight, owner.clientHeight, rail.getBoundingClientRect().height, owner.scrollTop),\n        scrollTop: owner.scrollTop, viewport: owner.clientHeight,\n        // This adapter owns only vertical paint. An explicitly unwrapped\n        // editor keeps both native axes rather than losing horizontal access.\n        nativeFallback: !!scrollElement && owner.scrollWidth > owner.clientWidth + 1,\n      };\n      if (scrollElement) owner.setAttribute(\"data-element-scrollbar\", next.nativeFallback ? \"horizontal\" : \"mounted\");\n      metricsRef.current = next;\n      setMetrics(old => Object.keys(next).every(key => next[key as keyof typeof next] === old[key as keyof typeof old]) ? old : next);\n    };\n    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };\n    refresh.current = schedule;\n    schedule();\n    const resize = new ResizeObserver(schedule);\n    resize.observe(owner);\n    resize.observe(rail);\n    if (!scrollElement && document.body) resize.observe(document.body);\n    const source = scrollElement ?? window;\n    source.addEventListener(\"scroll\", schedule, { passive: true });\n    source.addEventListener(\"input\", schedule, { passive: true });\n    window.addEventListener(\"resize\", schedule, { passive: true });\n    window.visualViewport?.addEventListener(\"resize\", schedule);\n    return () => {\n      if (frame) cancelAnimationFrame(frame);\n      resize.disconnect();\n      source.removeEventListener(\"scroll\", schedule);\n      source.removeEventListener(\"input\", schedule);\n      window.removeEventListener(\"resize\", schedule);\n      window.visualViewport?.removeEventListener(\"resize\", schedule);\n      if (!previousId && owner.id === generatedId) owner.removeAttribute(\"id\");\n      restoreNativeScrollbar();\n      refresh.current = () => {};\n    };\n  }, [generatedId, scrollElement]);\n  const scrollTo = (top: number) => {\n    if (scrollElement === null) return;\n    const owner = scrollElement ?? document.scrollingElement ?? document.documentElement;\n    owner.scrollTo({ top: Math.max(0, Math.min(metricsRef.current.maxScroll, top)), behavior: \"instant\" });\n  };\n  const point=feedback.point;\n  const move = (clientY: number) => {\n    if (!drag.current || !host.current) return;\n    const { travel, maxScroll } = metricsRef.current;\n    const position = clientY - host.current.getBoundingClientRect().top - drag.current.grabOffset;\n    scrollTo(travel > 0 ? position / travel * maxScroll : 0);\n  };\n  const release = () => {\n    drag.current = null; feedback.press(false);\n  };\n  const hasOverflow = scrollElement !== null && metrics.maxScroll > 0;\n  return (\n    <div\n      {...props}\n      ref={externalRef}\n      data-slot={scrollElement === undefined ? \"page-scrollbar\" : \"element-scrollbar\"}\n      data-overflow={hasOverflow ? \"true\" : \"false\"}\n      data-native-fallback={metrics.nativeFallback || undefined}\n      data-dragging={dragging ? \"true\" : undefined}\n      data-motion={active ? \"on\" : \"off\"}\n      data-scrollbar-variant={appearance.variant}\n      role=\"scrollbar\"\n      aria-label={props[\"aria-label\"] ?? (scrollElement === undefined ? \"Page scroll position\" : \"Text scroll position\")}\n      aria-controls={controlledId}\n      aria-orientation=\"vertical\"\n      aria-valuemin={0}\n      aria-valuemax={Math.round(metrics.maxScroll)}\n      aria-valuenow={Math.round(Math.max(0, Math.min(metrics.maxScroll, metrics.scrollTop)))}\n      aria-hidden={!hasOverflow || metrics.nativeFallback || undefined}\n      tabIndex={hasOverflow && !metrics.nativeFallback ? 0 : -1}\n      className={cn(\"v-page-scrollbar\", className)}\n      style={{ ...appearance.style, ...style }}\n      onPointerEnter={event => { feedback.hover(true); point(event); props.onPointerEnter?.(event); }}\n      onPointerLeave={event => { feedback.hover(false); props.onPointerLeave?.(event); }}\n      onPointerDown={event => {\n        onPointerDown?.(event);\n        if (event.defaultPrevented || event.button !== 0 || metrics.maxScroll <= 0) return;\n        const relative = event.clientY - event.currentTarget.getBoundingClientRect().top - metrics.thumbOffset;\n        const onThumb = event.target instanceof Element && !!event.target.closest('[data-slot=\"page-scrollbar-thumb\"]');\n        drag.current = { pointerId: event.pointerId, grabOffset: onThumb ? relative : metrics.thumbSize / 2 };\n        event.currentTarget.setPointerCapture(event.pointerId);\n        event.preventDefault();\n        feedback.press(true); move(event.clientY); point(event);\n      }}\n      onPointerMove={event => { onPointerMove?.(event); if (drag.current?.pointerId === event.pointerId) move(event.clientY); point(event); }}\n      onPointerUp={event => { onPointerUp?.(event); release(); if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}\n      onPointerCancel={event => { onPointerCancel?.(event); release(); }}\n      onLostPointerCapture={event => { onLostPointerCapture?.(event); release(); }}\n      onKeyDown={event => {\n        onKeyDown?.(event); if (event.defaultPrevented) return;\n        const { scrollTop, viewport, maxScroll } = metricsRef.current;\n        const targets: Record<string, number> = { ArrowDown: scrollTop + 48, ArrowUp: scrollTop - 48, PageDown: scrollTop + viewport * .9, PageUp: scrollTop - viewport * .9, Home: 0, End: maxScroll, \" \": scrollTop + viewport * .9 * (event.shiftKey ? -1 : 1) };\n        if (event.key in targets) { event.preventDefault(); scrollTo(targets[event.key]); }\n      }}\n    >\n      <div data-slot=\"page-scrollbar-thumb\" style={{ height: metrics.thumbSize, transform: `translateY(${metrics.thumbOffset}px)` }}>\n        {appearance.variant === \"organic\" && <ScrollThumbPaint feedback={feedback}/>}\n      </div>\n    </div>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/scroll-area.css",
+      "content": "@layer cojeev-states {\n/* Native overflow keeps its own scroll semantics while sharing the app's slim,\n   theme-aware fallback. Managed controls below replace only the visible thumb. */\nhtml[data-scrollbar-policy=\"cojeev\"] {\n  --cojeev-scrollbar-size: 4px;\n  --cojeev-scrollbar-color: var(--v-text-2);\n}\n:where(html[data-scrollbar-policy=\"cojeev\"],html[data-scrollbar-policy=\"cojeev\"] *) {\n  scrollbar-width: thin;\n  scrollbar-color: var(--cojeev-scrollbar-color,var(--v-text-2)) transparent;\n}\n:where(html[data-scrollbar-policy=\"cojeev\"],html[data-scrollbar-policy=\"cojeev\"] *)::-webkit-scrollbar {\n  width: var(--cojeev-scrollbar-size,6px);\n  height: var(--cojeev-scrollbar-size,6px);\n}\n:where(html[data-scrollbar-policy=\"cojeev\"],html[data-scrollbar-policy=\"cojeev\"] *)::-webkit-scrollbar-track { background:transparent; }\n:where(html[data-scrollbar-policy=\"cojeev\"],html[data-scrollbar-policy=\"cojeev\"] *)::-webkit-scrollbar-thumb {\n  border-radius:var(--r-pill);\n  background:var(--cojeev-scrollbar-color,var(--v-text-2));\n}\n:where(html[data-scrollbar-policy=\"cojeev\"],html[data-scrollbar-policy=\"cojeev\"] *)::-webkit-scrollbar-thumb:hover {\n  background:color-mix(in oklab,var(--cojeev-scrollbar-color,var(--v-text-2)) 76%,var(--v-brand));\n}\n\n/* The Radix viewport owns scroll. The thumb's SVG is decorative geometry only. */\n[data-slot=\"scroll-area\"].v-scroll {\n  position: relative;\n  isolation: isolate;\n  overflow: hidden;\n  max-height: var(--h, 240px);\n  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-5);\n  border-radius: var(--r-card-sm, 20px);\n  background: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-border);\n}\n[data-slot=\"scroll-area\"].-ink { background: var(--v-ink); color: var(--v-on-ink); }\n[data-slot=\"scroll-area\"].-plain { min-width:0; max-width:100%; padding:0; background:transparent; color:inherit; box-shadow:none; border-radius:inherit; }\n/* Leave room for control paint so decorative SVG overhang cannot invent a\n   tiny scroll range (and an almost full-height thumb) when content fits. */\n[data-slot=\"scroll-area\"].-plain > [data-slot=\"scroll-area-viewport\"] { height:auto; max-height:var(--h,320px); padding:var(--s-2) var(--s-6) var(--s-3) var(--s-2); }\n[data-slot=\"scroll-area\"].-plain > [data-slot=\"scroll-area-viewport\"] > div { table-layout:fixed; width:100%; }\n.v-list-scroll { --h:min(320px,60dvh); }\n[data-slot=\"scroll-area-viewport\"] {\n  width: 100%;\n  height: 100%;\n  max-height: calc(var(--h, 240px) - 12px);\n  border-radius: inherit;\n  overscroll-behavior: contain;\n  scrollbar-width: none;\n  padding-right: var(--s-6);\n}\n[data-slot=\"scroll-area-viewport\"]::-webkit-scrollbar { display:none; width:0; height:0; }\n[data-slot=\"scroll-area-viewport\"]:focus-visible {\n  outline: 2px solid var(--v-brand);\n  outline-offset: -3px;\n}\n[data-slot=\"scroll-area-viewport\"] > div > :is(p,.v-body) {\n  margin: 0;\n  padding: var(--s-3) 0;\n  border-bottom: 1px solid color-mix(in oklab,var(--v-border) 70%,transparent);\n  font-size: var(--fs-body);\n  line-height: 1.6;\n}\n[data-slot=\"scroll-area-viewport\"] > div > :is(p,.v-body):last-child { border-bottom: 0; }\n[data-slot=\"scroll-area\"].-ink [data-slot=\"scroll-area-viewport\"] > div > :is(p,.v-body) {\n  border-bottom-color: color-mix(in oklab,var(--v-on-ink) 14%,transparent);\n}\n[data-slot=\"scroll-area-scrollbar\"] {\n  display: flex;\n  --scrollbar-size: 6px;\n  padding: 0 calc((24px - var(--scrollbar-size)) / 2);\n  touch-action: none;\n  user-select: none;\n  border-radius: var(--r-pill);\n  background: transparent;\n  transition: background-color 160ms ease;\n  z-index: 2;\n}\n[data-slot=\"scroll-area-scrollbar\"][data-orientation=\"vertical\"] { width: 24px; }\n[data-slot=\"scroll-area-scrollbar\"][data-orientation=\"horizontal\"] { height: 24px; padding: calc((24px - var(--scrollbar-size)) / 2) 0; flex-direction: column; }\n[data-slot=\"scroll-area-scrollbar\"]::before {\n  content: \"\";\n  position: absolute;\n  inset: 0 calc((24px - var(--scrollbar-size)) / 2);\n  border-radius: inherit;\n  pointer-events: none;\n}\n[data-slot=\"scroll-area-scrollbar\"][data-orientation=\"horizontal\"]::before {\n  inset: calc((24px - var(--scrollbar-size)) / 2) 0;\n}\n[data-slot=\"scroll-area-scrollbar\"]:hover::before,\n[data-slot=\"scroll-area-scrollbar\"][data-dragging=\"true\"]::before {\n  background: color-mix(in oklab,var(--scrollbar-color,var(--v-pink)) 24%,transparent);\n}\n[data-slot=\"scroll-area-thumb\"] {\n  position: relative;\n  flex: 1;\n  /* Match Radix's 18px geometry floor; a larger CSS minimum breaks its travel. */\n  min-height: 18px;\n  background: transparent;\n  color: var(--scrollbar-color,var(--v-text-2));\n}\n[data-slot=\"scroll-area-thumb\"]::before { content: \"\"; position: absolute; inset: -4px; }\n[data-slot=\"scroll-area-scrollbar\"][data-orientation=\"horizontal\"] [data-slot=\"scroll-area-thumb\"] { min-width: 18px; min-height: 0; }\n.v-scroll__contour { display: block; position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; fill: currentColor; }\n[data-slot=\"scroll-area-scrollbar\"]:hover [data-slot=\"scroll-area-thumb\"],\n[data-slot=\"scroll-area-scrollbar\"][data-scrolling=\"true\"] [data-slot=\"scroll-area-thumb\"] { color: var(--scrollbar-color,var(--v-pink-deep)); }\n[data-slot=\"scroll-area-scrollbar\"][data-dragging=\"true\"] [data-slot=\"scroll-area-thumb\"] { color: var(--scrollbar-color,var(--v-pink)); }\n[data-slot=\"scroll-area\"].-ink [data-slot=\"scroll-area-thumb\"] { color: var(--scrollbar-color,color-mix(in oklab,var(--v-on-ink) 65%,transparent)); }\n[data-slot=\"scroll-area-scrollbar\"][data-scrollbar-variant=\"rounded\"] [data-slot=\"scroll-area-thumb\"]::after,\n[data-slot=\"scroll-area-scrollbar\"][data-scrollbar-variant=\"minimal\"] [data-slot=\"scroll-area-thumb\"]::after { content:\"\"; position:absolute; inset:0; border-radius:var(--r-pill); background:currentColor; }\n[data-slot=\"scroll-area-scrollbar\"][data-scrollbar-variant=\"minimal\"] [data-slot=\"scroll-area-thumb\"]::after { opacity:.72; }\n[data-slot=\"scroll-area-scrollbar\"][data-scrollbar-variant=\"minimal\"] [data-slot=\"scroll-area-thumb\"]::after { border-radius:0; }\n:root[data-mode=\"dark\"] [data-slot=\"scroll-area\"].-ink { background: var(--v-canvas); color: var(--v-text); }\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"scroll-area-scrollbar\"] { transition: none; }\n  [data-slot=\"scroll-area-viewport\"] { scroll-behavior: auto; }\n}\n[data-slot=\"scroll-area-scrollbar\"][data-motion=\"off\"] { transition: none; }\n\n/* Document scrolling stays native; the mounted attribute exists only while the overlay\n   owns the paint, and the pending attribute only inside the head bootstrap's bounded\n   window. The effect that writes \"mounted\" cannot run before hydration, so the pending\n   marker is what keeps the native bar from painting and then being swapped. Neither\n   attribute exists without scripting, and the bootstrap drops the pending one after its\n   timeout, so a bundle that never arrives leaves the native scrollbar in place. */\nhtml[data-page-scrollbar=\"mounted\"],\nhtml[data-page-scrollbar-pending],\nhtml[data-page-scrollbar=\"mounted\"] body,\nhtml[data-page-scrollbar-pending] body { scrollbar-width: none; }\nhtml[data-page-scrollbar=\"mounted\"]::-webkit-scrollbar,\nhtml[data-page-scrollbar-pending]::-webkit-scrollbar,\nhtml[data-page-scrollbar=\"mounted\"] body::-webkit-scrollbar,\nhtml[data-page-scrollbar-pending] body::-webkit-scrollbar { width: 0; height: 0; }\n.v-page-scrollbar {\n  position: fixed;\n  right: 2px;\n  top: var(--page-scrollbar-top,80px);\n  bottom: 16px;\n  width: 24px;\n  border-radius: var(--r-pill);\n  z-index: 50;\n  touch-action: none;\n  user-select: none;\n  --scrollbar-size: 6px;\n  color: var(--scrollbar-color,var(--v-text-2));\n  background: transparent;\n  transition: background-color 160ms ease;\n}\n.v-page-scrollbar[data-overflow=\"false\"] { visibility: hidden; pointer-events: none; }\n.v-page-scrollbar:hover,\n.v-page-scrollbar[data-scrolling=\"true\"] { color: var(--scrollbar-color,var(--v-pink-deep)); }\n.v-page-scrollbar[data-dragging=\"true\"] { color: var(--scrollbar-color,var(--v-pink)); }\n.v-page-scrollbar:focus-visible { outline: 2px solid var(--v-brand); outline-offset: -1px; }\n[data-slot=\"page-scrollbar-thumb\"] { position: absolute; left:calc((24px - var(--scrollbar-size)) / 2); right:calc((24px - var(--scrollbar-size)) / 2); top:0; min-height: 0; }\n[data-slot=\"page-scrollbar-thumb\"] svg { display: block; width: 100%; height: 100%; fill: currentColor; pointer-events: none; }\n.v-page-scrollbar[data-scrollbar-variant=\"rounded\"] [data-slot=\"page-scrollbar-thumb\"]::after,\n.v-page-scrollbar[data-scrollbar-variant=\"minimal\"] [data-slot=\"page-scrollbar-thumb\"]::after { content:\"\"; position:absolute; inset:0; border-radius:var(--r-pill); background:currentColor; }\n.v-page-scrollbar[data-scrollbar-variant=\"minimal\"] [data-slot=\"page-scrollbar-thumb\"]::after { opacity:.72; }\n.v-page-scrollbar[data-scrollbar-variant=\"minimal\"] [data-slot=\"page-scrollbar-thumb\"]::after { border-radius:0; }\n.v-page-scrollbar[data-motion=\"off\"] { transition: none; }\n@media (pointer: coarse) { .v-page-scrollbar { right: 0; width: 24px; } }\n@media (prefers-reduced-motion: reduce) { .v-page-scrollbar { transition: none; } }\n\n/* A fixed-size grip stays readable even when the proportional thumb is long. */\n.v-scroll__grip { position:absolute; left:50%; top:50%; translate:-50% -50%; display:flex; flex-direction:column; gap:3px; color:var(--v-canvas); pointer-events:none; }\n.v-scroll__grip i { display:block; width:min(3px,var(--scrollbar-size,6px)); height:min(3px,var(--scrollbar-size,6px)); border-radius:50%; background:currentColor; }\n[data-orientation=\"horizontal\"] .v-scroll__grip { flex-direction:row; }\n[data-dragging=\"true\"] .v-scroll__grip { color:var(--ink-fixed); }\n.v-page-scrollbar::before { content:\"\"; position:absolute; top:4px; bottom:4px; left:50%; width:1px; background:var(--v-border); pointer-events:none; }\n[data-slot=\"page-scrollbar-thumb\"]::before { content:\"\"; position:absolute; inset:0 -3px; }\n\n.v-page-scrollbar[data-slot=\"element-scrollbar\"] { position:absolute; top:4px; bottom:18px; inset-inline-end:1px; z-index:2; }\n.v-page-scrollbar[data-slot=\"element-scrollbar\"]::before { display:none; }\n:root [data-element-scrollbar=\"mounted\"] { scrollbar-width:none; }\n[data-element-scrollbar=\"mounted\"]::-webkit-scrollbar { width:0; height:0; }\n:root [data-element-scrollbar=\"horizontal\"] { scrollbar-width:auto; }\n[data-slot=\"element-scrollbar\"][data-native-fallback] { visibility:hidden; pointer-events:none; }\n@media(forced-colors:active) {\n  :root [data-element-scrollbar=\"mounted\"] { scrollbar-width:auto; }\n  [data-element-scrollbar=\"mounted\"]::-webkit-scrollbar { width:auto; height:auto; }\n  [data-slot=\"element-scrollbar\"] { display:none; }\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/scroll-area.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/scroll-area.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "scroll-area",
+      "name": "Scroll Area",
+      "tier": "base",
+      "evidence": "I07",
+      "status": "source",
+      "root": ".v-scroll",
+      "variants": [
+        "ink"
+      ],
+      "sizes": [],
+      "states": [
+        "rest"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [],
+      "canvas": "480x240",
+      "contract": "entries/scroll-area/contract.md",
+      "demo": "entries/scroll-area/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "ink-default-rest.html",
+        "ink-default-rest-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "ScrollbarAppearanceProps",
+        "props": [
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          }
+        ]
+      },
+      {
+        "name": "ScrollbarProviderProps",
+        "props": [
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          }
+        ]
+      },
+      {
+        "name": "ScrollAreaProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"ink\" | \"plain\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "viewportClassName",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "viewportProps",
+            "type": "React.ComponentProps<typeof Primitive.Viewport>",
+            "required": false,
+            "description": "Native viewport attributes, including a ref, scroll listener or accessible name."
+          },
+          {
+            "name": "viewportWrapper",
+            "type": "(viewport: React.ReactElement) => React.ReactNode",
+            "required": false,
+            "description": "Compose a primitive around the actual scrolling element, preserving its ref."
+          },
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          }
+        ]
+      },
+      {
+        "name": "ScrollAreaListProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"ink\" | \"plain\" | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "viewportClassName",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "viewportProps",
+            "type": "React.ComponentProps<typeof Primitive.Viewport>",
+            "required": false,
+            "description": "Native viewport attributes, including a ref, scroll listener or accessible name."
+          },
+          {
+            "name": "viewportWrapper",
+            "type": "(viewport: React.ReactElement) => React.ReactNode",
+            "required": false,
+            "description": "Compose a primitive around the actual scrolling element, preserving its ref."
+          },
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          },
+          {
+            "name": "maxHeight",
+            "type": "React.CSSProperties[\"maxHeight\"]",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "ScrollBarProps",
+        "props": [
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          }
+        ]
+      },
+      {
+        "name": "PageScrollBarProps",
+        "props": [
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          }
+        ]
+      },
+      {
+        "name": "ElementScrollBarProps",
+        "props": [
+          {
+            "name": "scrollbarSize",
+            "type": "number",
+            "required": false,
+            "description": "Visible thumb thickness in pixels. The 24px rail remains the hit target."
+          },
+          {
+            "name": "scrollbarColor",
+            "type": "string",
+            "required": false,
+            "description": "Thumb and active-rail color."
+          },
+          {
+            "name": "scrollbarVariant",
+            "type": "ScrollbarVariant",
+            "required": false,
+            "description": "Organic contour is the default; rounded and minimal use simpler paint."
+          },
+          {
+            "name": "scrollElement",
+            "type": "HTMLElement | null",
+            "required": true,
+            "description": "Null during attachment never falls back to taking over the document."
+          },
+          {
+            "name": "refreshKey",
+            "type": "unknown",
+            "required": false,
+            "description": "Refresh after a controlled value changes without a native input event."
+          }
+        ]
+      }
+    ],
+    "category": "Layout",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

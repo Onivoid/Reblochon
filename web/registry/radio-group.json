@@ -1,0 +1,212 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "radio-group",
+  "title": "Radio group",
+  "description": "Lets users select one option from a labeled set of mutually exclusive choices.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-radio-group",
+    "motion"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/radio-group.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { controlRadiusStyle, type ControlRadius } from \"@/lib/cojeev/control-appearance\";\nimport {\n  SelectorGlyph,\n  selectorStyle,\n  type SelectorShape,\n  type SelectorTone,\n  type SelectorSize,\n  type SelectorIndicator,\n} from \"@/lib/cojeev/selector\";\nexport type {\n  SelectorShape,\n  SelectorTone,\n  SelectorSize,\n  SelectorIndicator,\n} from \"@/lib/cojeev/selector\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-radio-group\";\nimport { useFlowGroup } from \"@/lib/cojeev-motion/use-flow\";\nexport const radioGroupVariants = cva(\"v-radios grid gap-2\", {\n  variants: { pictographic: { true: \"v-iradios\", false: \"\" } },\n  defaultVariants: { pictographic: false },\n});\nconst RadioStyleContext = React.createContext<{\n  appearance?: \"row\" | \"card\" | \"chip\";\n  pictographic: boolean;\n  shape: SelectorShape;\n  tone: SelectorTone;\n  size?: SelectorSize;\n  indicator?: SelectorIndicator;\n  showIndicator?: boolean;\n  value?: string;\n  disabled?: boolean;\n  cancelKeyboardNavigation: () => void;\n}>({ pictographic: false, shape: \"organic\", tone: \"pink\", cancelKeyboardNavigation: () => {} });\nexport type RadioGroupProps = React.ComponentProps<typeof Primitive.Root> &\n  VariantProps<typeof radioGroupVariants> & {\n    shape?: SelectorShape;\n    tone?: SelectorTone;\n    size?: SelectorSize;\n    indicator?: SelectorIndicator;\n    showIndicator?: boolean;\n    appearance?: \"row\" | \"card\" | \"chip\";\n    radius?: ControlRadius;\n  };\nexport function RadioGroup({\n  className,\n  pictographic = false,\n  ref,\n  children,\n  shape = \"organic\",\n  tone = \"pink\",\n  size,\n  indicator = \"auto\",\n  showIndicator = true,\n  appearance,\n  radius,\n  style,\n  value: controlled,\n  defaultValue,\n  onValueChange,\n  onKeyDownCapture,\n  onPointerDownCapture,\n  onClickCapture,\n  onFocus,\n  ...props\n}: RadioGroupProps) {\n  const [local, setLocal] = React.useState(defaultValue);\n  const value = controlled ?? local;\n  const keyboardNavigation = React.useRef<{ origin: HTMLElement; activated: boolean } | null>(null);\n  const navigationExpiry = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);\n  const cancelKeyboardNavigation = React.useCallback(() => {\n    clearTimeout(navigationExpiry.current);\n    keyboardNavigation.current = null;\n  }, []);\n  React.useEffect(() => cancelKeyboardNavigation, [cancelKeyboardNavigation]);\n  const ownedRadio = (target: EventTarget | null, group: HTMLElement) => {\n    if (!(target instanceof HTMLElement) || target.getAttribute(\"role\") !== \"radio\") return null;\n    return target.closest('[data-slot=\"radio-group\"]') === group ? target : null;\n  };\n  const flowRef = useFlowGroup<HTMLDivElement>(ref, {\n    itemSelector: '[data-slot=\"radio-group-item\"]',\n    activeSelector: '[data-state=\"checked\"]',\n  });\n  return (\n    <RadioStyleContext.Provider\n      value={{\n        pictographic: !!pictographic && !appearance,\n        appearance,\n        shape,\n        tone,\n        size,\n        indicator,\n        showIndicator,\n        value,\n        disabled: props.disabled,\n        cancelKeyboardNavigation,\n      }}\n    >\n      <Primitive.Root\n        ref={flowRef}\n        onKeyDownCapture={event => {\n          cancelKeyboardNavigation();\n          onKeyDownCapture?.(event);\n          if (event.defaultPrevented || props.disabled || event.altKey || event.ctrlKey || event.metaKey) return;\n          const origin = ownedRadio(event.target, event.currentTarget);\n          const key = event.key;\n          const navigationKey = [\"Home\", \"End\"].includes(key)\n            || (props.orientation !== \"horizontal\" && [\"ArrowUp\", \"ArrowDown\"].includes(key))\n            || (props.orientation !== \"vertical\" && [\"ArrowLeft\", \"ArrowRight\"].includes(key));\n          if (!origin || !navigationKey) return;\n          keyboardNavigation.current = { origin, activated: false };\n          // Radix defers roving focus to a task. Retain keyboard intent through\n          // that task even if a fast keyup has already cleared its document flag.\n          navigationExpiry.current = setTimeout(() => {\n            navigationExpiry.current = setTimeout(cancelKeyboardNavigation, 0);\n          }, 0);\n        }}\n        onPointerDownCapture={event => { cancelKeyboardNavigation(); onPointerDownCapture?.(event); }}\n        onClickCapture={event => {\n          const navigation = keyboardNavigation.current;\n          if (navigation && ownedRadio(event.target, event.currentTarget) !== navigation.origin) navigation.activated = true;\n          onClickCapture?.(event);\n        }}\n        onFocus={event => {\n          onFocus?.(event);\n          const navigation = keyboardNavigation.current;\n          const target = ownedRadio(event.target, event.currentTarget);\n          if (!navigation || !target || target === navigation.origin) return;\n          // A held arrow already clicks inside Radix's Item onFocus. The scoped\n          // click marker prevents a second callback, including rejected controlled changes.\n          if (!navigation.activated && !event.defaultPrevented && !props.disabled\n            && target.getAttribute(\"aria-checked\") !== \"true\" && !target.matches(\":disabled,[data-disabled]\")) {\n            navigation.activated = true;\n            target.click();\n          }\n          cancelKeyboardNavigation();\n        }}\n        data-slot=\"radio-group\"\n        data-part=\"root\"\n        data-appearance={appearance}\n        style={{ ...controlRadiusStyle(radius), ...style }}\n        value={value}\n        onValueChange={(next) => {\n          if (controlled === undefined) setLocal(next);\n          onValueChange?.(next);\n        }}\n        data-flow-group={pictographic && !appearance ? \"\" : undefined}\n        data-flow={pictographic && !appearance ? undefined : \"off\"}\n        className={cn(radioGroupVariants({ pictographic: !!pictographic && !appearance }), className)}\n        {...props}\n      >\n        {children}\n      </Primitive.Root>\n    </RadioStyleContext.Provider>\n  );\n}\nexport type RadioGroupItemProps = React.ComponentProps<\n  typeof Primitive.Item\n> & { appearance?: \"row\" | \"card\" | \"chip\"; radius?: ControlRadius; pictographic?: boolean; shape?: SelectorShape; tone?: SelectorTone; size?: SelectorSize; indicator?: SelectorIndicator; showIndicator?: boolean };\nexport function RadioGroupItem({\n  className,\n  pictographic,\n  shape,\n  tone,\n  size,\n  indicator,\n  showIndicator,\n  style,\n  appearance,\n  radius,\n  children,\n  ref,\n  onKeyDown,\n  ...props\n}: RadioGroupItemProps) {\n  const inherited = React.useContext(RadioStyleContext);\n  const icon = !(appearance ?? inherited.appearance) && (pictographic ?? inherited.pictographic);\n  const selectedShape = shape ?? inherited.shape;\n  const selectedTone = tone ?? inherited.tone;\n  return (\n    <Primitive.Item\n      ref={ref}\n      onKeyDown={event => {\n        onKeyDown?.(event);\n        if (event.defaultPrevented) inherited.cancelKeyboardNavigation();\n      }}\n      data-slot=\"radio-group-item\"\n      data-part=\"item\"\n      data-appearance={appearance ?? inherited.appearance}\n      data-selector-shape={selectedShape}\n      style={selectorStyle(selectedTone, { ...controlRadiusStyle(radius), ...style }, size ?? inherited.size ?? (icon ? 16 : \"default\"))}\n      data-pictographic={icon || undefined}\n      className={cn(\n        icon ? \"v-iradio\" : \"v-radio inline-flex items-center gap-[var(--s-3)]\",\n        className,\n      )}\n      {...props}\n    >\n      <span data-slot=\"radio-group-indicator\" data-part=\"indicator\">\n        <SelectorGlyph\n          shape={selectedShape}\n          tone={selectedTone}\n          state={inherited.value === props.value}\n          indicator={indicator ?? inherited.indicator}\n          showIndicator={showIndicator ?? inherited.showIndicator}\n          disabled={props.disabled || inherited.disabled}\n        />\n      </span>\n      {children}\n    </Primitive.Item>\n  );\n}\nexport type RadioGroupBodyProps = React.ComponentProps<\"span\">;\nexport function RadioGroupBody({ className, ...props }: RadioGroupBodyProps) {\n  return (\n    <span\n      data-slot=\"radio-group-body\"\n      className={cn(\"v-radio__body\", className)}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/lib/selector.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { AnimatePresence, motion } from \"motion/react\";\nimport { shapeContour, signatureShapePaths } from \"@/lib/cojeev/signature-shapes\";\nimport { useChoreography } from \"@/lib/cojeev-motion/choreography\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\n\nexport type SelectorShape =\n  \"organic\" | \"rounded\" | \"circle\" | \"pebble\" | \"leaf\" | \"flower\";\nexport type SelectorTone = \"pink\" | \"blue\" | \"olive\" | \"yellow\";\n/** Numeric sizes are clamped to 16–64px; the containing control keeps its hit area. */\nexport type SelectorSize = \"sm\" | \"default\" | \"lg\" | number;\nexport type SelectorIndicator = \"auto\" | \"dot\" | \"check\" | \"diamond\" | \"flower\";\nexport function selectorSize(size: SelectorSize = \"default\") {\n  return typeof size === \"number\"\n    ? Math.min(64, Math.max(16, Number.isFinite(size) ? size : 28))\n    : ({ sm: 20, default: 28, lg: 36 }[size] ?? 28);\n}\nexport const selectorShapes: SelectorShape[] = [\n  \"organic\",\n  \"pebble\",\n  \"rounded\",\n  \"circle\",\n  \"leaf\",\n  \"flower\",\n];\nexport const selectorTones: SelectorTone[] = [\n  \"pink\",\n  \"blue\",\n  \"olive\",\n  \"yellow\",\n];\nconst contour = (radius: (angle: number) => number) =>\n  shapeContour((angle) => [\n    50 + radius(angle) * Math.cos(angle),\n    50 + radius(angle) * Math.sin(angle),\n  ]);\nconst paths: Record<SelectorShape, string> = {\n  organic: contour((t) => 41 + 1.1 * Math.cos(3 * t + 0.6)),\n  rounded: contour(\n    (t) =>\n      40 /\n      Math.pow(Math.abs(Math.cos(t)) ** 5 + Math.abs(Math.sin(t)) ** 5, 1 / 5),\n  ),\n  circle: contour(() => 41),\n  pebble: signatureShapePaths[\"pebble-soft\"],\n  leaf: shapeContour((t) => {\n    const x = 38 * Math.cos(t),\n      y = 30 * Math.sin(t) * (1 + 0.22 * Math.cos(t));\n    return [50 + (x - y) * 0.707, 50 + (x + y) * 0.707];\n  }),\n  flower: contour((t) => 37 + 5 * Math.cos(5 * t - Math.PI / 2)),\n};\nexport function selectorStyle(\n  tone: SelectorTone,\n  style?: React.CSSProperties,\n  size: SelectorSize = \"default\",\n): React.CSSProperties {\n  return {\n    \"--selector-accent\": `var(--v-${tone})`,\n    \"--selector-size\": `${selectorSize(size)}px`,\n    ...style,\n  } as React.CSSProperties;\n}\n/** A single silhouette/mark renderer for native and Radix selection semantics. */\nexport function SelectorGlyph({\n  shape = \"organic\",\n  tone = \"pink\",\n  state,\n  kind = \"radio\",\n  disabled = false,\n  indicator = \"auto\",\n  showIndicator = true,\n}: {\n  shape?: SelectorShape;\n  tone?: SelectorTone;\n  state: boolean | \"indeterminate\";\n  kind?: \"checkbox\" | \"radio\";\n  disabled?: boolean;\n  indicator?: SelectorIndicator;\n  showIndicator?: boolean;\n}) {\n  const { quiet, transition } = useChoreography();\n  const surface = React.useRef<HTMLSpanElement>(null);\n  const morphRef = useMorph<HTMLSpanElement>(\"controls\", surface);\n  React.useEffect(() => {\n    const node = surface.current;\n    const owner = node?.closest('[role=\"checkbox\"], [role=\"radio\"], label');\n    if (!node || !owner) return;\n    const controller = new AbortController();\n    for (const type of [\"keydown\", \"keyup\"] as const)\n      owner.addEventListener(\n        type,\n        (event) => {\n          const key = (event as KeyboardEvent).key;\n          if (key === \" \" || key === \"Enter\")\n            node.dispatchEvent(new KeyboardEvent(type, { key }));\n        },\n        { signal: controller.signal },\n      );\n    for (const type of [\"focusin\", \"focusout\"] as const)\n      owner.addEventListener(\n        type,\n        () => node.dispatchEvent(new FocusEvent(type)),\n        { signal: controller.signal },\n      );\n    return () => controller.abort();\n  }, []);\n  const active = state === true || state === \"indeterminate\";\n  const mark = indicator === \"auto\" ? (kind === \"checkbox\" ? \"check\" : \"dot\") : indicator;\n  const strokeWidth = active && !showIndicator ? 2.5 : active ? 1.25 : 1.5;\n  const fill = disabled\n    ? \"var(--v-disabled-face)\"\n    : active\n      ? `var(--v-${tone})`\n      : \"var(--v-canvas)\";\n  const ink = disabled ? \"var(--v-disabled-ink)\" : \"var(--v-on-accent)\";\n  const stroke = disabled\n    ? \"var(--v-disabled-edge)\"\n    : active\n      ? ink\n      : \"var(--v-text-2)\";\n  const mappedShape = {\n    rounded: \"squircle\",\n    circle: \"circle\",\n    pebble: \"pebble\",\n    leaf: \"leaf\",\n    flower: \"flower-5\",\n  };\n  return (\n    <span\n      data-slot=\"selector-glyph\"\n      data-selector-shape={shape}\n      data-selector-tone={tone}\n      data-selector-indicator={showIndicator ? mark : \"none\"}\n      data-state={state === \"indeterminate\" ? \"indeterminate\" : active ? \"checked\" : \"unchecked\"}\n      data-motion-quiet={quiet || undefined}\n      aria-hidden=\"true\"\n      style={{\n        display: \"inline-grid\",\n        position: \"relative\",\n        placeItems: \"center\",\n        width: \"var(--selector-size,28px)\",\n        height: \"var(--selector-size,28px)\",\n        flexShrink: 0,\n      }}\n    >\n      <span\n        ref={morphRef}\n        data-slot=\"selector-surface-host\"\n        data-morph=\"both\"\n        data-tier=\"tile\"\n        data-shape={shape === \"organic\" ? undefined : mappedShape[shape]}\n        data-depth={shape === \"organic\" ? 0.018 : 0}\n        data-lobes={shape === \"organic\" ? 3 : 0}\n        data-asym=\".1\"\n        data-sw={strokeWidth}\n        data-motion={quiet || disabled ? \"off\" : undefined}\n        aria-disabled={disabled || undefined}\n        style={\n          {\n            position: \"absolute\",\n            width: \"calc(var(--selector-size,28px) - 4px)\",\n            height: \"calc(var(--selector-size,28px) - 4px)\",\n            borderRadius: \"48% 52% 50% 50%\",\n            \"--mfill\": fill,\n            \"--mstroke\": stroke,\n          } as React.CSSProperties\n        }\n      />\n      <motion.svg\n        data-slot=\"selector-drawing\"\n        aria-hidden=\"true\"\n        focusable=\"false\"\n        viewBox=\"0 0 100 100\"\n        width=\"100%\"\n        height=\"100%\"\n        style={{ display: \"block\", overflow: \"visible\", flexShrink: 0 }}\n      >\n        <motion.path\n          data-slot=\"selector-surface\"\n          d={paths[shape]}\n          initial={false}\n          animate={{ d: paths[shape], scale: 1 }}\n          transition={transition}\n          fill={fill}\n          stroke={\n            disabled\n              ? \"var(--v-disabled-edge)\"\n              : active\n                ? ink\n                : \"var(--v-text-2)\"\n          }\n          strokeWidth={strokeWidth}\n          vectorEffect=\"non-scaling-stroke\"\n        />\n        <AnimatePresence initial={false}>\n          {active && showIndicator && (\n            <motion.g\n              key={`${state}-${mark}`}\n              data-slot=\"selector-mark\"\n              initial={quiet ? false : { opacity: 0, scale: 0.55 }}\n              animate={{ opacity: 1, scale: 1 }}\n              exit={{ opacity: 0, scale: quiet ? 1 : 0.55 }}\n              transition={transition}\n              style={{ transformOrigin: \"50px 50px\" }}\n            >\n              {state === \"indeterminate\" ? (\n                <path\n                  d=\"M32 50H68\"\n                  stroke={ink}\n                  strokeWidth=\"9\"\n                  strokeLinecap=\"round\"\n                />\n              ) : mark === \"check\" ? (\n                <path\n                  d=\"M28 50 43 65 73 35\"\n                  fill=\"none\"\n                  stroke={ink}\n                  strokeWidth=\"8\"\n                  strokeLinecap=\"round\"\n                  strokeLinejoin=\"round\"\n                />\n              ) : mark === \"diamond\" ? (\n                <path d=\"M50 29 71 50 50 71 29 50Z\" fill={ink} />\n              ) : mark === \"flower\" ? (\n                <path d={paths.flower} transform=\"translate(28 28) scale(.44)\" fill={ink} />\n              ) : (\n                <circle cx=\"50\" cy=\"50\" r=\"13\" fill={ink} />\n              )}\n            </motion.g>\n          )}\n        </AnimatePresence>\n      </motion.svg>\n    </span>\n  );\n}\n",
+      "type": "registry:lib",
+      "target": "lib/cojeev/selector.tsx"
+    },
+    {
+      "path": "registry/cojeev/styles/radio-group.css",
+      "content": "@layer cojeev-states {\n[data-slot=\"radio-group\"] { display:grid; gap:var(--s-2); }\n.v-radio[data-slot=\"radio-group-item\"] { display:inline-flex; align-items:center; gap:var(--s-3); min-height:44px; min-width:0; border:0; box-shadow:none; background:transparent; color:var(--v-text); font-size:var(--fs-body); text-align:start; cursor:pointer; }\n[data-slot=\"radio-group-indicator\"] { display:inline-grid; place-items:center; width:var(--selector-size,28px); height:var(--selector-size,28px); flex:none; }\n[data-slot=\"radio-group-item\"]:focus-visible { outline:none; }\n[data-slot=\"radio-group-item\"]:focus-visible [data-slot=\"radio-group-indicator\"] { outline:2px solid var(--ring); outline-offset:3px; border-radius:var(--r-sm); }\n[data-slot=\"radio-group-item\"][data-disabled] { color:var(--v-disabled-ink); cursor:not-allowed; }\n.v-radio[data-slot=\"radio-group-item\"].-block { display:grid; grid-template-columns:var(--selector-size,28px) minmax(0,1fr) auto; gap:var(--s-4); padding:var(--s-4) var(--s-4); border-radius:var(--r-card-sm); background:var(--card); box-shadow:inset 0 0 0 1px var(--v-border); }\n.v-radio[data-slot=\"radio-group-item\"].-block:not([data-disabled]):hover { background:var(--v-beige-2); }\n.v-radio[data-slot=\"radio-group-item\"].-block[data-state=\"checked\"] { background:color-mix(in oklab,var(--selector-accent) 16%,var(--v-canvas)); box-shadow:inset 0 0 0 1.5px var(--selector-accent); }\n[data-slot=\"radio-group-body\"] { display:grid; gap:3px; min-width:0; overflow-wrap:anywhere; }\n[data-slot=\"radio-group-body\"] b { font-size:var(--fs-body); font-weight:var(--fw-semibold); line-height:1.35; }\n[data-slot=\"radio-group-body\"] small { color:var(--v-text-2); font-size:var(--fs-small); line-height:1.45; }\n[data-slot=\"radio-group-item\"][data-disabled] [data-slot=\"radio-group-body\"] small { color:var(--v-disabled-ink); }\n.v-iradios[data-slot=\"radio-group\"] { grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); max-width:400px; }\n.v-iradio[data-slot=\"radio-group-item\"] { position:relative; display:grid; justify-items:center; gap:var(--s-2); padding:var(--s-5) var(--s-3) var(--s-4); border-radius:var(--r-card-sm); background:var(--card); color:var(--v-text); cursor:pointer; }\n.v-iradio[data-slot=\"radio-group-item\"] [data-slot=\"radio-group-indicator\"] { position:absolute; inset:5px 5px auto auto; width:var(--selector-size,16px); height:var(--selector-size,16px); }\n.v-iradio[data-slot=\"radio-group-item\"] [data-slot=\"selector-glyph\"] { width:var(--selector-size,16px); height:var(--selector-size,16px); }\n.v-iradio[data-slot=\"radio-group-item\"] > .v-icon { width:26px; height:26px; }\n.v-iradio[data-slot=\"radio-group-item\"] small { font-size:var(--fs-meta); font-weight:var(--fw-medium); }\n.v-iradio[data-slot=\"radio-group-item\"][data-state=\"checked\"] { background:var(--selector-accent); color:var(--v-on-accent); }\n.v-iradio[data-slot=\"radio-group-item\"]:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }\n@media(pointer:coarse) { .v-radio[data-slot=\"radio-group-item\"] { min-height:44px; } }\n\n/* The shared Button body engine owns the moving selector contour. The original\n   SVG is the immediate SSR/Off/reduced fallback; the mark stays above either. */\n[data-slot=\"selector-glyph\"]:has([data-slot=\"selector-surface-host\"] > svg.v-morph) [data-slot=\"selector-surface\"] { opacity:0; }\n[data-slot=\"selector-drawing\"] { position:relative; pointer-events:none; }\n\n[data-slot=\"radio-group-item\"][data-appearance] { display:flex; align-items:center; min-height:44px; min-width:0; padding:var(--s-3) var(--s-3); gap:var(--s-3); color:var(--v-text); text-align:start; border:0; border-radius:var(--v-control-radius,12px); background:transparent; cursor:pointer; }\n[data-slot=\"radio-group-item\"][data-appearance=\"row\"] { width:100%; border-radius:0; border-bottom:1px solid var(--v-border); }\n[data-slot=\"radio-group-item\"][data-appearance=\"card\"] { display:grid; grid-template-columns:var(--selector-size,28px) minmax(0,1fr); align-items:start; width:100%; padding:var(--s-5); border-radius:min(var(--v-control-radius,16px),24px); background:var(--card); box-shadow:inset 0 0 0 1px var(--v-edge); }\n[data-slot=\"radio-group-item\"][data-appearance=\"chip\"] { width:fit-content; border-radius:var(--v-control-radius,999px); box-shadow:inset 0 0 0 1px var(--v-edge); gap:var(--s-2); }\n[data-slot=\"radio-group-item\"][data-appearance]:not([data-disabled])[data-state=\"checked\"] { background:color-mix(in oklab,var(--selector-accent) 18%,var(--v-canvas)); }\n[data-slot=\"radio-group-item\"][data-appearance]:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }\n[data-slot=\"radio-group-item\"][data-appearance]:focus-visible [data-slot=\"radio-group-indicator\"] { outline:none; }\n[data-slot=\"radio-group-item\"][data-appearance][data-disabled] { color:var(--v-disabled-ink); cursor:not-allowed; }\n[data-slot=\"radio-group-body\"] { display:grid; gap:3px; min-width:0; overflow-wrap:anywhere; }\n[data-slot=\"radio-group-body\"] small { color:var(--v-text-2); font-size:var(--fs-small); line-height:1.45; }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/radio-group.css"
+    },
+    {
+      "path": "registry/cojeev/styles/control-appearance.css",
+      "content": "@layer cojeev-states {\n/* One inherited corner contract, with a readable cap for multiline/native fields. */\n:is(.v-input,.v-igroup,.v-select,.v-native,.v-number-input,.v-btn) {\n  border-radius: var(--v-control-radius, var(--r-pill));\n}\n:is(.v-textarea,.v-composer,.v-native,.v-multi-select__trigger) {\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n}\n.v-btn[data-control-shape=\"card\"] { border-radius: var(--r-md); }\n.v-btn[data-control-shape=\"pill\"] { border-radius: var(--r-pill); }\n\n/* A Field can own the treatment for its immediate shell; explicit child paint wins. */\n:root .v-native[data-appearance] { padding-inline-end:var(--s-10); }\n:root .v-native[data-appearance][size]:not([size=\"1\"]) { padding-inline:var(--s-2); }\n[data-slot=\"field\"][data-appearance=\"contour\"] { --v-field-face: var(--v-canvas); }\n:root [data-appearance=\"contour\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"contour\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-color: var(--v-canvas);\n  color: var(--v-text);\n  box-shadow: inset 0 0 0 1px var(--v-edge);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  border-radius: 0;\n  background-color: transparent;\n  color: var(--v-text);\n  box-shadow: inset 0 -1px 0 var(--v-edge);\n  padding-inline: 2px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] {\n  padding: var(--s-4) var(--s-4);\n  border-radius: min(var(--v-control-radius, 20px), 20px);\n  background: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 9%, transparent);\n  gap: var(--s-2);\n}\n:root [data-appearance=\"inset\"]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger) {\n  background-color: var(--v-beige);\n  color: var(--v-text);\n  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--v-text) 12%, transparent);\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background: transparent;\n  box-shadow: none;\n  padding-inline: 0;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] [data-slot=\"field-label\"] { color: var(--v-text-2); }\n:root [data-slot=\"field\"][data-appearance=\"inset\"]:focus-within { outline: 2px solid var(--v-brand); outline-offset: 2px; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):focus-within,\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):focus-within {\n  outline: 2px solid var(--v-brand);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance=\"inset\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { outline: none; }\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is(:disabled,[data-disabled=\"true\"],:has(input:disabled)),\n:root [data-slot=\"field\"][data-appearance] :is(.v-input,.v-igroup,.v-textarea):is(:disabled,:has(input:disabled)) {\n  background: var(--v-disabled-face);\n  color: var(--v-disabled-ink);\n  box-shadow: inset 0 0 0 1px var(--v-disabled-edge);\n  cursor: not-allowed;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"],\n:root [data-appearance]:is(.v-input,.v-igroup,.v-textarea,.v-native,.v-select,.v-number-input,.v-multi-select__trigger):is([aria-invalid=\"true\"],[data-invalid=\"true\"],:has([aria-invalid=\"true\"])) {\n  outline: 2px solid var(--v-danger-fill);\n  outline-offset: 3px;\n}\n:root [data-slot=\"field\"][data-appearance][data-state=\"error\"] [role=\"alert\"] { color: var(--v-danger-ink); }\n\n.v-form-example { display: grid; gap: var(--s-5); width: 100%; min-width: 0; max-width: 480px; margin-inline: auto; }\n.v-form-example__intro { display: grid; gap: var(--s-1); }\n.v-form-example__intro strong { font-family: var(--font-display, inherit); font-size: var(--fs-title); font-weight: var(--fw-medium); }\n.v-form-example__intro p { margin: 0; color: var(--v-text-2); font-size: var(--fs-small); line-height: 1.5; }\n.v-form-example__status { min-height: 1.5em; margin: 0; font-size: var(--fs-meta); color: var(--v-text-2); overflow-wrap: anywhere; }\n.v-form-example__footer { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }\n\n/* Composer owns one surface, while the actual textarea keeps native editing. */\n:root .v-composer[data-appearance] { border-radius:min(var(--v-control-radius,20px),20px); background:var(--v-canvas); color:var(--v-text); box-shadow:inset 0 0 0 1px var(--v-edge); }\n:root .v-composer[data-appearance=\"inset\"] { background:var(--v-beige); box-shadow:inset 0 1px 2px color-mix(in oklab,var(--v-text) 12%,transparent); }\n:root .v-composer[data-appearance=\"editorial\"] { border-radius:0; background:transparent; box-shadow:inset 0 -1px 0 var(--v-edge); }\n:root .v-composer[data-appearance] .v-textarea:is(:focus,:hover,:not(:focus)) { background:transparent; box-shadow:none; outline:0; border-radius:0; resize:vertical; }\n:root .v-composer[data-appearance] .v-textarea-scroll > textarea { padding-inline-end:var(--s-8); }\n:root [data-slot=\"field\"][data-appearance] [data-slot=\"input-group\"] .v-textarea { background:transparent; box-shadow:none; outline:0; border:0; border-radius:0; }\n:root .v-composer[data-appearance]:focus-within { outline:2px solid var(--v-brand); outline-offset:3px; }\n:root [data-slot=\"field\"][data-appearance=\"inset\"] .v-composer[data-appearance] { background:transparent; box-shadow:none; outline:0; }\n.v-form-example[data-form-example=\"field\"] { max-width:600px; }\n.v-form-example [data-slot=\"field-label\"] { font-size:var(--fs-control); line-height:1.5; }\n.v-form-example [data-slot=\"field-description\"] { font-size:var(--fs-small); margin:0; }\n.v-form-example__footer > .v-btn, .v-form-example [data-slot=\"textarea-composer-bar\"] > .v-btn { min-height:44px; }\n.v-form-example [data-slot=\"textarea-composer-bar\"] { justify-content:space-between; flex-wrap:wrap; gap:var(--s-3); padding:var(--s-3) var(--s-3); border-top:1px solid var(--v-border); }\n.v-form-example__allowance { height:4px; border-radius:var(--r-xs); overflow:hidden; background:var(--v-beige); margin-top:-8px; }\n.v-form-example__allowance > span { display:block; height:100%; max-width:100%; border-radius:inherit; background:var(--v-blue-deep); }\n.v-form-example__label-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s-2); justify-content:space-between; }\n.v-form-example__label-row > span { font-size:var(--fs-meta); color:var(--v-text-2); }\n.v-form-example__hint { margin:0; color:var(--v-text-2); font-size:var(--fs-small); line-height:1.5; }\n/* Editorial draws only the focus edge: no moving caret, label or hit area. */\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer),\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):not([data-appearance]) {\n  background-image:linear-gradient(var(--v-brand),var(--v-brand)); background-repeat:no-repeat; background-position:left bottom; background-size:0% 2px;\n  transition:background-size var(--t-micro) var(--enter);\n}\n:root [data-appearance=\"editorial\"]:is(.v-input,.v-igroup,.v-textarea,.v-composer):focus-within,\n:root [data-slot=\"field\"][data-appearance=\"editorial\"] :is(.v-input,.v-igroup,.v-textarea):focus-within { background-size:100% 2px; outline:0; }\n@media(prefers-reduced-motion:reduce) { :root [data-slot=\"field\"] :is(.v-input,.v-igroup,.v-textarea,.v-composer) { transition:none; } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/control-appearance.css"
+    },
+    {
+      "path": "registry/cojeev/styles/choice-foundations.css",
+      "content": "@layer cojeev-states {\n/* Shared example composition, shipped with every choice-family entry. */\n.v-choice-example {\n  display: grid;\n  gap: var(--s-5);\n  width: 100%;\n  max-width: 560px;\n  min-width: 0;\n  color: var(--v-text);\n}\n.v-choice-example header {\n  display: grid;\n  gap: var(--s-1);\n}\n.v-choice-example header strong {\n  font-size: var(--fs-lead);\n  font-weight: var(--fw-semibold);\n}\n.v-choice-example header p,\n.v-choice-result {\n  margin: 0;\n  font-size: var(--fs-small);\n  line-height: 1.5;\n  color: var(--v-text-2);\n}\n.v-choice-options {\n  display: grid;\n  gap: var(--s-3);\n  min-width: 0;\n}\n.v-choice-options[data-approach=\"chip\"] {\n  display: flex;\n  flex-wrap: wrap;\n  gap: var(--s-2);\n}\n.v-choice-options[data-approach=\"card\"] {\n  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));\n  align-items: stretch;\n}\n.v-choice-options[data-approach=\"card\"]\n  > :is([data-slot=\"checkbox\"], [data-slot=\"radio-group-item\"]) {\n  grid-template-columns: 1fr;\n  align-content: start;\n  gap: var(--s-4);\n}\n.v-choice-options[data-approach=\"card\"] [data-slot$=\"-body\"] {\n  gap: var(--s-2);\n}\n/* The summary below already closes the list; a second adjacent rule reads as a seam. */\n.v-choice-options[data-approach=\"row\"]\n  > :is([data-slot=\"checkbox\"], [data-slot=\"radio-group-item\"]):last-child {\n  border-bottom: none;\n}\n.v-choice-result {\n  padding-top: var(--s-3);\n  border-top: 1px solid var(--v-border);\n}\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/choice-foundations.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/radio-group.css\"": {},
+    "@import \"@/styles/cojeev/control-appearance.css\"": {},
+    "@import \"@/styles/cojeev/choice-foundations.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "radio-group",
+      "name": "Radio group",
+      "tier": "base",
+      "evidence": "I07",
+      "status": "source",
+      "root": ".v-radios",
+      "variants": [
+        "row",
+        "card",
+        "chip"
+      ],
+      "sizes": [
+        "default",
+        "sm",
+        "lg"
+      ],
+      "states": [
+        "unchecked",
+        "checked",
+        "focused",
+        "disabled",
+        "reduced-motion"
+      ],
+      "dataStates": [],
+      "category": "controls",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group",
+        "toggles",
+        "enters"
+      ],
+      "canvas": "480x240",
+      "contract": "entries/radio-group/contract.md",
+      "demo": "entries/radio-group/demo.html",
+      "isolation": [
+        "default-default-rest.html",
+        "default-default-rest-dark.html",
+        "default-default-disabled.html",
+        "default-default-disabled-dark.html",
+        "default-default-checked.html",
+        "default-default-checked-dark.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "RadioGroupProps",
+        "props": [
+          {
+            "name": "pictographic",
+            "type": "boolean | null | undefined",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "shape",
+            "type": "SelectorShape",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "tone",
+            "type": "SelectorTone",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "SelectorSize",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "indicator",
+            "type": "SelectorIndicator",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "showIndicator",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "appearance",
+            "type": "\"row\" | \"card\" | \"chip\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "RadioGroupItemProps",
+        "props": [
+          {
+            "name": "appearance",
+            "type": "\"row\" | \"card\" | \"chip\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "radius",
+            "type": "ControlRadius",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "pictographic",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "shape",
+            "type": "SelectorShape",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "tone",
+            "type": "SelectorTone",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "size",
+            "type": "SelectorSize",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "indicator",
+            "type": "SelectorIndicator",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "showIndicator",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "RadioGroupBodyProps",
+        "props": []
+      }
+    ],
+    "category": "Forms",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

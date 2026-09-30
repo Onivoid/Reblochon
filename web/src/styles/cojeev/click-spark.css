@@ -1,0 +1,5 @@
+@layer cojeev-states {
+.v-click-spark { --effect-accent:var(--v-pink); }
+.v-click-spark canvas { display:block; }
+
+}

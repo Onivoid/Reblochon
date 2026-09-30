@@ -1,0 +1,164 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "menubar",
+  "title": "Menubar",
+  "description": "Groups application commands into a horizontal row of keyboard-navigable menus.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-menubar"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/scroll-area.json",
+    "https://000h.cojeev.com/r/item-adornment.json",
+    "https://000h.cojeev.com/r/animated-icon.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/menubar.tsx",
+      "content": "\"use client\";\nimport { scrollAreaListChildren } from \"@/components/ui/scroll-area\";\n\nimport * as React from \"react\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-menubar\";\nimport {\n  useFlowAppearance,\n  useFlowGroup,\n} from \"@/lib/cojeev-motion/use-flow\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { assignMotionRef } from \"@/lib/cojeev-motion/refs\";\n\nfunction useRetainedMenuContentRef(ref?: React.Ref<HTMLDivElement>) {\n  const nodeRef = React.useRef<HTMLDivElement | null>(null);\n  const composedRef = React.useCallback((node: HTMLDivElement | null) => {\n    nodeRef.current = node;\n    const release = assignMotionRef(ref, node);\n    return () => {\n      nodeRef.current = null;\n      release();\n    };\n  }, [ref]);\n  return { nodeRef, composedRef };\n}\n\nimport { adornItem, adornMenuItem, itemText, type ItemAdornmentItemProps } from \"@/components/ui/item-adornment\";\nimport { StateChevron, AnimatedIcon } from \"@/components/ui/animated-icon\";\n\nexport type MenubarProps = React.ComponentProps<typeof Primitive.Root>;\nexport function Menubar({ className, ref, ...props }: MenubarProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.Root\n      ref={morphRef}\n      data-slot=\"menubar\"\n      data-part=\"root\"\n      className={cn(\n        \"v-menubar inline-flex gap-[var(--s-1)] p-1 bg-[var(--card)] rounded-[var(--r-pill)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type MenubarMenuProps = React.ComponentProps<typeof Primitive.Menu>;\nexport function MenubarMenu(props: MenubarMenuProps) {\n  return <Primitive.Menu {...props} />;\n}\nexport type MenubarPortalProps = React.ComponentProps<typeof Primitive.Portal>;\nexport function MenubarPortal(props: MenubarPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type MenubarGroupProps = React.ComponentProps<typeof Primitive.Group>;\nexport function MenubarGroup(props: MenubarGroupProps) {\n  return <Primitive.Group data-slot=\"menubar-group\" {...props} />;\n}\nexport type MenubarRadioGroupProps = React.ComponentProps<\n  typeof Primitive.RadioGroup\n>;\nexport function MenubarRadioGroup(props: MenubarRadioGroupProps) {\n  return <Primitive.RadioGroup data-slot=\"menubar-radiogroup\" {...props} />;\n}\nexport type MenubarSubProps = React.ComponentProps<typeof Primitive.Sub>;\nexport function MenubarSub(props: MenubarSubProps) {\n  return <Primitive.Sub {...props} />;\n}\nexport type MenubarTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n> & { chevron?: boolean };\nexport function MenubarTrigger({\n  className,\n  children,\n  chevron = true,\n  ref,\n  ...props\n}: MenubarTriggerProps) {\n  const morphRef = useMorph<HTMLButtonElement>(\"buttons\", ref);\n  return (\n    <Primitive.Trigger\n      ref={morphRef}\n      data-slot=\"menubar-trigger\"\n      data-part=\"trigger\"\n      data-menu=\"\"\n      className={cn(\n        \"v-menubar__trigger h-8 px-[var(--s-4)] rounded-[var(--r-pill)] text-[length:var(--fs-control)] font-medium\",\n        className,\n      )}\n      {...props}\n    >{adornItem(children, false, \"\", props.asChild, chevron ? <StateChevron /> : null)}</Primitive.Trigger>\n  );\n}\nexport const menubarContentVariants = cva(\n  \"v-menu [background:var(--popover)] [border-radius:var(--r-card-sm)] [padding:var(--s-2)] [min-width:200px] [box-shadow:var(--shadow-float)] [border:1px_solid_var(--v-border)] [display:grid] [gap:2px]\",\n);\nexport type MenubarContentProps = React.ComponentProps<\n  typeof Primitive.Content\n>;\nexport function MenubarContent({\n  className,\n  ref,\n  children,\n  sideOffset = 6,\n  onInteractOutside,\n  ...props\n}: MenubarContentProps) {\n  const { nodeRef, composedRef } = useRetainedMenuContentRef(ref);\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", composedRef);\n  const groupRef = useFlowGroup<HTMLDivElement>(morphRef, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[data-highlighted]\",\n  });\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, groupRef, \"grow\");\n  return (\n    <Primitive.Portal>\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"menubar-content\"\n        data-part=\"content\"\n        sideOffset={sideOffset}\n        className={cn(menubarContentVariants(), className)}\n        {...props}\n        onInteractOutside={(event) => {\n          onInteractOutside?.(event);\n          // A retained closing menu must not dismiss the next menu when its\n          // keyboard focus enters that sibling before the old exit finishes.\n          if (nodeRef.current?.dataset.state === \"closed\") event.preventDefault();\n        }}\n      >\n        {scrollAreaListChildren(children, props.asChild)}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\nexport type MenubarSubContentProps = React.ComponentProps<\n  typeof Primitive.SubContent\n>;\nexport function MenubarSubContent({\n  className,\n  children,\n  ref,\n  onInteractOutside,\n  ...props\n}: MenubarSubContentProps) {\n  const { nodeRef, composedRef } = useRetainedMenuContentRef(ref);\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", composedRef);\n  const groupRef = useFlowGroup<HTMLDivElement>(morphRef, {\n    itemSelector: \".v-menu__item\",\n    activeSelector: \"[data-highlighted]\",\n  });\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, groupRef, \"grow\");\n  return (\n    <Primitive.Portal>\n      <Primitive.SubContent\n        ref={flowRef}\n        data-slot=\"menubar-sub-content\"\n        data-part=\"content\"\n        className={cn(menubarContentVariants(), className)}\n        {...props}\n        onInteractOutside={(event) => {\n          onInteractOutside?.(event);\n          if (nodeRef.current?.dataset.state === \"closed\") event.preventDefault();\n        }}\n      >{scrollAreaListChildren(children, props.asChild)}</Primitive.SubContent>\n    </Primitive.Portal>\n  );\n}\nexport type MenubarItemProps = React.ComponentProps<typeof Primitive.Item> & {\n  variant?: \"default\" | \"danger\";\n  inset?: boolean;\n} & ItemAdornmentItemProps;\nexport function MenubarItem({\n  className,\n  children,\n  adornment,\n  adornmentId,\n  variant,\n  inset,\n  ref,\n  ...props\n}: MenubarItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.Item\n      ref={morphRef}\n      data-slot=\"menubar-item\"\n      data-part=\"item\"\n      data-inset={inset || undefined}\n      className={cn(\n        \"v-menu__item flex items-center gap-[var(--s-3)] min-h-10 px-[var(--s-3)] rounded-[var(--r-md)] text-[length:var(--fs-control)] w-full text-left whitespace-nowrap outline-none\",\n        variant === \"danger\" && \"-danger\",\n        className,\n  children,\n  adornment,\n  adornmentId,\n      )}\n      {...props}\n    >{adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild)}</Primitive.Item>\n  );\n}\nexport type MenubarSubTriggerProps = React.ComponentProps<\n  typeof Primitive.SubTrigger\n> & { inset?: boolean } & ItemAdornmentItemProps;\nexport function MenubarSubTrigger({\n  className,\n  adornment,\n  adornmentId,\n  inset,\n  children,\n  ref,\n  ...props\n}: MenubarSubTriggerProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.SubTrigger\n      ref={morphRef}\n      data-slot=\"menubar-sub-trigger\"\n      data-part=\"item\"\n      data-inset={inset || undefined}\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <StateChevron direction=\"right\" />)}\n    </Primitive.SubTrigger>\n  );\n}\nexport type MenubarCheckboxItemProps = React.ComponentProps<\n  typeof Primitive.CheckboxItem\n> & ItemAdornmentItemProps;\nexport function MenubarCheckboxItem({\n  className,\n  adornment,\n  adornmentId,\n  children,\n  ref,\n  ...props\n}: MenubarCheckboxItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.CheckboxItem\n      ref={morphRef}\n      data-slot=\"menubar-checkbox-item\"\n      data-part=\"item\"\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <span className=\"v-menu__check\" aria-hidden=\"true\"><Primitive.ItemIndicator data-slot=\"menubar-item-indicator\" data-part=\"indicator\"><AnimatedIcon name=\"check\" preset=\"validation\" /></Primitive.ItemIndicator></span>)}\n    </Primitive.CheckboxItem>\n  );\n}\nexport type MenubarRadioItemProps = React.ComponentProps<\n  typeof Primitive.RadioItem\n> & ItemAdornmentItemProps;\nexport function MenubarRadioItem({\n  className,\n  adornment,\n  adornmentId,\n  children,\n  ref,\n  ...props\n}: MenubarRadioItemProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"nav\", ref);\n  return (\n    <Primitive.RadioItem\n      ref={morphRef}\n      data-slot=\"menubar-radio-item\"\n      data-part=\"item\"\n      className={cn(\"v-menu__item\", className)}\n      {...props}\n    >\n      {adornMenuItem(children, adornment, adornmentId ?? props.textValue ?? props.id ?? itemText(children), props.asChild, <span className=\"v-menu__check\" aria-hidden=\"true\"><Primitive.ItemIndicator data-slot=\"menubar-item-indicator\" data-part=\"indicator\"><AnimatedIcon name=\"dot\" preset=\"validation\" /></Primitive.ItemIndicator></span>)}\n    </Primitive.RadioItem>\n  );\n}\nexport type MenubarLabelProps = React.ComponentProps<typeof Primitive.Label>;\nexport function MenubarLabel({ className, ...props }: MenubarLabelProps) {\n  return (\n    <Primitive.Label\n      data-slot=\"menubar-label\"\n      data-part=\"group\"\n      className={cn(\"v-menu__group\", className)}\n      {...props}\n    />\n  );\n}\nexport type MenubarSeparatorProps = React.ComponentProps<\n  typeof Primitive.Separator\n>;\nexport function MenubarSeparator({\n  className,\n  ...props\n}: MenubarSeparatorProps) {\n  return (\n    <Primitive.Separator\n      data-slot=\"menubar-separator\"\n      data-part=\"separator\"\n      className={cn(\"v-menu__sep\", className)}\n      {...props}\n    />\n  );\n}\nexport type MenubarShortcutProps = React.ComponentProps<\"span\">;\nexport function MenubarShortcut({ className, ...props }: MenubarShortcutProps) {\n  return (\n    <span\n      data-slot=\"menubar-shortcut\"\n      className={cn(\n        \"ml-auto text-[length:var(--fs-caps)] text-[color:var(--muted-foreground)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/menubar.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-menu__item:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  display: flex;\n  align-items: center;\n  gap: var(--s-3);\n  min-height: 40px;\n  padding: 0 var(--s-3);\n  border-radius: var(--r-md);\n  font-size: var(--fs-control);\n  width: 100%;\n  text-align: left;\n  white-space: nowrap;\n}\n.v-menu__item:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]):hover,\n.v-menu__item:where(\n    [data-slot=\"menubar\"],\n    [data-slot^=\"menubar-\"]\n  )[data-highlighted] {\n  background: var(--v-beige);\n}\n.v-menu__item:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]).-danger {\n  color: var(--v-danger-ink);\n}\n.v-menu__sep:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  height: 1px;\n  background: var(--v-border);\n  margin: var(--s-1) 0;\n}\n.v-menu__group:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  font-size: var(--fs-caps);\n  letter-spacing: 0.06em;\n  text-transform: uppercase;\n  color: var(--muted-foreground);\n  padding: var(--s-2) var(--s-3) var(--s-1);\n}\n.v-menubar:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  display: inline-flex;\n  gap: var(--s-1);\n  padding: var(--s-1);\n  background: var(--card);\n  border-radius: var(--r-pill);\n}\n.v-menubar__trigger:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  height: 32px;\n  padding: 0 var(--s-4);\n  border-radius: var(--r-pill);\n  font-size: var(--fs-control);\n  font-weight: var(--fw-medium);\n}\n.v-menubar__trigger:where(\n    [data-slot=\"menubar\"],\n    [data-slot^=\"menubar-\"]\n  )[aria-expanded=\"true\"],\n.v-menubar__trigger:where(\n    [data-slot=\"menubar\"],\n    [data-slot^=\"menubar-\"]\n  ):hover {\n  background: var(--v-ink);\n  color: var(--v-on-ink);\n}\n.v-menu:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-menu:where(\n    [data-slot=\"menubar\"],\n    [data-slot^=\"menubar-\"]\n  )::-webkit-scrollbar {\n  width: 12px;\n  height: 12px;\n}\n.v-menu:where(\n    [data-slot=\"menubar\"],\n    [data-slot^=\"menubar-\"]\n  )::-webkit-scrollbar-track {\n  background: transparent;\n  border-radius: var(--r-pill);\n}\n.v-menu:where(\n    [data-slot=\"menubar\"],\n    [data-slot^=\"menubar-\"]\n  )::-webkit-scrollbar-thumb {\n  background: color-mix(in oklab, var(--v-ink) 34%, transparent);\n  border-radius: var(--r-pill);\n  border: 4px solid transparent;\n  background-clip: content-box;\n  min-height: 36px;\n}\n.v-menu:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-menu:where([data-slot=\"menubar\"], [data-slot^=\"menubar-\"]) {\n  scrollbar-gutter: stable;\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"menubar\"],\n  [data-slot^=\"menubar-\"],\n  [data-slot=\"menubar\"]::before,\n  [data-slot=\"menubar\"]::after,\n  [data-slot^=\"menubar-\"]::before,\n  [data-slot^=\"menubar-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n[data-slot^=\"menubar-\"][data-inset] {\n  padding-left: var(--s-8);\n}\n[data-slot^=\"menubar-\"][data-disabled] {\n  color: var(--v-disabled-ink);\n  cursor: not-allowed;\n}\n[data-slot^=\"menubar-\"][data-part=\"item\"][data-highlighted] {\n  outline: none;\n  background: var(--v-beige);\n}\n\n[data-slot=\"menubar-content\"], [data-slot=\"menubar-sub-content\"] {\n min-width:min(200px,calc(100vw - 24px)); max-width:calc(100vw - 24px);\n max-height:min(480px,var(--radix-menubar-content-available-height,calc(100dvh - 32px)));\n overflow:visible; overscroll-behavior:contain; overflow-wrap:anywhere;\n}\n[data-slot=\"menubar-item\"] { min-width:0; height:auto; min-height:36px; white-space:normal; }\n\n/* Nested menus live above dialog surfaces as well as the document. */\n[data-slot=\"menubar-content\"], [data-slot=\"menubar-sub-content\"] { z-index: var(--z-popover); }\n\n/* Compact by default; --menu-width or inline width can deliberately match a large trigger. */\n[data-slot=\"menubar-content\"], [data-slot=\"menubar-sub-content\"] { width:var(--menu-width,260px); min-width:min(200px,calc(100vw - 24px)); max-width:calc(100vw - 24px); color:var(--popover-foreground); }\n[data-slot^=\"menubar-\"][data-part=\"item\"] { min-width:0; min-height:44px; padding-block:var(--s-2); gap:var(--s-3); white-space:normal; overflow-wrap:anywhere; text-align:start; }\n[data-slot^=\"menubar-\"][data-part=\"item\"]:is(:hover,[data-highlighted],[data-state=\"checked\"]) { background:var(--v-beige); color:var(--v-text); }\n[data-slot^=\"menubar-\"][data-part=\"item\"][data-state=\"checked\"] { background:var(--v-pink-soft); }\n[data-slot^=\"menubar-\"][data-part=\"item\"]:active { background:var(--v-pink-soft); color:var(--v-text); }\n[data-slot^=\"menubar-\"][data-part=\"item\"].-danger { color:var(--v-danger-ink); }\n[data-slot^=\"menubar-\"][data-part=\"item\"][data-disabled] { background:transparent; color:var(--v-disabled-ink); }\n[data-slot^=\"menubar-\"] .v-menu__check { display:inline-grid; place-items:center; width:18px; min-width:18px; margin-inline-start:auto; color:inherit; }\n[data-slot^=\"menubar-\"] .v-menu__check .v-icon { width:16px; height:16px; }\n\n[data-slot=\"menubar-trigger\"] { display:inline-flex; align-items:center; gap:var(--s-2); min-height:36px; height:auto; color:var(--v-text); }\n[data-slot=\"menubar-trigger\"]:is(:hover,[data-highlighted],[data-state=\"open\"],[aria-expanded=\"true\"]) { background:var(--v-ink); color:var(--v-on-ink); --mfill:var(--v-ink); }\n[data-slot=\"menubar-trigger\"]:active { background:var(--v-pink); color:var(--v-on-accent); --mfill:var(--v-pink); }\n[data-slot=\"menubar-trigger\"][data-disabled] { background:transparent; color:var(--v-disabled-ink); --mfill:transparent; }\n\n/* A native flyout may share a narrow viewport with its parent. Use Popper's\n   measured free width so its labels wrap instead of leaving the screen. */\n[data-slot=\"menubar-sub-content\"] { min-width:min(200px,var(--radix-menubar-content-available-width,200px)); max-width:min(calc(100vw - 24px),var(--radix-menubar-content-available-width,260px)); }\n\n/* The shared ScrollArea owns menu overflow and its custom thumb. */\n:is([data-slot=\"menubar-content\"],[data-slot=\"menubar-sub-content\"]) .v-list-scroll { --list-scroll-max-height:min(320px, calc(var(--radix-popper-available-height, 60dvh) - 20px)); }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/menubar.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/menubar.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "menubar",
+      "name": "Menubar",
+      "tier": "base",
+      "evidence": "Ext",
+      "status": "derived",
+      "root": ".v-menubar",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "nav",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "group",
+        "opens"
+      ],
+      "canvas": "480x360",
+      "contract": "entries/menubar/contract.md",
+      "demo": "entries/menubar/demo.html",
+      "isolation": [
+        "default-default-rest-480x360.html",
+        "default-default-rest-dark-480x360.html",
+        "default-default-open-480x360.html",
+        "default-default-open-dark-480x360.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "MenubarProps",
+        "props": []
+      },
+      {
+        "name": "MenubarMenuProps",
+        "props": []
+      },
+      {
+        "name": "MenubarPortalProps",
+        "props": []
+      },
+      {
+        "name": "MenubarGroupProps",
+        "props": []
+      },
+      {
+        "name": "MenubarRadioGroupProps",
+        "props": []
+      },
+      {
+        "name": "MenubarSubProps",
+        "props": []
+      },
+      {
+        "name": "MenubarTriggerProps",
+        "props": [
+          {
+            "name": "chevron",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "MenubarContentProps",
+        "props": []
+      },
+      {
+        "name": "MenubarSubContentProps",
+        "props": []
+      },
+      {
+        "name": "MenubarItemProps",
+        "props": [
+          {
+            "name": "variant",
+            "type": "\"default\" | \"danger\"",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "inset",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "MenubarSubTriggerProps",
+        "props": [
+          {
+            "name": "inset",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "MenubarCheckboxItemProps",
+        "props": []
+      },
+      {
+        "name": "MenubarRadioItemProps",
+        "props": []
+      },
+      {
+        "name": "MenubarLabelProps",
+        "props": []
+      },
+      {
+        "name": "MenubarSeparatorProps",
+        "props": []
+      },
+      {
+        "name": "MenubarShortcutProps",
+        "props": []
+      }
+    ],
+    "category": "Actions",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}

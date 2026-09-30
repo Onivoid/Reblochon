@@ -1,0 +1,122 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "alert-dialog",
+  "title": "Alert Dialog",
+  "description": "Pauses a workflow for a focused confirmation before a consequential action proceeds.",
+  "dependencies": [
+    "class-variance-authority",
+    "@radix-ui/react-alert-dialog"
+  ],
+  "registryDependencies": [
+    "https://000h.cojeev.com/r/cojeev.json",
+    "https://000h.cojeev.com/r/button.json"
+  ],
+  "files": [
+    {
+      "path": "registry/cojeev/ui/alert-dialog.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useMorph } from \"@/lib/cojeev-motion/use-morph\";\nimport { cva } from \"class-variance-authority\";\nimport { cn } from \"@/lib/utils\";\nimport * as Primitive from \"@radix-ui/react-alert-dialog\";\nimport { useFlowAppearance } from \"@/lib/cojeev-motion/use-flow\";\nimport { Button } from \"@/components/ui/button\";\nexport type AlertDialogProps = React.ComponentProps<typeof Primitive.Root>;\nexport function AlertDialog(props: AlertDialogProps) {\n  return <Primitive.Root {...props} />;\n}\nexport type AlertDialogTriggerProps = React.ComponentProps<\n  typeof Primitive.Trigger\n>;\nexport function AlertDialogTrigger(props: AlertDialogTriggerProps) {\n  return (\n    <Primitive.Trigger\n      data-slot=\"alert-dialog-trigger\"\n      data-part=\"trigger\"\n      data-dialog-open=\"\"\n      {...props}\n    />\n  );\n}\nexport type AlertDialogPortalProps = React.ComponentProps<\n  typeof Primitive.Portal\n>;\nexport function AlertDialogPortal(props: AlertDialogPortalProps) {\n  return <Primitive.Portal {...props} />;\n}\nexport type AlertDialogOverlayProps = React.ComponentProps<\n  typeof Primitive.Overlay\n>;\nexport function AlertDialogOverlay({\n  className,\n  ref,\n  ...props\n}: AlertDialogOverlayProps) {\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, ref, \"fade\");\n  return (\n    <Primitive.Overlay\n      ref={flowRef}\n      data-slot=\"alert-dialog-overlay\"\n      data-part=\"overlay\"\n      className={cn(\n        \"v-scrim fixed inset-0 bg-[var(--v-scrim)] z-[calc(var(--z-dialog)-1)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport const alertdialogContentVariants = cva(\n  \"v-dialog [position:fixed] [inset:0] [margin:auto] [width:min(520px,calc(100%_-_48px))] [height:fit-content] [background:var(--v-canvas)] [border-radius:var(--r-sheet)] [padding:var(--s-8)] [z-index:var(--z-dialog)] [display:grid] [box-shadow:var(--shadow-float),inset_0_0_0_1px_var(--v-border)] [gap:var(--s-4)]\",\n);\nexport type AlertDialogContentProps = React.ComponentProps<\n  typeof Primitive.Content\n> & { showCloseButton?: boolean };\nexport function AlertDialogContent({\n  className,\n  ref,\n  children,\n  showCloseButton = false,\n  ...props\n}: AlertDialogContentProps) {\n  const morphRef = useMorph<HTMLDivElement>(\"surfaces\", ref);\n  const flowRef = useFlowAppearance<HTMLDivElement>(true, morphRef, \"enter\");\n  return (\n    <Primitive.Portal>\n      <AlertDialogOverlay />\n      <Primitive.Content\n        ref={flowRef}\n        data-slot=\"alert-dialog-content\"\n        data-part=\"content\"\n        className={cn(alertdialogContentVariants(), className)}\n        {...props}\n      >\n        {children}\n        {showCloseButton && (\n          <AlertDialogCancel\n            aria-label=\"Close\"\n            className=\"absolute right-4 top-4\"\n          >\n            ×\n          </AlertDialogCancel>\n        )}\n      </Primitive.Content>\n    </Primitive.Portal>\n  );\n}\nexport type AlertDialogHeaderProps = React.ComponentProps<\"div\">;\nexport function AlertDialogHeader({\n  className,\n  ...props\n}: AlertDialogHeaderProps) {\n  return (\n    <div\n      data-slot=\"alert-dialog-header\"\n      data-part=\"header\"\n      className={cn(\n        \"v-dialog__head flex items-start justify-between gap-[var(--s-4)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type AlertDialogFooterProps = React.ComponentProps<\"div\">;\nexport function AlertDialogFooter({\n  className,\n  ...props\n}: AlertDialogFooterProps) {\n  return (\n    <div\n      data-slot=\"alert-dialog-footer\"\n      data-part=\"footer\"\n      className={cn(\n        \"v-dialog__actions flex gap-[var(--s-3)] justify-end mt-[var(--s-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type AlertDialogTitleProps = React.ComponentProps<\n  typeof Primitive.Title\n>;\nexport function AlertDialogTitle({\n  className,\n  ...props\n}: AlertDialogTitleProps) {\n  return (\n    <Primitive.Title\n      data-slot=\"alert-dialog-title\"\n      data-part=\"title\"\n      className={cn(\n        \"v-section font-[family-name:var(--font-display)] text-[length:var(--fs-section)] leading-[1.15] tracking-[-0.01em] pt-1.5 font-medium\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type AlertDialogDescriptionProps = React.ComponentProps<\n  typeof Primitive.Description\n>;\nexport function AlertDialogDescription({\n  className,\n  ...props\n}: AlertDialogDescriptionProps) {\n  return (\n    <Primitive.Description\n      data-slot=\"alert-dialog-description\"\n      data-part=\"description\"\n      className={cn(\n        \"v-body-2 text-[length:var(--fs-body)] leading-[1.5] text-[color:var(--v-text-2)]\",\n        className,\n      )}\n      {...props}\n    />\n  );\n}\nexport type AlertDialogActionProps = React.ComponentProps<\n  typeof Primitive.Action\n>;\nexport function AlertDialogAction({\n  asChild,\n  children,\n  ...props\n}: AlertDialogActionProps) {\n  return (\n    <Primitive.Action\n      data-slot=\"alert-dialog-action\"\n      data-part=\"action\"\n      asChild\n      {...props}\n    >\n      {asChild ? children : <Button variant=\"danger\">{children}</Button>}\n    </Primitive.Action>\n  );\n}\nexport type AlertDialogCancelProps = React.ComponentProps<\n  typeof Primitive.Cancel\n>;\nexport function AlertDialogCancel({\n  asChild,\n  children,\n  ...props\n}: AlertDialogCancelProps) {\n  return (\n    <Primitive.Cancel\n      data-slot=\"alert-dialog-cancel\"\n      data-part=\"action\"\n      asChild\n      {...props}\n    >\n      {asChild ? children : <Button variant=\"secondary\">{children}</Button>}\n    </Primitive.Cancel>\n  );\n}\n",
+      "type": "registry:ui"
+    },
+    {
+      "path": "registry/cojeev/styles/alert-dialog.css",
+      "content": "@layer cojeev-states {\n/* Cojeev authored subparts, state precedence, and irreducible shapes; scoped to this registry item. */\n.v-scrim:where([data-slot=\"alert-dialog\"], [data-slot^=\"alert-dialog-\"]) {\n  position: fixed;\n  inset: 0;\n  background: var(--v-scrim);\n  z-index: var(--z-sheet);\n}\n.v-dialog__head:where(\n  [data-slot=\"alert-dialog\"],\n  [data-slot^=\"alert-dialog-\"]\n) {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--s-4);\n}\n.v-dialog__actions:where(\n  [data-slot=\"alert-dialog\"],\n  [data-slot^=\"alert-dialog-\"]\n) {\n  display: flex;\n  gap: var(--s-2);\n  justify-content: flex-end;\n}\n/* Scrim paint and retained close use the shared opacity-only Motion lane. */\n.v-dialog:where([data-slot=\"alert-dialog\"], [data-slot^=\"alert-dialog-\"]) {\n  animation: v-dialog-in var(--t-max) var(--enter) both;\n}\n.v-dialog__head:where(\n  [data-slot=\"alert-dialog\"],\n  [data-slot^=\"alert-dialog-\"]\n) {\n  align-items: start;\n}\n.v-dialog__head:where([data-slot=\"alert-dialog\"], [data-slot^=\"alert-dialog-\"])\n  .v-section {\n  font-size: var(--fs-section);\n  line-height: 1.15;\n  padding-top: var(--s-2);\n}\n.v-dialog:where([data-slot=\"alert-dialog\"], [data-slot^=\"alert-dialog-\"])\n  > .v-body-2 {\n  max-width: 52ch;\n}\n.v-dialog__actions:where(\n  [data-slot=\"alert-dialog\"],\n  [data-slot^=\"alert-dialog-\"]\n) {\n  margin-top: var(--s-2);\n  gap: var(--s-3);\n}\n.v-dialog:where([data-slot=\"alert-dialog\"], [data-slot^=\"alert-dialog-\"]) {\n  scrollbar-gutter: stable;\n}\n.v-dialog:where([data-slot=\"alert-dialog\"], [data-slot^=\"alert-dialog-\"]) {\n  scrollbar-gutter: stable;\n}\n@keyframes v-scrim-in {\n  from {\n    opacity: 0;\n  }\n}\n@keyframes v-dialog-in {\n  from {\n    opacity: 0;\n    transform: translateY(10px) scale(0.985);\n  }\n}\n@media (prefers-reduced-motion: reduce) {\n  [data-slot=\"alert-dialog\"],\n  [data-slot^=\"alert-dialog-\"],\n  [data-slot=\"alert-dialog\"]::before,\n  [data-slot=\"alert-dialog\"]::after,\n  [data-slot^=\"alert-dialog-\"]::before,\n  [data-slot^=\"alert-dialog-\"]::after {\n    animation-duration: 0s;\n    animation-iteration-count: 1;\n    transition-duration: 0s;\n    scroll-behavior: auto;\n  }\n}\n\n\n/* A long dialog stays inside the screen; its actions remain reachable. */\n[data-slot=\"alert-dialog-content\"] { max-height:calc(100dvh - 32px); overflow-y:auto; overscroll-behavior:contain; min-width:0; grid-template-columns:minmax(0,1fr); }\n[data-slot=\"alert-dialog-title\"], [data-slot=\"alert-dialog-description\"] { overflow-wrap:anywhere; }\n[data-slot=\"alert-dialog-footer\"] { flex-wrap:wrap; }\n@media (max-width:640px) { [data-slot=\"alert-dialog-content\"] { width:calc(100% - 24px); padding:var(--s-6); } }\n\n}\n",
+      "type": "registry:file",
+      "target": "styles/cojeev/alert-dialog.css"
+    }
+  ],
+  "css": {
+    "@import \"@/styles/cojeev/alert-dialog.css\"": {}
+  },
+  "meta": {
+    "source": {
+      "id": "alert-dialog",
+      "name": "Alert Dialog",
+      "tier": "base",
+      "evidence": "Ext I07",
+      "status": "derived",
+      "root": ".v-dialog",
+      "variants": [],
+      "sizes": [],
+      "states": [
+        "open",
+        "rest",
+        "hover",
+        "focus",
+        "active"
+      ],
+      "dataStates": [],
+      "category": "surfaces",
+      "motionOnByDefault": false,
+      "flowRoles": [
+        "press",
+        "opens"
+      ],
+      "canvas": "720x480",
+      "contract": "entries/alert-dialog/contract.md",
+      "demo": "entries/alert-dialog/demo.html",
+      "isolation": [
+        "default-default-rest-720x480.html",
+        "default-default-rest-dark-720x480.html",
+        "default-default-open-720x480.html",
+        "default-default-open-dark-720x480.html"
+      ]
+    },
+    "api": [
+      {
+        "name": "AlertDialogProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogTriggerProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogPortalProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogOverlayProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogContentProps",
+        "props": [
+          {
+            "name": "showCloseButton",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ]
+      },
+      {
+        "name": "AlertDialogHeaderProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogFooterProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogTitleProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogDescriptionProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogActionProps",
+        "props": []
+      },
+      {
+        "name": "AlertDialogCancelProps",
+        "props": []
+      }
+    ],
+    "category": "Feedback",
+    "fidelity": "refined-design-family",
+    "baseComponent": true
+  },
+  "type": "registry:ui"
+}
